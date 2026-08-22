@@ -20,12 +20,36 @@ apps:
       - home
 
 parts:
+  # snapcraft 9.0.1 stopped installing rustup for the rust plugin, which 9.0.0
+  # did, so the toolchain is bootstrapped here instead. Upstream bug:
+  # https://github.com/canonical/snapcraft/issues/6330
+  #
+  # The part name must be exactly `rust-deps`. The plugin looks for that name in
+  # the dependencies of the part it is building, and when it finds it, it checks
+  # PATH for `cargo` and `rustc` instead of `rustup`. The symlinks below are what
+  # satisfy that check, because $HOME/.cargo/bin is not on PATH for the next part.
+  rust-deps:
+    plugin: nil
+    build-packages:
+      - curl
+    override-pull: |
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
+      ln -sf "$HOME/.cargo/bin/cargo" /usr/local/bin/cargo
+      ln -sf "$HOME/.cargo/bin/rustc" /usr/local/bin/rustc
+      ln -sf "$HOME/.cargo/bin/rustup" /usr/local/bin/rustup
+
   mhr:
     plugin: rust
     source: .
-    # The system rustc on core24 is older than the edition 2024 toolchain
-    # this crate needs, so the plugin bootstraps its own.
-    rust-channel: stable
+    # The system rustc on core24 is older than the edition 2024 toolchain this
+    # crate needs. `rust-deps` above installs a current one and puts it in
+    # /usr/local/bin, which comes before /usr/bin on PATH. `none` hands the
+    # toolchain to that part; the plugin rejects a channel here while a
+    # `rust-deps` part exists.
+    rust-channel: none
+    after:
+      - rust-deps
     build-packages:
       - libwebkit2gtk-4.1-dev
       - libgtk-3-dev

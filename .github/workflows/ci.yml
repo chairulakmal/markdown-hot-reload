@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Same list as build-packages in snap/snapcraft.yaml. Keep the two in sync.
       - name: Install system dependencies
@@ -68,13 +68,17 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
+      # Still declares `runs: using: node20`, and its last release was July 2024,
+      # so the deprecation warning in the log cannot be fixed from here. GitHub
+      # already runs it on Node 24 anyway. Upstream request:
+      # https://github.com/snapcore/action-build/issues/1
       - uses: snapcore/action-build@v1
         id: build
 
       # Keeps the snap downloadable for `snap install --dangerous` testing.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: markdown-hot-reload-snap
           path: ${{ steps.build.outputs.snap }}

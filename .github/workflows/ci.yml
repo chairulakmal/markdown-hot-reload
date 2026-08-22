@@ -60,11 +60,15 @@ jobs:
         run: cargo build --locked --release
 
   # The snap is a distribution channel, so it is built before a release rather
-  # than during one. Main only: a build inside LXD has no cargo cache.
+  # than during one. It runs on pull requests too: main is reachable only
+  # through a pull request, so building the snap after the merge would mean
+  # every packaging break lands on main before anyone sees it.
+  #
+  # Never add this to the ruleset's required checks. It is slow (a build inside
+  # LXD has no cargo cache) and the concurrency rule above cancels it when a
+  # pull request is pushed again, and a cancelled required check blocks merges.
   snap:
     needs: ci
-    # Skipped on pull requests, so never make this a required status check.
-    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:

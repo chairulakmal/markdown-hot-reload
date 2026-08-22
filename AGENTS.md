@@ -47,7 +47,7 @@ The GUI cannot be verified from a headless tool call. Add a test to `src/render.
 Three parts of that ruleset constrain `.github/workflows/ci.yml`. Read them before editing that file.
 
 - **The required check is named `ci`, which is the id of the job in `ci.yml`.** Renaming the job, or adding a `name:` key to it, renames the check. The ruleset then waits for a check that no longer reports, and every pull request stops merging.
-- **The `snap` job must never become a required check.** It carries `if: github.event_name == 'push'`, so it does not run on a pull request. A required check that never runs stays *expected* instead of passing, and blocks the merge forever.
+- **The `snap` job must never become a required check.** It does run on pull requests, so it would not hit the "a required check that never runs stays *expected* forever" trap, but it takes up to 45 minutes and the workflow's concurrency rule cancels it when the branch is pushed again. A cancelled check is not a passing one, so requiring it would block merges at random.
 - **Every commit must be signed.** The ruleset rejects an unsigned commit when it is pushed, including a commit an agent creates for the author. If a push is rejected with no clear reason, check `git log --show-signature -1` first.
 
 One more rule affects commit metadata. The ruleset requires an approving review for any change GitHub cannot attribute to a user account, and nobody can approve their own pull request. Keep `user.email` set to an address that is registered on the account, or such a pull request cannot be merged at all.
@@ -86,7 +86,7 @@ Mermaid is 3.5 MB raw and dominates the binary, so it is loaded only when a docu
 
 ## Distribution
 
-CI builds the snap on every push to `main` and uploads it as a workflow artifact, so a build break is caught at the commit that causes it rather than at release time. Nothing is published automatically: the artifact is there to install with `snap install --dangerous` and test.
+CI builds the snap on every pull request and every push to `main`, and uploads it as a workflow artifact, so a packaging break is caught before it lands rather than at release time. It also catches breaks that no commit here causes: the snapcraft 9.0.1 regression in the traps above arrived on its own, because the build action installs snapcraft from `latest/stable`. Nothing is published automatically. The artifact is there to install with `snap install --dangerous` and test.
 
 Snap Store and GitHub Releases are the only planned distribution channels. Flathub was considered and dropped, not deferred: this is a hobby project with one maintainer, and a second packaging manifest and Store listing costs more upkeep than the extra reach is worth. Don't propose adding it back without the author raising it first.
 

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>mhr &mdash; install on Ubuntu</title>
+    <style>
+      :root {
+        --fg: #1f2328;
+        --fg-muted: #59636e;
+        --bg: #ffffff;
+        --border: #d1d9e0;
+        --code-bg: #f6f8fa;
+        --link: #0969da;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #f0f6fc;
+          --fg-muted: #9198a1;
+          --bg: #0d1117;
+          --border: #3d444d;
+          --code-bg: #151b23;
+          --link: #4493f8;
+        }
+      }
+      body {
+        margin: 0;
+        padding: 2.5rem 1.25rem 4rem;
+        background: var(--bg);
+        color: var(--fg);
+        font: 16px/1.6 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+      }
+      main {
+        max-width: 46rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+      }
+      h2 {
+        font-size: 1.2rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.4rem;
+        margin-top: 2.5rem;
+      }
+      p {
+        color: var(--fg);
+      }
+      .lede {
+        color: var(--fg-muted);
+      }
+      a {
+        color: var(--link);
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        background: var(--code-bg);
+        border-radius: 0.25rem;
+        padding: 0.15em 0.35em;
+        font-size: 0.9em;
+      }
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        overflow-x: auto;
+      }
+      pre code {
+        background: none;
+        padding: 0;
+        font-size: 0.85rem;
+      }
+      .note {
+        border-left: 3px solid var(--link);
+        padding: 0.1rem 1rem;
+        color: var(--fg-muted);
+        margin: 1rem 0;
+      }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+        color: var(--fg-muted);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Install mhr on Ubuntu</h1>
+      <p class="lede">
+        This page shows how to install <code>mhr</code>, a read-only
+        GitHub-flavoured markdown viewer, from the <code>.deb</code>
+        attached to a
+        <a href="https://github.com/chairulakmal/markdown-hot-reload/releases"
+          >GitHub release</a
+        >, and how to check that download against its published checksum
+        before installing it. It covers requirements, download, checksum
+        verification, install, and removal, in that order. For the snap
+        package, other distributions, or building from source, see the
+        <a href="https://github.com/chairulakmal/markdown-hot-reload#install"
+          >README</a
+        >.
+      </p>
+
+      <h2>Requirements</h2>
+      <p>
+        The <code>.deb</code> needs Ubuntu 24.04 or newer, or Debian trixie
+        or newer. It links against the <code>t64</code> builds of GTK and
+        GLib, which earlier releases do not have.
+      </p>
+
+      <h2>1. Pick a release</h2>
+      <p>
+        Open the
+        <a href="https://github.com/chairulakmal/markdown-hot-reload/releases"
+          >releases page</a
+        >
+        and note the tag of the release you want, for example
+        <code>v0.1.0-beta</code>. Early tags are marked
+        <strong>Pre-release</strong> on purpose. That is expected during
+        alpha and beta, not a sign anything is broken.
+      </p>
+
+      <h2>2. Download the package and its checksums</h2>
+      <p>
+        Set <code>TAG</code> to the tag you picked, then download both files
+        into the same directory:
+      </p>
+      <pre><code>TAG=v0.1.0-beta
+
+curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/$TAG/SHA256SUMS"
+curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/$TAG/mhr_${TAG#v}-1_amd64.deb"</code></pre>
+      <p>
+        Every release also ships a source tarball and a
+        <code>.tar.gz</code> of the binary for other Linux distributions,
+        both covered by the same <code>SHA256SUMS</code> file.
+      </p>
+
+      <h2>3. Verify the checksum</h2>
+      <p>
+        Before installing anything, check the download against the
+        checksum GitHub Actions produced when it built the release:
+      </p>
+      <pre><code>sha256sum -c SHA256SUMS --ignore-missing</code></pre>
+      <p>
+        <code>--ignore-missing</code> skips the tarball's line, since you
+        only downloaded the <code>.deb</code>. The command must print
+        <code>OK</code> next to the package's filename. If it prints
+        <code>FAILED</code> or reports no such file, do not install the
+        package. Delete it and download it again.
+      </p>
+
+      <h2>4. Install it</h2>
+      <p>
+        <code>apt</code> resolves the WebKitGTK and GTK dependencies from
+        your system's own repositories, so no separate download step is
+        needed for those:
+      </p>
+      <pre><code>sudo apt install ./mhr_*.deb</code></pre>
+      <p>Then run it against any markdown file:</p>
+      <pre><code>mhr notes.md</code></pre>
+
+      <h2>Removing it</h2>
+      <pre><code>sudo apt remove mhr</code></pre>
+
+      <div class="note">
+        <code>mhr</code> never contacts the network. It only reads the file
+        you point it at and re-renders it when the file changes on disk.
+      </div>
+
+      <footer>
+        <a href="https://github.com/chairulakmal/markdown-hot-reload"
+          >chairulakmal/markdown-hot-reload</a
+        >
+        &middot; MIT licensed
+      </footer>
+    </main>
+  </body>
+</html>

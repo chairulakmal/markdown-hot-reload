@@ -14,8 +14,8 @@ env:
   # come from a compiler that was chosen. Matches the dev machine. Bump it
   # deliberately, and never below rust-version in Cargo.toml.
   RUST_VERSION: 1.97.1
-  # Pinned so packaging behaviour only changes when this file does, not
-  # whenever crates.io ships a new cargo-deb. Bump it deliberately.
+  # Pinned so packaging behaviour changes only when this file changes,
+  # not whenever crates.io publishes a new cargo-deb release.
   CARGO_DEB_VERSION: 3.7.0
 
 jobs:
@@ -66,8 +66,8 @@ jobs:
           dir="mhr-${version}-x86_64-unknown-linux-gnu"
           mkdir -p dist "$dir"
           # rust-cache restores target/ keyed on Cargo.lock, and cargo-deb
-          # names .deb files by version, so a stale one from an earlier tag
-          # can survive a cache hit and ride along with the new one below.
+          # names .deb files by version, so a cache hit can leave a stale
+          # .deb from an earlier tag alongside the one built below.
           rm -rf target/debian
           cargo deb --no-build
           cp target/debian/*.deb dist/

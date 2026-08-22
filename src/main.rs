@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use tao::dpi::LogicalSize;
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
-use tao::window::WindowBuilder;
+use tao::window::{Icon, WindowBuilder};
 use wry::{WebView, WebViewBuilder};
 
 #[derive(Debug)]
@@ -43,6 +43,7 @@ fn main() -> Result<()> {
 
     let window = WindowBuilder::new()
         .with_title(title(&path))
+        .with_window_icon(window_icon())
         .with_inner_size(LogicalSize::new(920.0, 1000.0))
         .build(&event_loop)?;
 
@@ -124,6 +125,13 @@ fn read_and_render(path: &Path) -> String {
             render::escape_html(&e.to_string())
         ),
     }
+}
+
+/// A missing or malformed icon is not worth failing a launch over: the window
+/// opens with the desktop's default mark instead. Wayland ignores this
+/// regardless and takes the icon from the `.desktop` file, matched by app id.
+fn window_icon() -> Option<Icon> {
+    Icon::from_rgba(assets::icon_rgba()?, assets::ICON_SIZE, assets::ICON_SIZE).ok()
 }
 
 fn title(path: &Path) -> String {

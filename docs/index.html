@@ -119,6 +119,15 @@
         >.
       </p>
 
+      <div class="note">
+        <strong>v0.1.0-beta is out now.</strong> See the
+        <a
+          href="https://github.com/chairulakmal/markdown-hot-reload/releases/tag/v0.1.0-beta"
+          >release notes</a
+        >
+        for what changed.
+      </div>
+
       <div class="video-frame">
         <video controls preload="metadata">
           <source
@@ -187,6 +196,18 @@ curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/
         needed for those:
       </p>
       <pre><code>sudo apt install ./mhr_*.deb</code></pre>
+      <div class="note">
+        <code>apt</code> may print a line like
+        <code
+          >N: Download is performed unsandboxed as root as file '...'
+          couldn't be accessed by user '_apt'.</code
+        >
+        This is a warning, not an error. It happens because the
+        <code>_apt</code> sandbox user cannot read files inside your home
+        directory. The install still completes correctly. To avoid the
+        warning, move the <code>.deb</code> to <code>/tmp</code> first and
+        run the same command there.
+      </div>
       <p>Then run it against any markdown file:</p>
       <pre><code>mhr notes.md</code></pre>
 

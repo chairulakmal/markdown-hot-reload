@@ -1455,7 +1455,7 @@ dependencies = [
 
 [[package]]
 name = "mhr"
-version = "0.1.0-alpha"
+version = "0.1.0-beta"
 dependencies = [
  "anyhow",
  "comrak",

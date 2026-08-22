@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Nothing here writes to the repository, so the token stays read-only.
+permissions:
+  contents: read
+
+# Cancels superseded pull request runs. Pushes to main are never cancelled, so
+# every commit on main keeps a result.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Makes cargo fail on any warning, clippy's included, without busting the
+  # build cache the way RUSTFLAGS=-Dwarnings does.
+  CARGO_BUILD_WARNINGS: deny
+
+jobs:
+  ci:
+    # Pinned, not ubuntu-latest: this links WebKitGTK 4.1, and a runner image
+    # bump is where that package gets renamed or dropped.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same list as build-packages in snap/snapcraft.yaml. Keep the two in sync.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
+      # Without --locked, cargo rewrites Cargo.lock when it drifts from
+      # Cargo.toml, and CI then passes against a graph nobody committed.
+      - name: cargo clippy
+        run: cargo clippy --locked --all-targets
+
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+
+      - name: cargo test
+        run: cargo test --locked
+
+      - name: cargo build
+        run: cargo build --locked --release
+
+  # The snap is a distribution channel, so it is built before a release rather
+  # than during one. Main only: a build inside LXD has no cargo cache.
+  snap:
+    needs: ci
+    # Skipped on pull requests, so never make this a required status check.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: snapcore/action-build@v1
+        id: build
+
+      # Keeps the snap downloadable for `snap install --dangerous` testing.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: markdown-hot-reload-snap
+          path: ${{ steps.build.outputs.snap }}
+          if-no-files-found: error

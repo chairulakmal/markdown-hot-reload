@@ -1,6 +1,9 @@
 /target
 /TODO.md
 
+# Release staging, built by the release workflow and reproducible locally.
+/dist
+
 # snapcraft build output
 /parts
 /stage

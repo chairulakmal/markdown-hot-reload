@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=mhr
+GenericName=Markdown Viewer
+Comment=Read-only GitHub-flavoured markdown viewer that reloads on save
+Exec=mhr %f
+Icon=mhr
+Terminal=false
+MimeType=text/markdown;
+Categories=Utility;TextTools;
+# mhr exits with an error when it gets no file argument, so an app-grid launch
+# would always fail. NoDisplay keeps it out of the grid but leaves it in the
+# "Open With" menu for markdown files, which is the only way to start it here.
+NoDisplay=true

@@ -16,6 +16,27 @@ readme = "README.md"
 keywords = ["markdown", "viewer", "preview", "gfm", "live-reload"]
 categories = ["command-line-utilities", "text-processing"]
 
+# `$auto` runs dpkg-shlibdeps against the linked binary, so the WebKitGTK and
+# GTK versions in Depends come from the build machine instead of a hand-written
+# list that silently goes stale. maintainer is required: there is no authors key.
+[package.metadata.deb]
+maintainer = "Chairul Akmal <chairulakmal@protonmail.com>"
+depends = "$auto"
+section = "utils"
+priority = "optional"
+extended-description = """\
+mhr opens a native window showing a rendered markdown file and re-renders it \
+every time the file changes on disk. It never writes to the file it watches, \
+and it has no network access, so a document renders identically offline."""
+assets = [
+    ["target/release/mhr", "usr/bin/", "755"],
+    ["packaging/mhr.desktop", "usr/share/applications/", "644"],
+    # Resolves Icon=mhr in the desktop entry. Scalable rather than a rasterised
+    # hicolor size, so the one SVG serves every resolution.
+    ["assets/icon/mhr-icon.svg", "usr/share/icons/hicolor/scalable/apps/mhr.svg", "644"],
+    ["README.md", "usr/share/doc/mhr/README.md", "644"],
+]
+
 [dependencies]
 anyhow = "1.0.104"
 comrak = { version = "0.54.0", default-features = false, features = ["syntect-fancy"] }

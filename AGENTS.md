@@ -22,11 +22,19 @@ Breaking any of these is a design change, not a refactor. Raise it rather than d
 ## Commands
 
 ```
-cargo test                  # render pipeline and its escaping guarantees, math validation, CLI parsing, the watcher
-cargo clippy --all-targets  # lint levels come from [lints] in Cargo.toml, not from flags here
-cargo build --release
+cargo fmt --all -- --check           # CI fails on a formatting diff, so check before pushing
+cargo clippy --locked --all-targets  # lint levels come from [lints] in Cargo.toml, not from flags here
+cargo deny check                     # licence and advisory policy for the dependency tree, from deny.toml
+cargo test --locked                  # render pipeline and its escaping guarantees, math validation, CLI parsing, the watcher
+cargo build --locked --release
 ./target/release/mhr fixtures/kitchen-sink.md
 ```
+
+Those five are what the `ci` job runs, in that order. Run them before opening a pull request, because a failure in any of them blocks the merge.
+
+`--locked` is part of the command, not decoration. Without it, cargo quietly rewrites `Cargo.lock` when it drifts from `Cargo.toml`, and the run then passes against a dependency graph nobody committed.
+
+Building the snap locally needs LXD, which `snapcraft pack` sets up on first run. CI builds it on every push to `main`, so there is rarely a reason to run it by hand.
 
 `fixtures/kitchen-sink.md` exercises every supported GFM feature. Edit it from a second terminal to test reload.
 
@@ -77,6 +85,8 @@ Mermaid is 3.5 MB raw and dominates the binary, so it is loaded only when a docu
 `latex.css` and the four Latin Modern fonts come from the same `pulldown-latex` release as the crate version in `Cargo.toml`, and must be refreshed together with it: the stylesheet targets classes the crate emits (`menv-align`, `menv-cases` and friends), so a version mismatch silently mis-aligns matrices and align environments rather than failing. The fonts are 528 KB and are vendored rather than left to the system on purpose, for the same reason the app has no network access: a machine with no math font installed should not render math differently from one that has.
 
 ## Distribution
+
+CI builds the snap on every push to `main` and uploads it as a workflow artifact, so a build break is caught at the commit that causes it rather than at release time. Nothing is published automatically: the artifact is there to install with `snap install --dangerous` and test.
 
 Snap Store and GitHub Releases are the only planned distribution channels. Flathub was considered and dropped, not deferred: this is a hobby project with one maintainer, and a second packaging manifest and Store listing costs more upkeep than the extra reach is worth. Don't propose adding it back without the author raising it first.
 

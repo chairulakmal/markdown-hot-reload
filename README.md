@@ -17,7 +17,7 @@ cargo build --release
 ./target/release/mhr path/to/file.md
 ```
 
-`cargo test` runs the render pipeline tests, and `cargo clippy --all-targets` should stay clean.
+`cargo test` runs the render pipeline tests, and `cargo clippy --all-targets` should stay clean. [`AGENTS.md`](AGENTS.md) lists the full command set that CI runs.
 
 ## What it supports
 
@@ -42,7 +42,7 @@ Linux is the primary target. macOS is next. Windows is nice-to-have.
 Two things are required before a merge:
 
 - **Signed commits.** An unsigned commit is rejected. GitHub explains the setup in [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification).
-- **A passing `ci` check.** It runs `cargo fmt --check`, `cargo clippy`, `cargo deny check`, `cargo test`, and a `cargo release` build on Ubuntu 24.04. Run those locally first before creating a PR.
+- **A passing `ci` check.** It runs `cargo fmt --all -- --check`, `cargo clippy --locked --all-targets`, `cargo deny check`, `cargo test --locked`, and `cargo build --locked --release` on Ubuntu 24.04. Run those locally first before creating a PR.
 
 Working notes for contributors, including the decisions taken, the traps already checked for, and how the vendored frontend assets get refreshed, live in [`AGENTS.md`](AGENTS.md).
 

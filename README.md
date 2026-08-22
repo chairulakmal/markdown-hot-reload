@@ -2,7 +2,7 @@
 
 `mhr` is a read-only GitHub-flavoured markdown viewer for the desktop: point it at a file and it opens a window that re-renders the moment the file changes on disk. The thing worth knowing before anything else is that it has no network access at all, by design, so a rendered document behaves the same on a plane as it does at a desk. Below: what it does, how to build and run it, what it supports, and where the rest of the project's documentation lives.
 
-https://github.com/user-attachments/assets/d6b2a74f-3b03-4463-bea3-c8f183fce0ac
+https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118
 
 ## What it does
 

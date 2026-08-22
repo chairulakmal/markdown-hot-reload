@@ -20,14 +20,8 @@ apps:
       - home
 
 parts:
-  # snapcraft 9.0.1 stopped installing rustup for the rust plugin, which 9.0.0
-  # did, so the toolchain is bootstrapped here instead. Upstream bug:
-  # https://github.com/canonical/snapcraft/issues/6330
-  #
-  # The part name must be exactly `rust-deps`. The plugin looks for that name in
-  # the dependencies of the part it is building, and when it finds it, it checks
-  # PATH for `cargo` and `rustc` instead of `rustup`. The symlinks below are what
-  # satisfy that check, because $HOME/.cargo/bin is not on PATH for the next part.
+  # Bootstraps rustup, which snapcraft 9.0.1 stopped doing. The name, the
+  # symlinks and rust-channel below are all load-bearing: see AGENTS.md.
   rust-deps:
     plugin: nil
     build-packages:
@@ -42,11 +36,7 @@ parts:
   mhr:
     plugin: rust
     source: .
-    # The system rustc on core24 is older than the edition 2024 toolchain this
-    # crate needs. `rust-deps` above installs a current one and puts it in
-    # /usr/local/bin, which comes before /usr/bin on PATH. `none` hands the
-    # toolchain to that part; the plugin rejects a channel here while a
-    # `rust-deps` part exists.
+    # `none` hands the toolchain to rust-deps; core24's system rustc is too old.
     rust-channel: none
     after:
       - rust-deps

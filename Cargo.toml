@@ -1,6 +1,6 @@
 [package]
 name = "mhr"
-version = "0.1.0-alpha"
+version = "0.1.0-beta"
 edition = "2024"
 # The floor is set by dependencies (icu_* and time), not by edition 2024, which
 # only needs 1.85. Declaring it also lets cargo's MSRV-aware resolver pick
@@ -24,6 +24,13 @@ maintainer = "Chairul Akmal <chairulakmal@protonmail.com>"
 depends = "$auto"
 section = "utils"
 priority = "optional"
+# Without these, cargo-deb never reads LICENSE (it only auto-detects via the
+# top-level `license-file` key, which this crate doesn't set) and the shipped
+# copyright file says "Copyright information missing" instead of naming
+# anyone. `4` skips past the "MIT License" heading and blank line so the
+# embedded text starts at the copyright line itself.
+copyright = "2026 Chairul Akmal"
+license-file = ["LICENSE", "4"]
 extended-description = """\
 mhr opens a native window showing a rendered markdown file and re-renders it \
 every time the file changes on disk. It never writes to the file it watches, \

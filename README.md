@@ -29,7 +29,7 @@ The command it installs is `markdown-hot-reload.mhr` until the Snap Store grants
 On Debian and Ubuntu, a `.deb` is attached to each [release](https://github.com/chairulakmal/markdown-hot-reload/releases). It uses the WebKitGTK your system already has instead of bundling a second copy, which keeps it small:
 
 ```
-sudo apt install ./mhr_0.1.0-1_amd64.deb
+sudo apt install ./mhr_0.1.0-beta-1_amd64.deb
 ```
 
 That package needs Ubuntu 24.04 or Debian trixie or newer. It links against the `t64` builds of GTK and GLib, and earlier releases do not have them.

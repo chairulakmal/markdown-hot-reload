@@ -1,0 +1,12 @@
+/target
+/TODO.md
+
+# snapcraft build output
+/parts
+/stage
+/prime
+*.snap
+
+# Demo recordings. Uploaded through GitHub's web editor.
+*.mp4
+*.webm

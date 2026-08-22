@@ -1,0 +1,80 @@
+# Supply-chain policy for `cargo deny check`. Run it in CI alongside fmt,
+# clippy and test. Eight direct dependencies pull 555 crates, so the tree is the
+# part of this project most likely to grow a problem without anyone touching a
+# line of code here.
+#
+# Verified against cargo-deny 0.20.2 on 2026-08-20: advisories ok, bans ok,
+# licenses ok, sources ok.
+
+[graph]
+# cargo-deny's default graph includes every platform's conditional dependencies,
+# so an unfiltered run audits the Windows crates this project never compiles.
+# These are the targets that actually ship: Linux today, macOS at v0.2.0.
+# Windows is nice-to-have with no release target, and goes in here the day
+# that changes. Filtering to real targets drops the duplicate-version warnings
+# from 26 to 8.
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+]
+
+[advisories]
+# Vulnerabilities always fail, at any depth. Unmaintained is scoped to direct
+# dependencies instead, because at full depth it reports 12 crates and every one
+# of them is unfixable from here:
+#
+#   10x gtk-rs GTK3 bindings (RUSTSEC-2024-0411 through -0420)
+#       via tao and wry. WebKitGTK 4.1 *is* GTK3, so these stay until wry moves
+#       to WebKitGTK 6 / GTK4. Not a choice this project gets to make.
+#   proc-macro-error (RUSTSEC-2024-0370) via glib-macros, same GTK3 stack,
+#       and build-time only.
+#   bincode (RUSTSEC-2025-0141) via syntect via comrak, which loads its bundled
+#       syntax definitions from a pre-dumped binary rather than parsing YAML.
+#       That is also why syntect's yaml-rust advisory does not appear: the
+#       feature pulling it is off, so it is not in the graph at all.
+#
+# Scoped this way the check still earns its place: if comrak, wry, tao, notify
+# or any other direct dependency is itself flagged, CI breaks and that is a
+# signal worth acting on. Pinning 13 ignore entries that can never be resolved
+# would only create a list nobody re-reads.
+unmaintained = "workspace"
+ignore = []
+
+[licenses]
+# Everything observed in the current tree, and nothing else. A new license
+# showing up should fail the build and force a decision rather than ride in.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "ISC",
+    "Zlib",
+    "0BSD",
+    "CC0-1.0",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    # `option-ext`, reached only through wry -> dirs -> dirs-sys. MPL-2.0 is
+    # file-level copyleft: linking it into an MIT binary is fine, and the
+    # obligation only attaches to modifications of its own files, which this
+    # project does not make.
+    "MPL-2.0",
+]
+confidence-threshold = 0.93
+
+[bans]
+# The 8 remaining duplicates are all build-time (syn, thiserror, toml_edit,
+# heck, proc-macro-crate) or tiny leaf crates (bitflags, hashbrown), and all of
+# them are someone else's transitive version skew rather than anything fixable
+# from this manifest. They stay visible as warnings so a genuinely fat
+# duplicate is still noticeable, and they do not fail the build.
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+# Everything comes from crates.io. A git dependency appearing in this project
+# would be a change of policy, so it fails rather than warns.
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

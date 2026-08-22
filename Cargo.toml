@@ -1,0 +1,45 @@
+[package]
+name = "mhr"
+version = "0.1.0"
+edition = "2024"
+# The floor is set by dependencies (icu_* and time), not by edition 2024, which
+# only needs 1.85. Declaring it also lets cargo's MSRV-aware resolver pick
+# dependency versions that actually build here.
+rust-version = "1.88"
+description = "Read-only GitHub-flavoured markdown viewer that re-renders when the file changes on disk"
+license = "MIT"
+# The crate, the GitHub repo and the snap each carry a different name on
+# purpose. `mhr` is what gets typed at a shell; the long name is what someone
+# who has never heard of it can search for.
+repository = "https://github.com/chairulakmal/markdown-hot-reload"
+readme = "README.md"
+keywords = ["markdown", "viewer", "preview", "gfm", "live-reload"]
+categories = ["command-line-utilities", "text-processing"]
+
+[dependencies]
+anyhow = "1.0.104"
+comrak = { version = "0.54.0", default-features = false, features = ["syntect-fancy"] }
+notify = "8.2.0"
+notify-debouncer-full = "0.7.0"
+pulldown-latex = "0.8"
+rust-embed = { version = "8.12.0", features = ["compression"] }
+serde_json = "1.0.151"
+tao = "0.36.0"
+wry = "0.56.1"
+
+# Lint levels live here rather than in a CI invocation, so `cargo clippy` gives
+# every contributor the same bar the pipeline enforces. The code already passes
+# pedantic with zero warnings, and contains no `unsafe`, so both are free today
+# and only cost something the moment that stops being true.
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

@@ -1,5 +1,5 @@
 name: markdown-hot-reload
-version: '0.1.0' # keep in sync with the [package] version in Cargo.toml
+version: '0.1.0-alpha' # keep in sync with the [package] version in Cargo.toml
 license: MIT
 # Points at the vendored SVG rather than a copy under snap/gui/, so the Store
 # listing and the app both track the one source file.

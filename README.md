@@ -1,6 +1,6 @@
 # mhr
 
-`mhr` is a read-only GitHub-flavoured markdown viewer for the desktop: point it at a file and it opens a window that re-renders the moment the file changes on disk. The thing worth knowing before anything else is that it has no network access at all, by design, so a rendered document behaves the same on a plane as it does at a desk. Below: what it does, how to build and run it, what it supports, and where the rest of the project's documentation lives.
+`mhr` is a read-only GitHub-flavoured markdown viewer for the desktop: point it at a file and it opens a window that re-renders the moment the file changes on disk. The thing worth knowing before anything else is that it has no network access at all, by design, so a rendered document behaves the same on a plane as it does at a desk. Below: what it does, how to build and run it, what it supports, how to contribute a change, and where the rest of the project's documentation lives.
 
 https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118
 
@@ -35,9 +35,16 @@ Raw HTML in a document is always escaped, never executed. Documents come from ag
 
 Linux is the primary target. macOS is next. Windows is nice-to-have.
 
-## Development
+## Contributing
 
-Working notes for contributors, including the invariants the project won't bend on, the traps already paid for, and how the vendored frontend assets get refreshed, live in [`AGENTS.md`](AGENTS.md).
+`main` is a protected branch. A change reaches it through a pull request (PR): create a branch, open a PR, wait for the `ci` check to pass, then merge. Nobody can push directly to `main`, force-push it, or delete it, and this includes the maintainer.
+
+Two things are required before a merge:
+
+- **Signed commits.** An unsigned commit is rejected. GitHub explains the setup in [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification).
+- **A passing `ci` check.** It runs `cargo fmt --check`, `cargo clippy`, `cargo deny check`, `cargo test`, and a `cargo release` build on Ubuntu 24.04. Run those locally first before creating a PR.
+
+Working notes for contributors, including the decisions taken, the traps already checked for, and how the vendored frontend assets get refreshed, live in [`AGENTS.md`](AGENTS.md).
 
 ## License
 

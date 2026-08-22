@@ -1,6 +1,6 @@
 # Agent notes
 
-Working notes for agents on `mhr`, a read-only GitHub-flavoured markdown viewer that re-renders when the file changes on disk. The rule that overrides every other consideration: **this project has no npm, no `package.json`, and no build step for the frontend, and it must render identically with networking disabled.** Below: what the app is, the invariants, the commands, the traps already paid for, and how the vendored assets are refreshed.
+Working notes for agents on `mhr`, a read-only GitHub-flavoured markdown viewer that re-renders when the file changes on disk. The rule that overrides every other consideration: **this project has no npm, no `package.json`, and no build step for the frontend, and it must render identically with networking disabled.** Below: what the app is, the invariants, the commands, how changes land on `main`, the traps already paid for, how the vendored assets are refreshed, and where the app is distributed.
 
 ## What it is
 
@@ -31,6 +31,18 @@ cargo build --release
 `fixtures/kitchen-sink.md` exercises every supported GFM feature. Edit it from a second terminal to test reload.
 
 The GUI cannot be verified from a headless tool call. Add a test to `src/render.rs` for anything checkable from HTML output, and hand the run command to akmal for anything visual.
+
+## How changes land
+
+`main` is governed by a repository ruleset named `protect main and default branches`. Its bypass list is empty, so the maintainer takes the same route as everyone else: create a branch, open a pull request, wait for CI, merge. Direct pushes to `main`, force-pushes, and branch deletion are all refused.
+
+Three parts of that ruleset constrain `.github/workflows/ci.yml`. Read them before editing that file.
+
+- **The required check is named `ci`, which is the id of the job in `ci.yml`.** Renaming the job, or adding a `name:` key to it, renames the check. The ruleset then waits for a check that no longer reports, and every pull request stops merging.
+- **The `snap` job must never become a required check.** It carries `if: github.event_name == 'push'`, so it does not run on a pull request. A required check that never runs stays *expected* instead of passing, and blocks the merge forever.
+- **Every commit must be signed.** The ruleset rejects an unsigned commit when it is pushed, including a commit an agent creates for the author. If a push is rejected with no clear reason, check `git log --show-signature -1` first.
+
+One more rule affects commit metadata. The ruleset requires an approving review for any change GitHub cannot attribute to a user account, and nobody can approve their own pull request. Keep `user.email` set to an address that is registered on the account, or such a pull request cannot be merged at all.
 
 ## Traps already checked for
 

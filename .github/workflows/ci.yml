@@ -9,25 +9,22 @@ on:
 permissions:
   contents: read
 
-# Cancels superseded pull request runs. Pushes to main are never cancelled, so
-# every commit on main keeps a result.
+# Cancels superseded pull request runs; pushes to main always keep a result.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # Makes cargo fail on any warning, clippy's included, without busting the
-  # build cache the way RUSTFLAGS=-Dwarnings does.
+  # Fails on any warning without busting the cache the way RUSTFLAGS does.
   CARGO_BUILD_WARNINGS: deny
 
 jobs:
   ci:
-    # Pinned, not ubuntu-latest: this links WebKitGTK 4.1, and a runner image
-    # bump is where that package gets renamed or dropped.
+    # Pinned, not ubuntu-latest: an image bump is where WebKitGTK 4.1 gets dropped.
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Same list as build-packages in snap/snapcraft.yaml. Keep the two in sync.
       - name: Install system dependencies
@@ -44,8 +41,7 @@ jobs:
       - name: cargo fmt
         run: cargo fmt --all -- --check
 
-      # Without --locked, cargo rewrites Cargo.lock when it drifts from
-      # Cargo.toml, and CI then passes against a graph nobody committed.
+      # --locked, or cargo rewrites Cargo.lock and CI tests an uncommitted graph.
       - name: cargo clippy
         run: cargo clippy --locked --all-targets
 
@@ -59,22 +55,55 @@ jobs:
       - name: cargo build
         run: cargo build --locked --release
 
-  # The snap is a distribution channel, so it is built before a release rather
-  # than during one. Main only: a build inside LXD has no cargo cache.
+  # Gates `snap` and nothing else: `ci` is the required check, and one that
+  # does not report blocks the merge.
+  changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Named one by one, not `*.md`: fixtures/kitchen-sink.md is test input.
+      - id: filter
+        name: Look for changes outside the prose files
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "no usable base commit, so building anyway"
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          code=false
+          while IFS= read -r file; do
+            case "$file" in
+              '' | README.md | AGENTS.md | CLAUDE.md | LICENSE | .gitignore | docs/*.md) ;;
+              *) echo "$file changed"; code=true; break ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+  # Runs on pull requests so packaging breaks do not reach main.
+  # Never make it a required check: see "How changes land" in AGENTS.md.
   snap:
-    needs: ci
-    # Skipped on pull requests, so never make this a required status check.
-    if: github.event_name == 'push'
+    needs: [ci, changes]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
+      # Unmaintained, so its node20 warning is not fixable here:
+      # https://github.com/snapcore/action-build/issues/1
       - uses: snapcore/action-build@v1
         id: build
 
       # Keeps the snap downloadable for `snap install --dangerous` testing.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: markdown-hot-reload-snap
           path: ${{ steps.build.outputs.snap }}

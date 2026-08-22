@@ -1,5 +1,9 @@
 name: markdown-hot-reload
 version: '0.1.0' # keep in sync with the [package] version in Cargo.toml
+license: MIT
+# Points at the vendored SVG rather than a copy under snap/gui/, so the Store
+# listing and the app both track the one source file.
+icon: assets/icon/mhr-icon.svg
 summary: Read-only GitHub-flavoured markdown viewer that reloads on save
 description: |
   mhr watches a markdown file and re-renders it in a native window every
@@ -20,12 +24,26 @@ apps:
       - home
 
 parts:
+  # Bootstraps rustup, which snapcraft 9.0.1 stopped doing. The name, the
+  # symlinks and rust-channel below are all load-bearing: see AGENTS.md.
+  rust-deps:
+    plugin: nil
+    build-packages:
+      - curl
+    override-pull: |
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
+      ln -sf "$HOME/.cargo/bin/cargo" /usr/local/bin/cargo
+      ln -sf "$HOME/.cargo/bin/rustc" /usr/local/bin/rustc
+      ln -sf "$HOME/.cargo/bin/rustup" /usr/local/bin/rustup
+
   mhr:
     plugin: rust
     source: .
-    # The system rustc on core24 is older than the edition 2024 toolchain
-    # this crate needs, so the plugin bootstraps its own.
-    rust-channel: stable
+    # `none` hands the toolchain to rust-deps; core24's system rustc is too old.
+    rust-channel: none
+    after:
+      - rust-deps
     build-packages:
       - libwebkit2gtk-4.1-dev
       - libgtk-3-dev

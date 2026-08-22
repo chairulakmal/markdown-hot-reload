@@ -21,6 +21,20 @@ pub fn index_url() -> String {
     }
 }
 
+/// Side of the pre-rasterised window icon, in pixels.
+pub const ICON_SIZE: u32 = 128;
+
+/// The window icon as raw RGBA. `tao` wants pixels rather than an encoded
+/// image, and decoding a PNG or an SVG at runtime would mean a dependency, so
+/// `icon/window-icon.rgba` is rasterised ahead of time from `icon/mhr-icon.svg`
+/// and embedded as pixels. `docs/vendored-assets.md` records the command that
+/// regenerates it.
+pub fn icon_rgba() -> Option<Vec<u8>> {
+    let file = Asset::get("icon/window-icon.rgba")?;
+    let expected = ICON_SIZE as usize * ICON_SIZE as usize * 4;
+    (file.data.len() == expected).then(|| file.data.into_owned())
+}
+
 /// Serves the embedded assets. `index.html` carries a `<!--CONTENT-->` marker
 /// that is replaced with the current render, so the first paint needs no
 /// JavaScript at all; later updates arrive through `evaluate_script`.
@@ -109,6 +123,34 @@ mod tests {
         ] {
             assert!(Asset::get(path).is_some(), "{path} is not embedded");
         }
+    }
+
+    /// The four brand SVGs and the pre-rasterised window icon. The favicon
+    /// links in `index.html` name two of these by path, and a rename would
+    /// leave the page silently falling back to a blank icon.
+    #[test]
+    fn embeds_the_icon_set() {
+        for path in [
+            "icon/mhr-icon.svg",
+            "icon/mhr-icon-mono.svg",
+            "icon/mhr-icon-on-dark.svg",
+            "icon/mhr-icon-16.svg",
+            "icon/window-icon.rgba",
+        ] {
+            assert!(Asset::get(path).is_some(), "{path} is not embedded");
+        }
+    }
+
+    /// `Icon::from_rgba` rejects a buffer whose length is not `w * h * 4`, and
+    /// a regenerated blob at the wrong size would only show up as a missing
+    /// icon at runtime. Checked here so the size mismatch fails the build.
+    #[test]
+    fn rasterised_icon_is_the_size_the_window_asks_for() {
+        let rgba = super::icon_rgba().expect("window icon is embedded");
+        assert_eq!(
+            rgba.len(),
+            super::ICON_SIZE as usize * super::ICON_SIZE as usize * 4
+        );
     }
 
     /// The first paint carries the current render in the served HTML, so a

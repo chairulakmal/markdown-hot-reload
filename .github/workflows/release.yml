@@ -1,0 +1,81 @@
+name: Release
+
+# Tags only. Artifacts are cut from a tag so the version in the filename is
+# never in doubt; pushes to main go through CI and produce nothing downloadable.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  # Pinned rather than `stable`, unlike the ci job: a released binary should
+  # come from a compiler that was chosen. Matches the dev machine. Bump it
+  # deliberately, and never below rust-version in Cargo.toml.
+  RUST_VERSION: 1.97.1
+
+jobs:
+  release:
+    # Same runner as ci, so the glibc floor of the artifacts is 24.04's 2.39.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # Only this job writes, and only to draft the release.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      # Same list as build-packages in snap/snapcraft.yaml and the ci job.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Three places carry the version and a mismatch ships mislabelled files.
+      - name: Check the tag against Cargo.toml and snapcraft.yaml
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          crate=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+          snap=$(sed -n "s/^version: '\(.*\)'.*/\1/p" snap/snapcraft.yaml | head -1)
+          if [ "$tag" != "$crate" ] || [ "$tag" != "$snap" ]; then
+            echo "tag $tag, Cargo.toml $crate, snapcraft.yaml $snap"
+            exit 1
+          fi
+
+      - name: cargo build
+        run: cargo build --locked --release
+
+      # Compiled from source on every release. Releases are rare enough that a
+      # few minutes here is cheaper than trusting a prebuilt binary.
+      - name: Install cargo-deb
+        run: cargo install cargo-deb --locked
+
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          dir="mhr-${version}-x86_64-unknown-linux-gnu"
+          mkdir -p dist "$dir"
+          cargo deb --no-build
+          cp target/debian/*.deb dist/
+          cp target/release/mhr README.md LICENSE "$dir/"
+          tar czf "dist/${dir}.tar.gz" "$dir"
+          sha256sum dist/*.deb dist/*.tar.gz | sed 's|dist/||' > dist/SHA256SUMS
+
+      # Draft, so the notes get read before anyone can download the files.
+      - name: Draft the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            dist/*

@@ -81,7 +81,7 @@ jobs:
           code=false
           while IFS= read -r file; do
             case "$file" in
-              '' | README.md | AGENTS.md | CLAUDE.md | LICENSE | .gitignore | docs/*.md | docs/index.html | docs/.nojekyll) ;;
+              '' | README.md | AGENTS.md | CLAUDE.md | LICENSE | .gitignore | docs/*.md | docs/index.html | docs/.nojekyll | .claude/skills/test-deb/SKILL.md | .claude/skills/test-deb/scripts/test-deb.sh) ;;
               *) echo "$file changed"; code=true; break ;;
             esac
           done < <(git diff --name-only "$BASE" HEAD)

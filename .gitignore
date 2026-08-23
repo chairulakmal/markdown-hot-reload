@@ -13,3 +13,6 @@
 # Demo recordings. Uploaded through GitHub's web editor.
 *.mp4
 *.webm
+
+# Claude Code runtime state, not project tooling.
+/.claude/scheduled_tasks.lock

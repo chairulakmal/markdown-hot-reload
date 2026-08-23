@@ -13,10 +13,10 @@ Linux is the primary target, macOS is next, Windows is nice-to-have.
 Breaking any of these is a design change, not a refactor. Raise it rather than doing it quietly.
 
 - **No npm.** No `package.json`, no bundler, no `node_modules`. Frontend dependencies are vendored files in `assets/`.
-- **Offline is enforced, not intended.** `index.html` sets `connect-src 'none'` and `img-src 'self'`. Anything needing the network fails loudly instead of working on your machine and failing on a plane.
+- **Offline is enforced, not intended.** `index.html` sets `connect-src 'none'` and `img-src 'self'`. Anything needing the network fails loudly instead of working locally and failing elsewhere.
 - **Read-only.** No editing surface, no writing to the watched file, ever.
 - **`render.unsafe_` stays false.** Documents come from agents and editors, so raw HTML is escaped rather than executed. `src/render.rs` has tests asserting this; do not weaken them without an explicit decision.
-- **No `unsafe` in this crate.** `Cargo.toml` sets `[lints.rust] unsafe_code = "forbid"`, so this is enforced by the compiler rather than by review. Note this is a separate thing from comrak's `render.unsafe_` above, which is about HTML in documents. If a platform binding ever seems to need `unsafe`, that is a discussion, not a lint to relax.
+- **No `unsafe` in this crate.** `Cargo.toml` sets `[lints.rust] unsafe_code = "forbid"`, enforced by the compiler rather than by review. This is separate from comrak's `render.unsafe_` above, which is about HTML in documents. If a platform binding ever seems to need `unsafe`, that is a discussion, not a lint to relax.
 - **Parsing, highlighting, and escaping happen in Rust.** JavaScript only morphs the DOM and draws diagrams.
 
 ## Commands
@@ -30,9 +30,9 @@ cargo build --locked --release
 ./target/release/mhr fixtures/kitchen-sink.md
 ```
 
-Those five are what the `ci` job runs, in that order. Run them before opening a pull request, because a failure in any of them blocks the merge.
+These five are what the `ci` job runs, in that order. Run them before opening a pull request; a failure in any of them blocks the merge.
 
-`--locked` is part of the command, not decoration. Without it, cargo quietly rewrites `Cargo.lock` when it drifts from `Cargo.toml`, and the run then passes against a dependency graph nobody committed.
+`--locked` is part of the command, not decoration. Without it, cargo quietly rewrites `Cargo.lock` when it drifts from `Cargo.toml`, and the run passes against a dependency graph nobody committed.
 
 Building the snap locally needs LXD, which `snapcraft pack` sets up on first run. CI builds it on every pull request and every push to `main` that touches something other than prose, so there is rarely a reason to run it by hand.
 
@@ -44,7 +44,7 @@ The GUI cannot be verified from a headless tool call. Add a test to `src/render.
 
 `main` is governed by a repository ruleset named `protect main and default branches` whose bypass list is empty, so the maintainer takes the same route as everyone else: branch, pull request, passing CI, merge. [`README.md`](README.md) has the contributor-facing version. The rules below constrain `.github/workflows/ci.yml`, so read them before editing that file.
 
-- **The required check is named `ci`, which is the id of the job in `ci.yml`.** Renaming the job, or adding a `name:` key to it, renames the check. The ruleset then waits for a check that no longer reports, and every pull request stops merging.
+- **The required check is named `ci`, the id of the job in `ci.yml`.** Renaming the job, or adding a `name:` key to it, renames the check. The ruleset then waits for a check that no longer reports, and every pull request stops merging.
 - **The `snap` job must never become a required check.** It takes up to 45 minutes, the workflow's concurrency rule cancels it when the branch is pushed again, and a prose-only pull request skips it altogether. A cancelled check is not a passing one, so requiring it would block merges at random.
 - **Every commit must be signed**, including one an agent creates for the author. If a push is rejected with no clear reason, check `git log --show-signature -1` first.
 - **Keep `user.email` set to an address registered on the account.** The ruleset requires an approving review for any change GitHub cannot attribute to a user account, and nobody can approve their own pull request, so a stray address makes a pull request unmergeable.
@@ -69,11 +69,10 @@ The `changes` job follows from the first two bullets. It compares the changed fi
 
 Frontend dependencies are vendored files in `assets/`, compiled into the binary by `rust-embed`. The inventory, the refresh procedure, the icon design rules, and how the generated files are regenerated are in [`docs/vendored-assets.md`](docs/vendored-assets.md). Read it before touching anything in `assets/`.
 
-Two pairings there fail silently rather than loudly, which is why they are named here as well. `latex.css` and the four fonts must come from the same `pulldown-latex` release as the crate version in `Cargo.toml`, or math mis-aligns instead of erroring. `icon/window-icon.rgba` must agree with `assets::ICON_SIZE`, which a test checks.
+Two pairings there fail silently rather than loudly, which is why they are named here too. `latex.css` and the four fonts must come from the same `pulldown-latex` release as the crate version in `Cargo.toml`, or math mis-aligns instead of erroring. `icon/window-icon.rgba` must agree with `assets::ICON_SIZE`, which a test checks.
 
 ## Distribution
 
 CI builds the snap on every pull request and every push to `main` that touches more than prose, and uploads it as a workflow artifact, so a packaging break is caught before release rather than at it. It also catches breaks no commit here causes: the snapcraft 9.0.1 regression above arrived on its own, because the build action installs snapcraft from `latest/stable`. Nothing is published automatically; the artifact is there to install with `snap install --dangerous` and test.
 
 Snap Store and GitHub Releases are the only planned channels. Flathub was considered and dropped, not deferred: one maintainer, and a second packaging manifest and Store listing costs more upkeep than the extra reach is worth. Don't propose adding it back without the author raising it first.
-

@@ -30,7 +30,7 @@ On Debian and Ubuntu, a `.deb` is attached to each [release](https://github.com/
 sudo apt install ./mhr_0.1.0-1_amd64.deb
 ```
 
-That package needs Ubuntu 24.04 or Debian trixie or newer. It links against the `t64` builds of GTK and GLib, and earlier releases do not have them.
+That package needs Ubuntu 24.04 (Noble Numbat) or Debian 13 (trixie) or newer. It links against the `t64` builds of GTK and GLib, and earlier releases do not have them.
 
 On any other distribution, download the `x86_64-unknown-linux-gnu` tarball from the same release page and copy the binary into a directory on your `PATH`. Install WebKitGTK 4.1 from your own package manager first. Search for `webkit2gtk`, because the exact package name differs between distributions. Every release also ships a `SHA256SUMS` file for checking the download.
 

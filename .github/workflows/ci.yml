@@ -67,7 +67,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Named one by one, not `*.md`: fixtures/kitchen-sink.md is test input.
+      # Top-level files named one by one, not `*.md`: fixtures/kitchen-sink.md
+      # is test input. docs/* and .claude/* are safe as directory wildcards
+      # since nothing under either ever affects the build.
       - id: filter
         name: Look for changes outside the prose files
         env:
@@ -81,7 +83,7 @@ jobs:
           code=false
           while IFS= read -r file; do
             case "$file" in
-              '' | README.md | AGENTS.md | CLAUDE.md | LICENSE | .gitignore | docs/*.md | docs/index.html | docs/.nojekyll) ;;
+              '' | README.md | AGENTS.md | CLAUDE.md | LICENSE | .gitignore | docs/* | .claude/*) ;;
               *) echo "$file changed"; code=true; break ;;
             esac
           done < <(git diff --name-only "$BASE" HEAD)

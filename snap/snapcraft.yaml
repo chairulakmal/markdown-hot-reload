@@ -11,7 +11,7 @@ description: |
   is no network access, so a document looks the same on a plane as it does
   at a desk.
 base: core24
-grade: devel
+grade: stable
 confinement: strict
 
 apps:

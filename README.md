@@ -22,7 +22,11 @@ The snap is the recommended install on any distribution that runs snapd, and it 
 sudo snap install markdown-hot-reload
 ```
 
-The installed command is `markdown-hot-reload.mhr` until the Snap Store grants the shorter `mhr` alias.
+The installed command is `markdown-hot-reload.mhr` until the Snap Store grants the shorter `mhr` alias. You do not have to wait for that. This command creates the short name on your own machine:
+
+```
+sudo snap alias markdown-hot-reload.mhr mhr
+```
 
 On Debian and Ubuntu, each [release](https://github.com/chairulakmal/markdown-hot-reload/releases) ships a `.deb` that uses your system's WebKitGTK rather than a second copy:
 

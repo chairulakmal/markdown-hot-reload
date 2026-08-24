@@ -16,6 +16,8 @@ One Rust binary. `comrak` parses markdown to HTML, `notify` watches the file's p
 
 ## Install
 
+Every package below is built for x86_64, which is also called amd64. There is no arm64 build yet. Nobody has asked for one so far, so please open an issue if you need it.
+
 The snap is the recommended install on any distribution that runs snapd, and it bundles its own WebKitGTK:
 
 ```

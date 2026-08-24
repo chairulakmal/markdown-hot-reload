@@ -4,11 +4,13 @@ Name=mhr
 GenericName=Markdown Viewer
 Comment=Read-only GitHub-flavoured markdown viewer that reloads on save
 Exec=mhr %f
-Icon=mhr
-StartupWMClass=mhr
+Icon=${SNAP}/meta/gui/icon.svg
 Terminal=false
 MimeType=text/markdown;
 Categories=Utility;TextTools;
+# Matches the app id set in src/main.rs, so the desktop shell can find this
+# entry for the running window instead of falling back to a generic icon.
+StartupWMClass=mhr
 # mhr exits with an error when it gets no file argument, so an app-grid launch
 # would always fail. NoDisplay keeps it out of the grid but leaves it in the
 # "Open With" menu for markdown files, which is the only way to start it here.

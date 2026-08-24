@@ -10,6 +10,14 @@ use std::sync::{Arc, Mutex};
 use tao::dpi::LogicalSize;
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
+#[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd"
+))]
+use tao::platform::unix::EventLoopBuilderExtUnix;
 use tao::window::{Icon, WindowBuilder};
 use wry::{WebView, WebViewBuilder};
 
@@ -38,7 +46,20 @@ fn main() -> Result<()> {
 
     let body = Arc::new(Mutex::new(read_and_render(&path)));
 
-    let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();
+    let mut event_loop_builder = EventLoopBuilder::<UserEvent>::with_user_event();
+    // Without an explicit app id, GTK falls back to the invoking process's
+    // prgname, which is not guaranteed to be "mhr" under every launcher, so
+    // the desktop shell has nothing reliable to match against the installed
+    // `.desktop` file's `StartupWMClass` and shows a generic icon instead.
+    #[cfg(any(
+        target_os = "linux",
+        target_os = "dragonfly",
+        target_os = "freebsd",
+        target_os = "netbsd",
+        target_os = "openbsd"
+    ))]
+    event_loop_builder.with_app_id("mhr");
+    let event_loop = event_loop_builder.build();
     let proxy = event_loop.create_proxy();
 
     let window = WindowBuilder::new()

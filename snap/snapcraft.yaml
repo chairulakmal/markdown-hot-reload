@@ -1,4 +1,7 @@
 name: markdown-hot-reload
+# The Store slug stays the long name; mhr is the upstream command, set below
+# so search and the listing page both show what people actually type.
+title: mhr
 version: '0.1.0' # keep in sync with the [package] version in Cargo.toml
 license: MIT
 # Points at the vendored SVG rather than a copy under snap/gui/, so the Store
@@ -10,6 +13,10 @@ description: |
   time the file changes on disk. Rendering happens entirely offline: there
   is no network access, so a document looks the same on a plane as it does
   at a desk.
+contact: mail@chairulakmal.com
+issues: https://github.com/chairulakmal/markdown-hot-reload/issues
+source-code: https://github.com/chairulakmal/markdown-hot-reload
+website: https://mhr.chairulakmal.com
 base: core24
 grade: stable
 confinement: strict

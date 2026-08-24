@@ -24,7 +24,7 @@ The snap is the recommended install on any distribution that runs snapd, and it 
 sudo snap install markdown-hot-reload
 ```
 
-The snap is the only install where the command is not `mhr` at first. It arrives as `markdown-hot-reload.mhr`, because the short name has to be approved by the Snap Store and that request is still open. You do not have to wait for the approval. This command creates `mhr` on your own machine, and it keeps working whatever the Store decides:
+The snap is the only install where the command is not `mhr` at first. It arrives as `markdown-hot-reload.mhr`, because a bare `mhr` alias needs approval from the Snap Store, and that request only goes in once this build reaches the stable channel. You do not have to wait for it. This command creates `mhr` on your own machine, and it keeps working whatever the Store decides:
 
 ```
 sudo snap alias markdown-hot-reload.mhr mhr

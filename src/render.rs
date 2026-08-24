@@ -1,12 +1,18 @@
 use crate::math;
 use comrak::adapters::CodefenceRendererAdapter;
 use comrak::html::ChildRendering;
-use comrak::nodes::{NodeValue, Sourcepos};
+use comrak::nodes::{AstNode, NodeValue, Sourcepos};
 use comrak::options::Plugins;
 use comrak::plugins::syntect::{SyntectAdapter, SyntectAdapterBuilder};
-use comrak::{Arena, Options, create_formatter, parse_document};
+use comrak::{Anchorizer, Arena, Options, create_formatter, parse_document};
+use std::collections::HashSet;
 use std::fmt;
 use std::sync::OnceLock;
+
+/// Shared between `options()`, which prefixes every heading id, and
+/// `rewrite_local_anchor_links()`, which has to prefix the same way when it
+/// rewrites a link pointing at one, so the two can never drift apart.
+const HEADER_ID_PREFIX: &str = "user-content-";
 
 /// Emits mermaid fences as `<pre class="mermaid">`, the shape mermaid.js scans
 /// for, instead of letting syntect fail to find a `mermaid` syntax and fall
@@ -66,7 +72,7 @@ fn options() -> Options<'static> {
     o.extension.multiline_block_quotes = true;
     o.extension.math_dollars = true;
     o.extension.math_code = true;
-    o.extension.header_id_prefix = Some(String::from("user-content-"));
+    o.extension.header_id_prefix = Some(String::from(HEADER_ID_PREFIX));
     // Without this, the id gets the prefix but the heading's own anchor link
     // does not, so clicking it jumps to a fragment nothing has.
     o.extension.header_id_prefix_in_href = true;
@@ -117,6 +123,33 @@ fn write_math(output: &mut dyn fmt::Write, latex: &str, display: bool) -> fmt::R
     }
 }
 
+/// comrak's `header_id_prefix_in_href` only rewrites the small anchor icon it
+/// inserts next to each heading; a link written anywhere else in the
+/// document, which is how every hand-authored table of contents and every
+/// GitHub-rendered one works, still targets the bare, unprefixed slug and
+/// never matches. GitHub's own rendering resolves those links too, so this
+/// replicates that here rather than in `assets/app.js`: parsing stays in
+/// Rust, and JavaScript only morphs the DOM. Only links whose fragment
+/// matches a real heading are touched, so footnote references and other
+/// hash links, none of which comrak prefixes, are left alone.
+fn rewrite_local_anchor_links<'a>(root: &'a AstNode<'a>) {
+    let mut anchorizer = Anchorizer::new();
+    let heading_ids: HashSet<String> = root
+        .descendants()
+        .filter(|node| matches!(node.data.borrow().value, NodeValue::Heading(_)))
+        .map(|node| anchorizer.anchorize(&node.collect_text()))
+        .collect();
+
+    for node in root.descendants() {
+        if let NodeValue::Link(ref mut link) = node.data.borrow_mut().value
+            && let Some(fragment) = link.url.strip_prefix('#')
+            && heading_ids.contains(fragment)
+        {
+            link.url = format!("#{HEADER_ID_PREFIX}{fragment}");
+        }
+    }
+}
+
 pub fn to_html(markdown: &str) -> String {
     let mut plugins = Plugins::default();
     plugins.render.codefence_syntax_highlighter = Some(syntect());
@@ -128,6 +161,7 @@ pub fn to_html(markdown: &str) -> String {
     let options = options();
     let arena = Arena::new();
     let root = parse_document(&arena, markdown, &options);
+    rewrite_local_anchor_links(root);
 
     let mut html = String::new();
     match MathFormatter::format_document_with_plugins(root, &options, &mut html, &plugins) {
@@ -303,6 +337,23 @@ mod tests {
             html.contains(r##"href="#user-content-hello-world""##),
             "{html}"
         );
+    }
+
+    /// A hand-written table of contents, the common case, must resolve to the
+    /// same prefixed id the heading actually got, not just the heading's own
+    /// generated anchor icon.
+    #[test]
+    fn rewrites_local_links_to_match_prefixed_heading_ids() {
+        let html = to_html("- [Hello](#hello)\n\n# Hello");
+        assert!(html.contains(r##"href="#user-content-hello""##), "{html}");
+    }
+
+    /// Footnote references are never prefixed by comrak, so a link that
+    /// happens to share their shape must not be rewritten into a dead one.
+    #[test]
+    fn leaves_hash_links_alone_when_no_heading_matches() {
+        let html = to_html("[note](#fn1)\n\n# Something Else");
+        assert!(html.contains(r##"href="#fn1""##), "{html}");
     }
 
     /// The fixture's own header claims it exercises every supported GFM

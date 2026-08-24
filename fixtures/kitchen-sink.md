@@ -2,6 +2,22 @@
 
 A fixture that exercises every GFM feature the renderer claims to support. Edit it while `mhr` is open and watch the reload.
 
+## Table of contents
+
+Written as GitHub itself would resolve it, against the bare slug. `mhr` prefixes heading ids with `user-content-`, and rewrites a local link like this one to match, the same way GitHub's own rendering does.
+
+- [Text](#text)
+- [Definition list](#definition-list)
+- [Multiline block quote](#multiline-block-quote)
+- [Alerts](#alerts)
+- [Task list](#task-list)
+- [Table](#table)
+- [Code](#code)
+- [Raw HTML is escaped, not executed](#raw-html-is-escaped-not-executed)
+- [Math](#math)
+- [Mermaid](#mermaid)
+- [Scroll test](#scroll-test)
+
 ## Text
 
 Regular, *italic*, **bold**, ~~struck through~~, `inline code`, and a [link](https://example.com). Autolink: https://example.com

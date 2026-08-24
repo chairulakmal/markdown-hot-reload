@@ -13,7 +13,7 @@ description: |
   time the file changes on disk. Rendering happens entirely offline: there
   is no network access, so a document looks the same on a plane as it does
   at a desk.
-contact: chairulakmal@protonmail.com
+contact: mail@chairulakmal.com
 issues: https://github.com/chairulakmal/markdown-hot-reload/issues
 source-code: https://github.com/chairulakmal/markdown-hot-reload
 website: https://mhr.chairulakmal.com

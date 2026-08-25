@@ -134,7 +134,8 @@ fn read_and_render(path: &Path) -> String {
 
 /// A missing or malformed icon is not worth failing a launch over: the window
 /// opens with the desktop's default mark instead. Wayland ignores this
-/// regardless and takes the icon from the `.desktop` file, matched by app id.
+/// regardless and takes the icon from the `.desktop` file, which the shell
+/// finds by matching the window class against `StartupWMClass`.
 fn window_icon() -> Option<Icon> {
     Icon::from_rgba(assets::icon_rgba()?, assets::ICON_SIZE, assets::ICON_SIZE).ok()
 }

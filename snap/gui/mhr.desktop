@@ -8,8 +8,9 @@ Icon=${SNAP}/meta/gui/icon.svg
 Terminal=false
 MimeType=text/markdown;
 Categories=Utility;TextTools;
-# Matches the app id set in src/main.rs, so the desktop shell can find this
-# entry for the running window instead of falling back to a generic icon.
+# mhr sets no GTK app id, so GTK uses the program name as the window class.
+# Matching it here lets the desktop shell find this entry for the running
+# window instead of falling back to a generic icon.
 StartupWMClass=mhr
 # mhr exits with an error when it gets no file argument, so an app-grid launch
 # would always fail. NoDisplay keeps it out of the grid but leaves it in the

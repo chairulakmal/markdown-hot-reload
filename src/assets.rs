@@ -27,8 +27,8 @@ pub const ICON_SIZE: u32 = 128;
 /// The window icon as raw RGBA. `tao` wants pixels rather than an encoded
 /// image, and decoding a PNG or an SVG at runtime would mean a dependency, so
 /// `icon/window-icon.rgba` is rasterised ahead of time from `icon/mhr-icon.svg`
-/// and embedded as pixels. `docs/vendored-assets.md` records the command that
-/// regenerates it.
+/// and embedded as pixels. `docs/vendored-assets.md` in the repository records
+/// the command that regenerates it; the published crate excludes `docs/`.
 pub fn icon_rgba() -> Option<Vec<u8>> {
     let file = Asset::get("icon/window-icon.rgba")?;
     let expected = ICON_SIZE as usize * ICON_SIZE as usize * 4;

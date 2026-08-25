@@ -21,6 +21,18 @@ base: core24
 grade: stable
 confinement: strict
 
+slots:
+  # GTK owns the app id set in src/main.rs as a session-bus name. Strict
+  # confinement refuses that unless the name is declared here: the AppArmor
+  # profile snapd generates otherwise allows this snap to own nothing but
+  # org.kde.StatusNotifierItem-*, and tao turns the refusal into a panic
+  # before the window opens. See the trap in AGENTS.md. This name, the
+  # with_app_id call, and StartupWMClass in both desktop files move together.
+  dbus-mhr:
+    interface: dbus
+    bus: session
+    name: com.chairulakmal.mhr
+
 apps:
   # Installs as `markdown-hot-reload.mhr` until a bare `mhr` alias is
   # requested from the Snap Store after publishing.
@@ -29,6 +41,8 @@ apps:
     extensions: [gnome]
     plugs:
       - home
+    slots:
+      - dbus-mhr
 
 parts:
   # Bootstraps rustup, which snapcraft 9.0.1 stopped doing. The name, the

@@ -38,6 +38,8 @@ sudo snap alias markdown-hot-reload.mhr mhr
 
 The second command creates the `mhr` command. It is needed because the snap installs itself as `markdown-hot-reload.mhr`. A bare `mhr` alias needs approval from the Snap Store, and that request is currently under review. The alias works on your own machine whatever the Store decides.
 
+Running the snap from a terminal can print lines like `Could not open /sys/class/dmi/id/chassis_type` or `This call is not available inside the sandbox`. These come from GTK probing hardware and desktop details that Snap's confinement blocks on purpose. They are harmless: the window still opens and renders the file normally, so it is safe to ignore them.
+
 Each [release](https://github.com/chairulakmal/markdown-hot-reload/releases) also ships a `.deb` for Ubuntu 24.04, Debian 13, and newer, and an `x86_64-unknown-linux-gnu` tarball for every other distribution. Neither one updates itself, because there is no apt repository for `mhr`.
 
 [The install guide](https://mhr.chairulakmal.com/) is the full version: all three paths step by step, how to check a download against its published checksum, and how to remove each one.

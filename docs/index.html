@@ -467,6 +467,14 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
       <p>Then open any markdown file:</p>
       <pre><code>mhr notes.md</code></pre>
       <p>
+        Running the snap from a terminal can print lines like
+        <code>Could not open /sys/class/dmi/id/chassis_type</code> or
+        <code>This call is not available inside the sandbox</code>. These come
+        from GTK probing hardware and desktop details that Snap's confinement
+        blocks on purpose. They are harmless: the window still opens and
+        renders the file normally, so it is safe to ignore them.
+      </p>
+      <p>
         snapd refreshes installed snaps on its own, so a new release of
         <code>mhr</code> arrives without you doing anything. The
         <a

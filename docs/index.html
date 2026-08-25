@@ -6,7 +6,7 @@
     <title>mhr: install on Linux</title>
     <meta
       name="description"
-      content="Install mhr on Linux three ways: the snap in one command, the .deb on Ubuntu 24.04 or Debian 13, or the tarball on any x86_64 distribution. Includes checksum verification and how to remove each one. mhr is a read-only, offline GitHub-flavoured markdown viewer."
+      content="Install mhr on Linux four ways: the snap in one command, the .deb on Ubuntu 24.04 or Debian 13, the tarball on any x86_64 distribution, or cargo install mhr from crates.io. Includes checksum verification and how to remove each one. mhr is a read-only, offline GitHub-flavoured markdown viewer."
     />
     <link rel="canonical" href="https://mhr.chairulakmal.com/" />
     <meta property="og:type" content="website" />
@@ -14,7 +14,7 @@
     <meta property="og:title" content="mhr: install on Linux" />
     <meta
       property="og:description"
-      content="Install the snap in one command, the .deb on Ubuntu and Debian, or the tarball anywhere else. A read-only, offline GitHub-flavoured markdown viewer for Linux."
+      content="Install the snap in one command, the .deb on Ubuntu and Debian, the tarball anywhere else, or build it from crates.io with cargo. A read-only, offline GitHub-flavoured markdown viewer for Linux."
     />
     <meta name="twitter:card" content="summary" />
     <!--
@@ -46,7 +46,7 @@
             "applicationCategory": "DeveloperApplication",
             "operatingSystem": "Ubuntu 24.04 or newer, Debian 13 or newer, any Linux with snapd",
             "processorRequirements": "x86_64",
-            "softwareVersion": "0.1.0",
+            "softwareVersion": "0.1.1",
             "url": "https://mhr.chairulakmal.com/",
             "downloadUrl": "https://github.com/chairulakmal/markdown-hot-reload/releases",
             "installUrl": "https://mhr.chairulakmal.com/",
@@ -99,7 +99,7 @@
                 "@type": "HowToStep",
                 "name": "Pick a release",
                 "url": "https://mhr.chairulakmal.com/#pick-a-release",
-                "text": "Choose a tag from the releases page, for example v0.1.0, and set TAG to it."
+                "text": "Choose a tag from the releases page, for example v0.1.1, and set TAG to it."
               },
               {
                 "@type": "HowToStep",
@@ -149,6 +149,31 @@
                 "name": "Install WebKitGTK",
                 "url": "https://mhr.chairulakmal.com/#tarball",
                 "text": "Install WebKitGTK 4.1 from your distribution's package manager. The package name varies, so search for webkit2gtk."
+              }
+            ]
+          },
+          {
+            "@type": "HowTo",
+            "name": "Install mhr from crates.io with cargo",
+            "description": "Build mhr from source with cargo. This path needs a Rust toolchain and the WebKitGTK development packages, and it does not update itself.",
+            "totalTime": "PT5M",
+            "tool": [
+              { "@type": "HowToTool", "name": "rustup" },
+              { "@type": "HowToTool", "name": "cargo" },
+              { "@type": "HowToTool", "name": "apt" }
+            ],
+            "step": [
+              {
+                "@type": "HowToStep",
+                "name": "Install the build prerequisites",
+                "url": "https://mhr.chairulakmal.com/#cargo",
+                "text": "Install Rust 1.88 or newer with rustup, then run sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config. Without those three packages the build fails at the linker without naming the missing package."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Install the crate",
+                "url": "https://mhr.chairulakmal.com/#cargo",
+                "text": "Run cargo install mhr. It compiles from source and puts the binary in ~/.cargo/bin, which rustup already adds to your PATH. Confirm with mhr --version."
               }
             ]
           }
@@ -299,18 +324,12 @@
         <h1>Install mhr on Linux</h1>
         <p class="lede">
           <code>mhr</code> is a read-only GitHub-flavoured markdown viewer.
-          There are three ways to install it: the snap, which is one command
+          There are four ways to install it: the snap, which is one command
           and updates itself, the <code>.deb</code> for Ubuntu 24.04 and
-          Debian 13, and a tarball for every other x86_64 distribution. This
-          page covers all three, including how to check a download against its
-          published checksum and how to remove each one. To build from source
-          instead, see the
-          <a
-            href="https://github.com/chairulakmal/markdown-hot-reload#building-and-running"
-            target="_blank"
-            rel="noopener noreferrer"
-            >README</a
-          >.
+          Debian 13, a tarball for every other x86_64 distribution, and
+          <code>cargo install mhr</code>, which builds it from source. This
+          page covers all four, including how to check a download against its
+          published checksum and how to remove each one.
         </p>
         <nav class="toc" aria-label="Sections on this page">
           <strong>On this page:</strong>
@@ -330,15 +349,16 @@
               </ol>
             </li>
             <li><a href="#tarball">The tarball, for other distributions</a></li>
+            <li><a href="#cargo">From crates.io, with cargo</a></li>
             <li><a href="#removing-it">Removing it</a></li>
           </ol>
         </nav>
       </header>
 
       <div class="note">
-        <strong>v0.1.0 is the current release.</strong> See the
+        <strong>v0.1.1 is the current release.</strong> See the
         <a
-          href="https://github.com/chairulakmal/markdown-hot-reload/releases/tag/v0.1.0"
+          href="https://github.com/chairulakmal/markdown-hot-reload/releases/tag/v0.1.1"
           target="_blank"
           rel="noopener noreferrer"
           >release notes</a
@@ -414,6 +434,7 @@
               <th scope="col">Snap</th>
               <th scope="col">.deb</th>
               <th scope="col">Tarball</th>
+              <th scope="col">cargo</th>
             </tr>
           </thead>
           <tbody>
@@ -422,18 +443,28 @@
               <td>Any distribution running snapd</td>
               <td>Ubuntu 24.04+, Debian 13+</td>
               <td>Any x86_64 Linux</td>
+              <td>Any Linux with a Rust toolchain</td>
             </tr>
             <tr>
               <th scope="row">Updates</th>
               <td>Automatic</td>
               <td>Manual, watch the releases page</td>
               <td>Manual, watch the releases page</td>
+              <td>Manual, run the command again</td>
             </tr>
             <tr>
               <th scope="row">WebKitGTK</th>
               <td>Bundled in the snap</td>
               <td><code>apt</code> installs it for you</td>
               <td>You install it yourself</td>
+              <td>You install the development packages yourself</td>
+            </tr>
+            <tr>
+              <th scope="row">Ready in</th>
+              <td>Seconds, it is prebuilt</td>
+              <td>Seconds, it is prebuilt</td>
+              <td>Seconds, it is prebuilt</td>
+              <td>Minutes, it compiles on your machine</td>
             </tr>
             <tr>
               <th scope="row">Command name</th>
@@ -441,6 +472,7 @@
                 <code>markdown-hot-reload.mhr</code> until you run the alias
                 command
               </td>
+              <td><code>mhr</code></td>
               <td><code>mhr</code></td>
               <td><code>mhr</code></td>
             </tr>
@@ -506,7 +538,7 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
         Each step is explained on its own below. To install without reading
         further, run these lines in an empty directory:
       </p>
-      <pre><code>TAG=v0.1.0
+      <pre><code>TAG=v0.1.1
 BASE=https://github.com/chairulakmal/markdown-hot-reload/releases/download
 
 curl -LO "$BASE/$TAG/SHA256SUMS"
@@ -530,7 +562,7 @@ mhr --version                              # prints the installed version</code>
           rel="noopener noreferrer"
           >releases page</a
         >
-        and note the tag you want, for example <code>v0.1.0</code>. The tags
+        and note the tag you want, for example <code>v0.1.1</code>. The tags
         <code>v0.1.0-alpha</code> and <code>v0.1.0-beta</code> are marked
         <strong>Pre-release</strong> on purpose. That was the plan during
         early development, not a sign anything was broken.
@@ -541,14 +573,14 @@ mhr --version                              # prints the installed version</code>
         Set <code>TAG</code> to the tag you picked, then download both files
         into the same directory:
       </p>
-      <pre><code>TAG=v0.1.0
+      <pre><code>TAG=v0.1.1
 
 curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/$TAG/SHA256SUMS"
 curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/$TAG/mhr_${TAG#v}-1_amd64.deb"</code></pre>
       <p>
         <code>${TAG#v}</code> strips the leading <code>v</code>, because the
-        tag is <code>v0.1.0</code> while the file is
-        <code>mhr_0.1.0-1_amd64.deb</code>.
+        tag is <code>v0.1.1</code> while the file is
+        <code>mhr_0.1.1-1_amd64.deb</code>.
         <code>SHA256SUMS</code> covers the <code>.deb</code> and the tarball.
         It does not cover the "Source code" archives GitHub generates on its
         own.
@@ -597,7 +629,7 @@ mhr notes.md</code></pre>
         not run snapd. It contains the <code>mhr</code> binary, the README,
         and the licence, inside a directory named after the version:
       </p>
-      <pre><code>TAG=v0.1.0
+      <pre><code>TAG=v0.1.1
 BASE=https://github.com/chairulakmal/markdown-hot-reload/releases/download
 DIR="mhr-${TAG#v}-x86_64-unknown-linux-gnu"
 
@@ -614,11 +646,56 @@ sudo install -m 755 "$DIR/mhr" /usr/local/bin/mhr</code></pre>
       </p>
       <pre><code>mhr --version</code></pre>
 
+      <h2 id="cargo">From crates.io, with cargo</h2>
+      <p>
+        <code>mhr</code> is published on
+        <a
+          href="https://crates.io/crates/mhr"
+          target="_blank"
+          rel="noopener noreferrer"
+          >crates.io</a
+        >, so cargo can build and install it directly. Choose this if you
+        already have a Rust toolchain, or if you want to read the source you
+        are running. It compiles on your machine, so it takes minutes rather
+        than seconds, and it does not update itself.
+      </p>
+      <p>
+        Two prerequisites first. Rust 1.88 or newer, which
+        <a href="https://rustup.rs" target="_blank" rel="noopener noreferrer"
+          >rustup</a
+        >
+        installs, and the WebKitGTK development packages, because the window is
+        a WebKitGTK webview. On Ubuntu and Debian:
+      </p>
+      <pre><code>sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config</code></pre>
+      <div class="note">
+        <strong>Install those three packages before you run cargo.</strong>
+        Without them the build fails at the linker, and the error does not name
+        the package that is missing.
+      </div>
+      <p>Then install the crate and open a file:</p>
+      <pre><code>cargo install mhr
+mhr --version
+mhr notes.md</code></pre>
+      <p>
+        cargo puts the binary in <code>~/.cargo/bin</code>, which rustup
+        already adds to your <code>PATH</code>. To update later, run
+        <code>cargo install mhr</code> again.
+      </p>
+      <p>
+        This is the only install path that is not built here, so it is also
+        the only one that could work beyond Linux. Linux is the platform
+        <code>mhr</code> is released and tested on. macOS and Windows are
+        untested rather than supported, so treat a build there as something
+        that may work rather than something that should.
+      </p>
+
       <h2 id="removing-it">Removing it</h2>
       <p>Use the line that matches how you installed it:</p>
       <pre><code>sudo snap remove markdown-hot-reload   # snap
 sudo apt remove mhr                    # .deb
-sudo rm /usr/local/bin/mhr             # tarball</code></pre>
+sudo rm /usr/local/bin/mhr             # tarball
+cargo uninstall mhr                    # cargo</code></pre>
       <p>
         <code>mhr</code> writes no configuration files and no cache, so
         nothing is left behind after any of these.

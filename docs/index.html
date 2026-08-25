@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>mhr: install on Ubuntu</title>
+    <title>mhr: install on Linux</title>
     <meta
       name="description"
-      content="mhr is a read-only, offline GitHub-flavoured markdown viewer for Linux. Install it on Ubuntu or Debian, verify the checksum, and open any file safely."
+      content="Install mhr on Linux three ways: the snap in one command, the .deb on Ubuntu 24.04 or Debian 13, or the tarball on any x86_64 distribution. Includes checksum verification and how to remove each one. mhr is a read-only, offline GitHub-flavoured markdown viewer."
     />
     <link rel="canonical" href="https://mhr.chairulakmal.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://mhr.chairulakmal.com/" />
-    <meta property="og:title" content="mhr: install on Ubuntu" />
+    <meta property="og:title" content="mhr: install on Linux" />
     <meta
       property="og:description"
-      content="A read-only, offline GitHub-flavoured markdown viewer for Linux. Install it on Ubuntu or Debian, verify the checksum, and open any file safely."
+      content="Install the snap in one command, the .deb on Ubuntu and Debian, or the tarball anywhere else. A read-only, offline GitHub-flavoured markdown viewer for Linux."
     />
     <meta name="twitter:card" content="summary" />
     <!--
@@ -36,24 +36,123 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "mhr",
-        "description": "A read-only, offline GitHub-flavoured markdown viewer. It opens a window that re-renders the moment the file changes on disk, has no network access, and never writes to the file it watches.",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Linux",
-        "url": "https://mhr.chairulakmal.com/",
-        "downloadUrl": "https://github.com/chairulakmal/markdown-hot-reload/releases",
-        "codeRepository": "https://github.com/chairulakmal/markdown-hot-reload",
-        "license": "https://opensource.org/licenses/MIT",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "author": {
-          "@type": "Person",
-          "name": "Chairul Akmal"
-        }
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://mhr.chairulakmal.com/#app",
+            "name": "mhr",
+            "alternateName": "markdown-hot-reload",
+            "description": "A read-only, offline GitHub-flavoured markdown viewer. It opens a window that re-renders the moment the file changes on disk, has no network access, and never writes to the file it watches.",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Ubuntu 24.04 or newer, Debian 13 or newer, any Linux with snapd",
+            "processorRequirements": "x86_64",
+            "softwareVersion": "0.1.0",
+            "url": "https://mhr.chairulakmal.com/",
+            "downloadUrl": "https://github.com/chairulakmal/markdown-hot-reload/releases",
+            "installUrl": "https://mhr.chairulakmal.com/",
+            "codeRepository": "https://github.com/chairulakmal/markdown-hot-reload",
+            "programmingLanguage": "Rust",
+            "license": "https://opensource.org/licenses/MIT",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": {
+              "@type": "Person",
+              "name": "Chairul Akmal"
+            }
+          },
+          {
+            "@type": "HowTo",
+            "name": "Install mhr as a snap",
+            "description": "The recommended install on any Linux distribution that runs snapd. The snap bundles its own WebKitGTK and updates itself.",
+            "totalTime": "PT1M",
+            "tool": [{ "@type": "HowToTool", "name": "snapd" }],
+            "step": [
+              {
+                "@type": "HowToStep",
+                "name": "Install the snap",
+                "url": "https://mhr.chairulakmal.com/#snap",
+                "text": "Run sudo snap install markdown-hot-reload."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Create the mhr command",
+                "url": "https://mhr.chairulakmal.com/#snap",
+                "text": "Run sudo snap alias markdown-hot-reload.mhr mhr. The snap installs its command as markdown-hot-reload.mhr, because a bare mhr alias needs Snap Store approval and that request is under review."
+              }
+            ]
+          },
+          {
+            "@type": "HowTo",
+            "name": "Install mhr on Ubuntu or Debian from the .deb package",
+            "description": "Download the .deb attached to a GitHub release, verify it against the published SHA256 checksum, and install it with apt.",
+            "totalTime": "PT3M",
+            "tool": [
+              { "@type": "HowToTool", "name": "curl" },
+              { "@type": "HowToTool", "name": "sha256sum (coreutils)" },
+              { "@type": "HowToTool", "name": "apt" }
+            ],
+            "step": [
+              {
+                "@type": "HowToStep",
+                "name": "Pick a release",
+                "url": "https://mhr.chairulakmal.com/#pick-a-release",
+                "text": "Choose a tag from the releases page, for example v0.1.0, and set TAG to it."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Download the package and its checksums",
+                "url": "https://mhr.chairulakmal.com/#download",
+                "text": "Download SHA256SUMS and mhr_${TAG#v}-1_amd64.deb from that release into the same directory."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Verify the checksum",
+                "url": "https://mhr.chairulakmal.com/#verify",
+                "text": "Run sha256sum -c SHA256SUMS --ignore-missing. It must print OK next to the .deb filename. If it prints FAILED, delete the file and download it again."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Install it",
+                "url": "https://mhr.chairulakmal.com/#install",
+                "text": "Run sudo apt install ./mhr_*.deb, which resolves WebKitGTK and GTK from your system repositories. Confirm with mhr --version, then open a file with mhr notes.md."
+              }
+            ]
+          },
+          {
+            "@type": "HowTo",
+            "name": "Install mhr from the tarball on any x86_64 Linux distribution",
+            "description": "Download the binary tarball, verify it against the published SHA256 checksum, copy the binary onto your PATH, and install WebKitGTK 4.1 from your own package manager.",
+            "totalTime": "PT4M",
+            "tool": [
+              { "@type": "HowToTool", "name": "curl" },
+              { "@type": "HowToTool", "name": "sha256sum (coreutils)" },
+              { "@type": "HowToTool", "name": "tar" }
+            ],
+            "step": [
+              {
+                "@type": "HowToStep",
+                "name": "Download and verify the tarball",
+                "url": "https://mhr.chairulakmal.com/#tarball",
+                "text": "Download SHA256SUMS and mhr-${TAG#v}-x86_64-unknown-linux-gnu.tar.gz from the release, then run sha256sum -c SHA256SUMS --ignore-missing."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Copy the binary onto your PATH",
+                "url": "https://mhr.chairulakmal.com/#tarball",
+                "text": "Extract the archive and copy the mhr binary out of the extracted directory into a directory on your PATH, for example /usr/local/bin."
+              },
+              {
+                "@type": "HowToStep",
+                "name": "Install WebKitGTK",
+                "url": "https://mhr.chairulakmal.com/#tarball",
+                "text": "Install WebKitGTK 4.1 from your distribution's package manager. The package name varies, so search for webkit2gtk."
+              }
+            ]
+          }
+        ]
       }
     </script>
     <style>
@@ -96,8 +195,16 @@
         padding-bottom: 0.4rem;
         margin-top: 2.5rem;
       }
+      h3 {
+        font-size: 1rem;
+        margin-top: 1.75rem;
+        margin-bottom: 0.3rem;
+      }
       p {
         color: var(--fg);
+      }
+      .scroll {
+        overflow-x: auto;
       }
       .lede {
         color: var(--fg-muted);
@@ -123,6 +230,27 @@
         background: none;
         padding: 0;
         font-size: 0.85rem;
+      }
+      .facts {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+      .facts th,
+      .facts td {
+        border: 1px solid var(--border);
+        padding: 0.4rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      .facts th {
+        color: var(--fg-muted);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .facts thead th {
+        color: var(--fg);
       }
       .video-frame {
         height: 26rem;
@@ -168,21 +296,17 @@
   <body>
     <main>
       <header>
-        <h1>Install mhr on Ubuntu</h1>
+        <h1>Install mhr on Linux</h1>
         <p class="lede">
-          This page shows how to install <code>mhr</code>, a read-only
-          GitHub-flavoured markdown viewer, from the <code>.deb</code>
-          attached to a
+          <code>mhr</code> is a read-only GitHub-flavoured markdown viewer.
+          There are three ways to install it: the snap, which is one command
+          and updates itself, the <code>.deb</code> for Ubuntu 24.04 and
+          Debian 13, and a tarball for every other x86_64 distribution. This
+          page covers all three, including how to check a download against its
+          published checksum and how to remove each one. To build from source
+          instead, see the
           <a
-            href="https://github.com/chairulakmal/markdown-hot-reload/releases"
-            target="_blank"
-            rel="noopener noreferrer"
-            >GitHub release</a
-          >, and how to check that download against its published checksum
-          before installing it. For the snap package, other distributions,
-          or building from source, see the
-          <a
-            href="https://github.com/chairulakmal/markdown-hot-reload#install"
+            href="https://github.com/chairulakmal/markdown-hot-reload#building-and-running"
             target="_blank"
             rel="noopener noreferrer"
             >README</a
@@ -192,18 +316,27 @@
           <strong>On this page:</strong>
           <ol>
             <li><a href="#what-is-mhr">What is mhr</a></li>
-            <li><a href="#requirements">Requirements</a></li>
-            <li><a href="#pick-a-release">1. Pick a release</a></li>
-            <li><a href="#download">2. Download the package and its checksums</a></li>
-            <li><a href="#verify">3. Verify the checksum</a></li>
-            <li><a href="#install">4. Install it</a></li>
+            <li><a href="#which-package">Which package to use</a></li>
+            <li><a href="#snap">The snap, recommended</a></li>
+            <li>
+              <a href="#deb">The .deb, for Ubuntu and Debian</a>
+              <ol>
+                <li><a href="#requirements">Requirements</a></li>
+                <li><a href="#in-one-block">All four steps in one block</a></li>
+                <li><a href="#pick-a-release">Pick a release</a></li>
+                <li><a href="#download">Download the package and its checksums</a></li>
+                <li><a href="#verify">Verify the checksum</a></li>
+                <li><a href="#install">Install it</a></li>
+              </ol>
+            </li>
+            <li><a href="#tarball">The tarball, for other distributions</a></li>
             <li><a href="#removing-it">Removing it</a></li>
           </ol>
         </nav>
       </header>
 
       <div class="note">
-        <strong>v0.1.0 is out now.</strong> See the
+        <strong>v0.1.0 is the current release.</strong> See the
         <a
           href="https://github.com/chairulakmal/markdown-hot-reload/releases/tag/v0.1.0"
           target="_blank"
@@ -230,19 +363,19 @@
 
       <h2 id="what-is-mhr">What is mhr</h2>
       <p>
-        Run <code>mhr notes.md</code>, a window opens with the rendered
-        markdown, and every time you, an editor, or an agent saves that
-        file, the window updates in place. There is no editing surface;
+        Run <code>mhr notes.md</code> and a window opens with the rendered
+        markdown. Every time you, an editor, or an agent saves that file, the
+        window updates in place. There is no editing surface, and
         <code>mhr</code> never writes to the file it watches.
       </p>
       <p>
-        <strong>Safe to point at a file you did not write.</strong>
-        <code>mhr</code> never contacts the network (its webview's
-        Content-Security-Policy sets <code>connect-src 'none'</code>), and
-        it always escapes raw HTML in a document rather than executing it,
-        since a document can come from an editor, an agent, or a
-        repository you do not control. Details, and the tests that guard
-        each claim, are in the README's
+        <strong>It is safe to point at a file you did not write.</strong>
+        <code>mhr</code> never contacts the network, because its webview's
+        Content-Security-Policy sets <code>connect-src 'none'</code>, and it
+        always escapes raw HTML in a document rather than executing it. A
+        document can come from an editor, an agent, or a repository you do not
+        control, so every document is treated as untrusted input. The tests
+        that guard each claim are listed in the README's
         <a
           href="https://github.com/chairulakmal/markdown-hot-reload#safety"
           target="_blank"
@@ -250,15 +383,137 @@
           >Safety section</a
         >.
       </p>
+      <table class="facts">
+        <tbody>
+          <tr>
+            <th scope="row">Command</th>
+            <td><code>mhr &lt;file.md&gt;</code>, one file argument, required</td>
+          </tr>
+          <tr>
+            <th scope="row">Architecture</th>
+            <td>x86_64 (amd64) only, no arm64 build yet</td>
+          </tr>
+          <tr>
+            <th scope="row">Licence</th>
+            <td>MIT</td>
+          </tr>
+        </tbody>
+      </table>
 
-      <h2 id="requirements">Requirements</h2>
+      <h2 id="which-package">Which package to use</h2>
       <p>
-        The <code>.deb</code> needs Ubuntu 24.04 or newer, or Debian trixie
-        or newer. It links against the <code>t64</code> builds of GTK and
-        GLib, which earlier releases do not have.
+        <strong>Use the snap unless you have a reason not to.</strong> It is
+        the only package that updates itself. The other two are installed once
+        and stay at that version until you repeat the steps by hand.
+      </p>
+      <div class="scroll">
+        <table class="facts">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">Snap</th>
+              <th scope="col">.deb</th>
+              <th scope="col">Tarball</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Works on</th>
+              <td>Any distribution running snapd</td>
+              <td>Ubuntu 24.04+, Debian 13+</td>
+              <td>Any x86_64 Linux</td>
+            </tr>
+            <tr>
+              <th scope="row">Updates</th>
+              <td>Automatic</td>
+              <td>Manual, watch the releases page</td>
+              <td>Manual, watch the releases page</td>
+            </tr>
+            <tr>
+              <th scope="row">WebKitGTK</th>
+              <td>Bundled in the snap</td>
+              <td><code>apt</code> installs it for you</td>
+              <td>You install it yourself</td>
+            </tr>
+            <tr>
+              <th scope="row">Command name</th>
+              <td>
+                <code>markdown-hot-reload.mhr</code> until you run the alias
+                command
+              </td>
+              <td><code>mhr</code></td>
+              <td><code>mhr</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="snap">The snap, recommended</h2>
+      <p>
+        The snap runs on any distribution that has snapd. Ubuntu includes
+        snapd by default. The snap bundles its own WebKitGTK, so it does not
+        depend on what your system has installed:
+      </p>
+      <pre><code>sudo snap install markdown-hot-reload
+sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
+      <p>
+        The second command creates the <code>mhr</code> command. It is needed
+        because the snap installs itself as
+        <code>markdown-hot-reload.mhr</code>. A bare <code>mhr</code> alias
+        needs Snap Store approval, and that request is currently under review.
+        The alias command works on your own machine whatever the Store
+        decides.
+      </p>
+      <p>Then open any markdown file:</p>
+      <pre><code>mhr notes.md</code></pre>
+      <p>
+        snapd refreshes installed snaps on its own, so a new release of
+        <code>mhr</code> arrives without you doing anything. The
+        <a
+          href="https://snapcraft.io/markdown-hot-reload"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Snap Store listing</a
+        >
+        shows the version currently published.
       </p>
 
-      <h2 id="pick-a-release">1. Pick a release</h2>
+      <h2 id="deb">The .deb, for Ubuntu and Debian</h2>
+      <p>
+        Choose the <code>.deb</code> if you would rather install through
+        <code>apt</code> and use your system's own WebKitGTK than a bundled
+        copy. It installs the command as <code>mhr</code> straight away, with
+        no alias step.
+      </p>
+      <h3 id="requirements">Requirements</h3>
+      <p>
+        The <code>.deb</code> needs Ubuntu 24.04 (Noble Numbat), Debian 13
+        (trixie), or newer, on x86_64. It links against the <code>t64</code>
+        builds of GTK and GLib, which earlier releases do not have. On an
+        older release, use the snap or the tarball instead.
+      </p>
+
+      <h3 id="in-one-block">All four steps in one block</h3>
+      <p>
+        Each step is explained on its own below. To install without reading
+        further, run these lines in an empty directory:
+      </p>
+      <pre><code>TAG=v0.1.0
+BASE=https://github.com/chairulakmal/markdown-hot-reload/releases/download
+
+curl -LO "$BASE/$TAG/SHA256SUMS"
+curl -LO "$BASE/$TAG/mhr_${TAG#v}-1_amd64.deb"
+sha256sum -c SHA256SUMS --ignore-missing   # must print OK, stop here if it does not
+sudo apt install ./mhr_*.deb
+mhr --version                              # prints the installed version</code></pre>
+      <div class="note">
+        <strong>The <code>.deb</code> does not update itself.</strong> There
+        is no apt repository for <code>mhr</code>, so <code>apt upgrade</code>
+        will never bring you a new version. To update, repeat these steps with
+        a newer tag. The snap above avoids this.
+      </div>
+
+      <h3 id="pick-a-release">1. Pick a release</h3>
       <p>
         Open the
         <a
@@ -267,14 +522,13 @@
           rel="noopener noreferrer"
           >releases page</a
         >
-        and note the tag of the release you want, for example
-        <code>v0.1.0</code>. Earlier tags such as
+        and note the tag you want, for example <code>v0.1.0</code>. The tags
         <code>v0.1.0-alpha</code> and <code>v0.1.0-beta</code> are marked
-        <strong>Pre-release</strong> on purpose. That was expected during
+        <strong>Pre-release</strong> on purpose. That was the plan during
         early development, not a sign anything was broken.
       </p>
 
-      <h2 id="download">2. Download the package and its checksums</h2>
+      <h3 id="download">2. Download the package and its checksums</h3>
       <p>
         Set <code>TAG</code> to the tag you picked, then download both files
         into the same directory:
@@ -284,49 +538,83 @@
 curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/$TAG/SHA256SUMS"
 curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/$TAG/mhr_${TAG#v}-1_amd64.deb"</code></pre>
       <p>
-        Every release also ships a source tarball and a
-        <code>.tar.gz</code> of the binary for other Linux distributions,
-        both covered by the same <code>SHA256SUMS</code> file.
+        <code>${TAG#v}</code> strips the leading <code>v</code>, because the
+        tag is <code>v0.1.0</code> while the file is
+        <code>mhr_0.1.0-1_amd64.deb</code>.
+        <code>SHA256SUMS</code> covers the <code>.deb</code> and the tarball.
+        It does not cover the "Source code" archives GitHub generates on its
+        own.
       </p>
 
-      <h2 id="verify">3. Verify the checksum</h2>
+      <h3 id="verify">3. Verify the checksum</h3>
       <p>
-        Before installing anything, check the download against the
-        checksum GitHub Actions produced when it built the release:
+        Check the download against the checksum GitHub Actions produced when
+        it built the release:
       </p>
       <pre><code>sha256sum -c SHA256SUMS --ignore-missing</code></pre>
       <p>
-        <code>--ignore-missing</code> skips the tarball's line, since you
-        only downloaded the <code>.deb</code>. The command must print
+        <code>--ignore-missing</code> skips the tarball's line, since you only
+        downloaded the <code>.deb</code>. The command must print
         <code>OK</code> next to the package's filename. If it prints
-        <code>FAILED</code> or reports no such file, do not install the
+        <code>FAILED</code>, or reports no such file, do not install the
         package. Delete it and download it again.
       </p>
 
-      <h2 id="install">4. Install it</h2>
+      <h3 id="install">4. Install it</h3>
       <p>
-        <code>apt</code> resolves the WebKitGTK and GTK dependencies from
-        your system's own repositories, so no separate download step is
-        needed for those:
+        <code>apt</code> resolves the WebKitGTK and GTK dependencies from your
+        system's own repositories, so there is no separate download step for
+        those:
       </p>
       <pre><code>sudo apt install ./mhr_*.deb</code></pre>
       <div class="note">
-        <code>apt</code> may print a line like
+        <code>apt</code> may print
         <code
           >N: Download is performed unsandboxed as root as file '...'
           couldn't be accessed by user '_apt'.</code
         >
-        This is a warning, not an error. It happens because the
-        <code>_apt</code> sandbox user cannot read files inside your home
-        directory. The install still completes correctly. To avoid the
-        warning, move the <code>.deb</code> to <code>/tmp</code> first and
-        run the same command there.
+        This is a warning, not an error. The <code>_apt</code> sandbox user
+        cannot read files inside your home directory, and the install still
+        completes correctly. To avoid the warning, move the
+        <code>.deb</code> to <code>/tmp</code> and run the same command there.
       </div>
-      <p>Then run it against any markdown file:</p>
-      <pre><code>mhr notes.md</code></pre>
+      <p>Confirm the install, then open any markdown file:</p>
+      <pre><code>mhr --version
+mhr notes.md</code></pre>
+
+      <h2 id="tarball">The tarball, for other distributions</h2>
+      <p>
+        Every release ships a plain <code>x86_64-unknown-linux-gnu</code>
+        tarball. Use it on any distribution that is not Debian based and does
+        not run snapd. It contains the <code>mhr</code> binary, the README,
+        and the licence, inside a directory named after the version:
+      </p>
+      <pre><code>TAG=v0.1.0
+BASE=https://github.com/chairulakmal/markdown-hot-reload/releases/download
+DIR="mhr-${TAG#v}-x86_64-unknown-linux-gnu"
+
+curl -LO "$BASE/$TAG/SHA256SUMS"
+curl -LO "$BASE/$TAG/$DIR.tar.gz"
+sha256sum -c SHA256SUMS --ignore-missing   # must print OK, stop here if it does not
+tar xzf "$DIR.tar.gz"
+sudo install -m 755 "$DIR/mhr" /usr/local/bin/mhr</code></pre>
+      <p>
+        The binary needs WebKitGTK 4.1, which the tarball does not carry.
+        Install it from your own package manager. The package name varies
+        between distributions, so search for <code>webkit2gtk</code>. Then
+        confirm the install:
+      </p>
+      <pre><code>mhr --version</code></pre>
 
       <h2 id="removing-it">Removing it</h2>
-      <pre><code>sudo apt remove mhr</code></pre>
+      <p>Use the line that matches how you installed it:</p>
+      <pre><code>sudo snap remove markdown-hot-reload   # snap
+sudo apt remove mhr                    # .deb
+sudo rm /usr/local/bin/mhr             # tarball</code></pre>
+      <p>
+        <code>mhr</code> writes no configuration files and no cache, so
+        nothing is left behind after any of these.
+      </p>
 
       <footer>
         <a

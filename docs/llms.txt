@@ -10,13 +10,14 @@ Safety guarantees: the webview's Content-Security-Policy blocks all network acce
 
 - [README](https://github.com/chairulakmal/markdown-hot-reload/blob/main/README.md): what it does, how to install it, what markdown features it supports
 - [Contributor notes](https://github.com/chairulakmal/markdown-hot-reload/blob/main/AGENTS.md): architecture, design invariants, and the tests behind each safety guarantee
+- [Install guide](https://mhr.chairulakmal.com/): all three install paths step by step, with checksum verification and removal
 - [Releases](https://github.com/chairulakmal/markdown-hot-reload/releases): prebuilt packages and changelog
 
 ## Install
 
-- Snap (any distribution with snapd): `sudo snap install markdown-hot-reload`
-- Debian 13 / Ubuntu 24.04 or newer: `.deb` package on the releases page
-- Other x86_64 Linux: tarball on the releases page, plus WebKitGTK 4.1 from your package manager
+- Snap, recommended (any distribution with snapd): `sudo snap install markdown-hot-reload`, then `sudo snap alias markdown-hot-reload.mhr mhr` to create the `mhr` command. It is the only package that updates itself.
+- Debian 13 / Ubuntu 24.04 or newer: `.deb` package on the releases page, installed with `sudo apt install ./mhr_*.deb`. Updates are manual, because there is no apt repository.
+- Other x86_64 Linux: tarball on the releases page, plus WebKitGTK 4.1 from your package manager. Updates are manual.
 
 ## Platforms
 

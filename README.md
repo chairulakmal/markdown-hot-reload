@@ -27,31 +27,20 @@ The design invariants behind each of these, and the tests that guard them, are s
 
 ## Install
 
-Every package below is built for x86_64, which is also called amd64. There is no arm64 build yet. Nobody has asked for one so far, so please open an issue if you need it.
+Every package is built for x86_64, which is also called amd64. There is no arm64 build yet. Nobody has asked for one so far, so please open an issue if you need it.
 
-The snap is the recommended install on any distribution that runs snapd, and it bundles its own WebKitGTK:
+The snap is the recommended install on any distribution that runs snapd. Ubuntu includes snapd by default. The snap bundles its own WebKitGTK and updates itself:
 
 ```
 sudo snap install markdown-hot-reload
-```
-
-The snap is the only install where the command is not `mhr` at first. It arrives as `markdown-hot-reload.mhr`, because a bare `mhr` alias needs approval from the Snap Store, and that request only goes in once this build reaches the stable channel. You do not have to wait for it. This command creates `mhr` on your own machine, and it keeps working whatever the Store decides:
-
-```
 sudo snap alias markdown-hot-reload.mhr mhr
 ```
 
-On Debian and Ubuntu, each [release](https://github.com/chairulakmal/markdown-hot-reload/releases) ships a `.deb` that uses your system's WebKitGTK rather than a second copy:
+The second command creates the `mhr` command. It is needed because the snap installs itself as `markdown-hot-reload.mhr`. A bare `mhr` alias needs approval from the Snap Store, and that request is currently under review. The alias works on your own machine whatever the Store decides.
 
-```
-sudo apt install ./mhr_0.1.0-1_amd64.deb
-```
+Each [release](https://github.com/chairulakmal/markdown-hot-reload/releases) also ships a `.deb` for Ubuntu 24.04, Debian 13, and newer, and an `x86_64-unknown-linux-gnu` tarball for every other distribution. Neither one updates itself, because there is no apt repository for `mhr`.
 
-The `.deb` installs the command as `mhr` straight away. There is no alias step.
-
-This package needs Ubuntu 24.04 (Noble Numbat), Debian 13 (trixie), or newer. It links against the `t64` builds of GTK and GLib, which earlier releases do not have.
-
-On any other distribution, download the `x86_64-unknown-linux-gnu` tarball from the release page, copy the binary into a directory on your `PATH`, and install WebKitGTK 4.1 from your package manager. The package name varies, so search for `webkit2gtk`. The binary in the tarball is already named `mhr`. Each release also ships a `SHA256SUMS` file for checking the download.
+[The install guide](https://mhr.chairulakmal.com/) is the full version: all three paths step by step, how to check a download against its published checksum, and how to remove each one.
 
 ## Building and running
 
@@ -109,6 +98,8 @@ Contributor notes, including design invariants, decisions taken, and traps alrea
 
 ## Links
 
+- Install guide for snap, `.deb`, and tarball: [mhr.chairulakmal.com](https://mhr.chairulakmal.com/)
+- Snap Store listing: [snapcraft.io/markdown-hot-reload](https://snapcraft.io/markdown-hot-reload)
 - Source: [github.com/chairulakmal/markdown-hot-reload](https://github.com/chairulakmal/markdown-hot-reload)
 - Report a problem: [issue tracker](https://github.com/chairulakmal/markdown-hot-reload/issues)
 - Contributor notes: [`AGENTS.md`](AGENTS.md)

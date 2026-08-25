@@ -51,6 +51,10 @@ fn main() -> Result<()> {
     // prgname, which is not guaranteed to be "mhr" under every launcher, so
     // the desktop shell has nothing reliable to match against the installed
     // `.desktop` file's `StartupWMClass` and shows a generic icon instead.
+    // GLib requires a dotted, reverse-DNS style id here; a bare "mhr" fails
+    // `g_application_id_is_valid` and gtk_application_new logs a cascade of
+    // GLib-GObject/Gtk-CRITICAL warnings instead of erroring, so the breakage
+    // is silent unless someone reads stderr.
     #[cfg(any(
         target_os = "linux",
         target_os = "dragonfly",
@@ -58,7 +62,7 @@ fn main() -> Result<()> {
         target_os = "netbsd",
         target_os = "openbsd"
     ))]
-    event_loop_builder.with_app_id("mhr");
+    event_loop_builder.with_app_id("com.chairulakmal.mhr");
     let event_loop = event_loop_builder.build();
     let proxy = event_loop.create_proxy();
 

@@ -3,7 +3,59 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>mhr &mdash; install on Ubuntu</title>
+    <title>mhr: install on Ubuntu</title>
+    <meta
+      name="description"
+      content="mhr is a read-only, offline GitHub-flavoured markdown viewer for Linux. Install it on Ubuntu or Debian, verify the checksum, and open any file safely."
+    />
+    <link rel="canonical" href="https://mhr.chairulakmal.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mhr.chairulakmal.com/" />
+    <meta property="og:title" content="mhr: install on Ubuntu" />
+    <meta
+      property="og:description"
+      content="A read-only, offline GitHub-flavoured markdown viewer for Linux. Install it on Ubuntu or Debian, verify the checksum, and open any file safely."
+    />
+    <meta name="twitter:card" content="summary" />
+    <!--
+      A condensed, machine-readable summary for AI search tools and agents
+      that check for it: https://llmstxt.org
+    -->
+    <link
+      rel="alternate"
+      type="text/plain"
+      href="/llms.txt"
+      title="mhr summary for AI agents"
+    />
+    <!-- Inlined copy of assets/icon/mhr-icon.svg; GitHub Pages only serves docs/, so the source file cannot be linked directly. -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJtaHIiPgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSI0OCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiMyMDFlMWQiLz4KICA8cmVjdCB4PSI1MiIgeT0iMCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2VjMzAxMyIvPgogIDxnIGZpbGw9IiNmM2YyZjIiPgogICAgPHJlY3QgeD0iOCIgeT0iMzQiIHdpZHRoPSIzMiIgaGVpZ2h0PSI3Ii8+PHJlY3QgeD0iOCIgeT0iMzQiIHdpZHRoPSI3IiBoZWlnaHQ9IjQwIi8+PHJlY3QgeD0iMjAiIHk9IjM0IiB3aWR0aD0iNyIgaGVpZ2h0PSI0MCIvPjxyZWN0IHg9IjMzIiB5PSIzNCIgd2lkdGg9IjciIGhlaWdodD0iNDAiLz4KICAgIDxyZWN0IHg9Ijg1IiB5PSIyNiIgd2lkdGg9IjciIGhlaWdodD0iNDgiLz48cmVjdCB4PSI2MCIgeT0iNDgiIHdpZHRoPSIzMiIgaGVpZ2h0PSI3Ii8+PHJlY3QgeD0iNjAiIHk9IjQ4IiB3aWR0aD0iNyIgaGVpZ2h0PSIyNiIvPjxyZWN0IHg9IjYwIiB5PSI2NyIgd2lkdGg9IjMyIiBoZWlnaHQ9IjciLz4KICA8L2c+Cjwvc3ZnPgo="
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "mhr",
+        "description": "A read-only, offline GitHub-flavoured markdown viewer. It opens a window that re-renders the moment the file changes on disk, has no network access, and never writes to the file it watches.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Linux",
+        "url": "https://mhr.chairulakmal.com/",
+        "downloadUrl": "https://github.com/chairulakmal/markdown-hot-reload/releases",
+        "codeRepository": "https://github.com/chairulakmal/markdown-hot-reload",
+        "license": "https://opensource.org/licenses/MIT",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Chairul Akmal"
+        }
+      }
+    </script>
     <style>
       :root {
         --fg: #1f2328;
@@ -92,6 +144,18 @@
         color: var(--fg-muted);
         margin: 1rem 0;
       }
+      nav.toc {
+        font-size: 0.9rem;
+        color: var(--fg-muted);
+        margin-top: 1rem;
+      }
+      nav.toc ol {
+        margin: 0.4rem 0 0;
+        padding-left: 1.25rem;
+      }
+      nav.toc li {
+        margin: 0.15rem 0;
+      }
       footer {
         margin-top: 3rem;
         padding-top: 1.5rem;
@@ -103,26 +167,47 @@
   </head>
   <body>
     <main>
-      <h1>Install mhr on Ubuntu</h1>
-      <p class="lede">
-        This page shows how to install <code>mhr</code>, a read-only
-        GitHub-flavoured markdown viewer, from the <code>.deb</code>
-        attached to a
-        <a href="https://github.com/chairulakmal/markdown-hot-reload/releases"
-          >GitHub release</a
-        >, and how to check that download against its published checksum
-        before installing it. It covers requirements, download, checksum
-        verification, install, and removal, in that order. For the snap
-        package, other distributions, or building from source, see the
-        <a href="https://github.com/chairulakmal/markdown-hot-reload#install"
-          >README</a
-        >.
-      </p>
+      <header>
+        <h1>Install mhr on Ubuntu</h1>
+        <p class="lede">
+          This page shows how to install <code>mhr</code>, a read-only
+          GitHub-flavoured markdown viewer, from the <code>.deb</code>
+          attached to a
+          <a
+            href="https://github.com/chairulakmal/markdown-hot-reload/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            >GitHub release</a
+          >, and how to check that download against its published checksum
+          before installing it. For the snap package, other distributions,
+          or building from source, see the
+          <a
+            href="https://github.com/chairulakmal/markdown-hot-reload#install"
+            target="_blank"
+            rel="noopener noreferrer"
+            >README</a
+          >.
+        </p>
+        <nav class="toc" aria-label="Sections on this page">
+          <strong>On this page:</strong>
+          <ol>
+            <li><a href="#what-is-mhr">What is mhr</a></li>
+            <li><a href="#requirements">Requirements</a></li>
+            <li><a href="#pick-a-release">1. Pick a release</a></li>
+            <li><a href="#download">2. Download the package and its checksums</a></li>
+            <li><a href="#verify">3. Verify the checksum</a></li>
+            <li><a href="#install">4. Install it</a></li>
+            <li><a href="#removing-it">Removing it</a></li>
+          </ol>
+        </nav>
+      </header>
 
       <div class="note">
         <strong>v0.1.0 is out now.</strong> See the
         <a
           href="https://github.com/chairulakmal/markdown-hot-reload/releases/tag/v0.1.0"
+          target="_blank"
+          rel="noopener noreferrer"
           >release notes</a
         >
         for what changed.
@@ -136,22 +221,50 @@
           />
           <a
             href="https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118"
+            target="_blank"
+            rel="noopener noreferrer"
             >Demo video</a
           >
         </video>
       </div>
 
-      <h2>Requirements</h2>
+      <h2 id="what-is-mhr">What is mhr</h2>
+      <p>
+        Run <code>mhr notes.md</code>, a window opens with the rendered
+        markdown, and every time you, an editor, or an agent saves that
+        file, the window updates in place. There is no editing surface;
+        <code>mhr</code> never writes to the file it watches.
+      </p>
+      <p>
+        <strong>Safe to point at a file you did not write.</strong>
+        <code>mhr</code> never contacts the network (its webview's
+        Content-Security-Policy sets <code>connect-src 'none'</code>), and
+        it always escapes raw HTML in a document rather than executing it,
+        since a document can come from an editor, an agent, or a
+        repository you do not control. Details, and the tests that guard
+        each claim, are in the README's
+        <a
+          href="https://github.com/chairulakmal/markdown-hot-reload#safety"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Safety section</a
+        >.
+      </p>
+
+      <h2 id="requirements">Requirements</h2>
       <p>
         The <code>.deb</code> needs Ubuntu 24.04 or newer, or Debian trixie
         or newer. It links against the <code>t64</code> builds of GTK and
         GLib, which earlier releases do not have.
       </p>
 
-      <h2>1. Pick a release</h2>
+      <h2 id="pick-a-release">1. Pick a release</h2>
       <p>
         Open the
-        <a href="https://github.com/chairulakmal/markdown-hot-reload/releases"
+        <a
+          href="https://github.com/chairulakmal/markdown-hot-reload/releases"
+          target="_blank"
+          rel="noopener noreferrer"
           >releases page</a
         >
         and note the tag of the release you want, for example
@@ -161,7 +274,7 @@
         early development, not a sign anything was broken.
       </p>
 
-      <h2>2. Download the package and its checksums</h2>
+      <h2 id="download">2. Download the package and its checksums</h2>
       <p>
         Set <code>TAG</code> to the tag you picked, then download both files
         into the same directory:
@@ -176,7 +289,7 @@ curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/
         both covered by the same <code>SHA256SUMS</code> file.
       </p>
 
-      <h2>3. Verify the checksum</h2>
+      <h2 id="verify">3. Verify the checksum</h2>
       <p>
         Before installing anything, check the download against the
         checksum GitHub Actions produced when it built the release:
@@ -190,7 +303,7 @@ curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/
         package. Delete it and download it again.
       </p>
 
-      <h2>4. Install it</h2>
+      <h2 id="install">4. Install it</h2>
       <p>
         <code>apt</code> resolves the WebKitGTK and GTK dependencies from
         your system's own repositories, so no separate download step is
@@ -212,26 +325,18 @@ curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/
       <p>Then run it against any markdown file:</p>
       <pre><code>mhr notes.md</code></pre>
 
-      <h2>Removing it</h2>
+      <h2 id="removing-it">Removing it</h2>
       <pre><code>sudo apt remove mhr</code></pre>
 
-      <div class="note">
-        <strong>Safe to point at a file you did not write.</strong>
-        <code>mhr</code> never contacts the network, never writes to the
-        file it watches, and always escapes raw HTML in a document rather
-        than executing it. See the README's
-        <a
-          href="https://github.com/chairulakmal/markdown-hot-reload#safety"
-          >Safety section</a
-        >
-        for the details.
-      </div>
-
       <footer>
-        <a href="https://github.com/chairulakmal/markdown-hot-reload"
+        <a
+          href="https://github.com/chairulakmal/markdown-hot-reload"
+          target="_blank"
+          rel="noopener noreferrer"
           >chairulakmal/markdown-hot-reload</a
         >
-        &middot; MIT licensed
+        &middot; MIT licensed &middot;
+        <a href="/llms.txt">llms.txt</a>
       </footer>
     </main>
   </body>

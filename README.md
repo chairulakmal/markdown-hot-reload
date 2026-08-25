@@ -2,7 +2,7 @@
 
 # mhr
 
-`mhr` is a read-only, desktop GitHub-flavoured markdown viewer. Point it at a file and it opens a window that re-renders the moment the file changes on disk. It has no network access, by design, so a document renders the same offline as online. Below: what it does, how it works, how to install it, how to build and run it, what it supports, how to contribute a change, and where the source and further documentation live.
+`mhr` is a read-only, desktop GitHub-flavoured markdown viewer. Point it at a file and it opens a window that re-renders the moment the file changes on disk. It has no network access, by design, so a document renders the same offline as online. Below: what it does, how it works, how it keeps a document safe to open, how to install it, how to build and run it, what it supports, how to contribute a change, and where the source and further documentation live.
 
 https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118
 
@@ -13,6 +13,17 @@ Run `mhr notes.md`, a window opens with the rendered markdown, and every time yo
 ## How it works
 
 One Rust binary. `comrak` parses markdown to HTML, `notify` watches the file's parent directory, and `wry` and `tao` host a system webview that receives the new HTML through `evaluate_script`. The frontend is a static HTML shell plus about sixty lines of vanilla JavaScript, both compiled into the binary by `rust-embed`. Parsing, syntax highlighting, math conversion, and escaping all happen in Rust. JavaScript only morphs the DOM and draws Mermaid diagrams.
+
+## Safety
+
+A markdown file `mhr` opens can come from an editor, an agent, or a repository you do not control, not only from the person reading it. `mhr` treats every document as untrusted input.
+
+- **No network access.** `index.html` sets `connect-src 'none'` in its Content-Security-Policy, so anything that needs the network fails immediately instead of working locally and leaking data elsewhere.
+- **Raw HTML is escaped, never executed.** A document that embeds `<script>`, or any other raw tag, shows it as text on the page rather than running it. `src/render.rs` has tests that check this directly.
+- **Read-only.** `mhr` never writes to the file it watches. There is no editing surface.
+- **No `unsafe` code in this crate.** `Cargo.toml` forbids the `unsafe` keyword at the compiler level (`[lints.rust] unsafe_code = "forbid"`), not only by convention. This does not extend to dependencies, which are ordinary Rust crates and may use `unsafe` internally.
+
+The design invariants behind each of these, and the tests that guard them, are spelled out in [`AGENTS.md`](AGENTS.md).
 
 ## Install
 

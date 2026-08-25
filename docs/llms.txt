@@ -1,0 +1,23 @@
+# mhr
+
+> A read-only, offline GitHub-flavoured markdown viewer for the desktop. Point it at a file and it opens a window that re-renders the moment the file changes on disk. It has no network access and no editing surface.
+
+mhr is a single Rust binary with no npm, no bundler, and no build step for the frontend. It parses markdown to HTML with comrak, watches the file's parent directory with notify, and renders through a system webview (wry and tao). Parsing, syntax highlighting, math conversion, and HTML escaping all happen in Rust; the small amount of JavaScript only morphs the DOM and draws Mermaid diagrams.
+
+Safety guarantees: the webview's Content-Security-Policy blocks all network access (`connect-src 'none'`), so a document renders the same offline as online. Raw HTML in a document is always escaped, never executed, since documents are treated as untrusted input. mhr never writes to the file it watches. The crate forbids `unsafe` code at the compiler level.
+
+## Docs
+
+- [README](https://github.com/chairulakmal/markdown-hot-reload/blob/main/README.md): what it does, how to install it, what markdown features it supports
+- [Contributor notes](https://github.com/chairulakmal/markdown-hot-reload/blob/main/AGENTS.md): architecture, design invariants, and the tests behind each safety guarantee
+- [Releases](https://github.com/chairulakmal/markdown-hot-reload/releases): prebuilt packages and changelog
+
+## Install
+
+- Snap (any distribution with snapd): `sudo snap install markdown-hot-reload`
+- Debian 13 / Ubuntu 24.04 or newer: `.deb` package on the releases page
+- Other x86_64 Linux: tarball on the releases page, plus WebKitGTK 4.1 from your package manager
+
+## Platforms
+
+Linux is the primary target. macOS is planned next. Windows is nice-to-have, with no release target yet.

@@ -10,14 +10,6 @@ use std::sync::{Arc, Mutex};
 use tao::dpi::LogicalSize;
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
-#[cfg(any(
-    target_os = "linux",
-    target_os = "dragonfly",
-    target_os = "freebsd",
-    target_os = "netbsd",
-    target_os = "openbsd"
-))]
-use tao::platform::unix::EventLoopBuilderExtUnix;
 use tao::window::{Icon, WindowBuilder};
 use wry::{WebView, WebViewBuilder};
 
@@ -46,24 +38,12 @@ fn main() -> Result<()> {
 
     let body = Arc::new(Mutex::new(read_and_render(&path)));
 
-    let mut event_loop_builder = EventLoopBuilder::<UserEvent>::with_user_event();
-    // Without an explicit app id, GTK falls back to the invoking process's
-    // prgname, which is not guaranteed to be "mhr" under every launcher, so
-    // the desktop shell has nothing reliable to match against the installed
-    // `.desktop` file's `StartupWMClass` and shows a generic icon instead.
-    // GLib requires a dotted, reverse-DNS style id here; a bare "mhr" fails
-    // `g_application_id_is_valid` and gtk_application_new logs a cascade of
-    // GLib-GObject/Gtk-CRITICAL warnings instead of erroring, so the breakage
-    // is silent unless someone reads stderr.
-    #[cfg(any(
-        target_os = "linux",
-        target_os = "dragonfly",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
-    ))]
-    event_loop_builder.with_app_id("com.chairulakmal.mhr");
-    let event_loop = event_loop_builder.build();
+    // No app id is set here, on purpose. GTK claims one as a session-bus name,
+    // which strict snap confinement refuses, and tao turns that refusal into a
+    // panic before the window opens. Without an id, GTK falls back to the
+    // program name, which is `mhr` in every package, and that is what
+    // `StartupWMClass` in the two desktop files matches. See AGENTS.md.
+    let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
 
     let window = WindowBuilder::new()

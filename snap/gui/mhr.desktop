@@ -3,7 +3,11 @@ Type=Application
 Name=mhr
 GenericName=Markdown Viewer
 Comment=Read-only GitHub-flavoured markdown viewer that reloads on save
-Exec=mhr %f
+# snapd validates this against the app's wrapper name, markdown-hot-reload.mhr,
+# and silently drops the whole line when it does not match, leaving an entry
+# with no command. The bare `mhr` alias is not accepted here even once granted,
+# because it is a separate symlink rather than the wrapper.
+Exec=markdown-hot-reload.mhr %f
 Icon=${SNAP}/meta/gui/icon.svg
 Terminal=false
 MimeType=text/markdown;

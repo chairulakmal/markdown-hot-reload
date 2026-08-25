@@ -34,7 +34,7 @@ These five are what the `ci` job runs, in that order. Run them before opening a 
 
 `--locked` is part of the command, not decoration. Without it, cargo quietly rewrites `Cargo.lock` when it drifts from `Cargo.toml`, and the run passes against a dependency graph nobody committed.
 
-Building the snap locally needs LXD, which `snapcraft pack` sets up on first run. CI builds it on every pull request and every push to `main` that touches something other than prose, so there is rarely a reason to run it by hand.
+Building the snap locally needs LXD, which `snapcraft pack` sets up on first run. CI builds it on every pull request and every push to `main` that touches something other than prose, so there is rarely a reason to run it by hand. The CI build takes about 7 to 9 minutes; the `timeout-minutes: 45` on that job is a ceiling for a stuck build, not an estimate of how long it runs.
 
 `fixtures/kitchen-sink.md` exercises every supported GFM feature. Edit it from a second terminal to test reload.
 
@@ -45,11 +45,11 @@ The GUI cannot be verified from a headless tool call. Add a test to `src/render.
 `main` is governed by a repository ruleset named `protect main and default branches` whose bypass list is empty, so the maintainer takes the same route as everyone else: branch, pull request, passing CI, merge. [`README.md`](README.md) has the contributor-facing version. The rules below constrain `.github/workflows/ci.yml`, so read them before editing that file.
 
 - **The required check is named `ci`, the id of the job in `ci.yml`.** Renaming the job, or adding a `name:` key to it, renames the check. The ruleset then waits for a check that no longer reports, and every pull request stops merging.
-- **The `snap` job must never become a required check.** It takes up to 45 minutes, the workflow's concurrency rule cancels it when the branch is pushed again, and a prose-only pull request skips it altogether. A cancelled check is not a passing one, so requiring it would block merges at random.
+- **The `snap` job must never become a required check.** The workflow's concurrency rule cancels it when the branch is pushed again, and a prose-only pull request skips it altogether. A cancelled check is not a passing one, and a skipped one never reports at all, so requiring it would block merges at random.
 - **Every commit must be signed**, including one an agent creates for the author. If a push is rejected with no clear reason, check `git log --show-signature -1` first.
 - **Keep `user.email` set to an address registered on the account.** The ruleset requires an approving review for any change GitHub cannot attribute to a user account, and nobody can approve their own pull request, so a stray address makes a pull request unmergeable.
 
-The `changes` job follows from the first two bullets. It compares the changed files against a list of prose files and decides whether `snap` runs, so a documentation-only pull request skips the 45-minute build. It never gates `ci`, because a required check that does not report leaves the pull request unmergeable. Top-level files are named one by one instead of matching `*.md`, since `fixtures/kitchen-sink.md` is input to the render and CLI tests and a change to it must still run them. `docs/*` and `.claude/*` are directory wildcards instead, safe because nothing under either directory ever affects the build. A new top-level prose file has to be added to the list by name, or editing it triggers the snap build.
+The `changes` job follows from the first two bullets. It compares the changed files against a list of prose files and decides whether `snap` runs, so a documentation-only pull request skips the snap build. It never gates `ci`, because a required check that does not report leaves the pull request unmergeable. Top-level files are named one by one instead of matching `*.md`, since `fixtures/kitchen-sink.md` is input to the render and CLI tests and a change to it must still run them. `docs/*` and `.claude/*` are directory wildcards instead, safe because nothing under either directory ever affects the build. A new top-level prose file has to be added to the list by name, or editing it triggers the snap build.
 
 ## Traps already checked for
 
@@ -76,3 +76,5 @@ Two pairings there fail silently rather than loudly, which is why they are named
 CI builds the snap on every pull request and every push to `main` that touches more than prose, and uploads it as a workflow artifact, so a packaging break is caught before release rather than at it. It also catches breaks no commit here causes: the snapcraft 9.0.1 regression above arrived on its own, because the build action installs snapcraft from `latest/stable`. Nothing is published automatically; the artifact is there to install with `snap install --dangerous` and test.
 
 Snap Store and GitHub Releases are the only planned channels. Flathub was considered and dropped, not deferred: one maintainer, and a second packaging manifest and Store listing costs more upkeep than the extra reach is worth. Don't propose adding it back without the author raising it first.
+
+An apt repository was considered and dropped for the same reason. Hosting one is free, since `Packages` and a signed `Release` are static files GitHub Pages can serve, but it would commit signed `.deb` binaries into this repository's history forever, put a GPG signing key in the Actions secrets, and ask a user for three setup commands where the snap needs one. Automatic updates are the only problem it would solve, and the snap already solves that. So the `.deb` and the tarball stay manual installs, and the install guide says so in both sections. Same rule as Flathub: don't propose it without the author raising it first.

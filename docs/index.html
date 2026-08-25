@@ -216,8 +216,15 @@ curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/
       <pre><code>sudo apt remove mhr</code></pre>
 
       <div class="note">
-        <code>mhr</code> never contacts the network. It only reads the file
-        you point it at and re-renders it when the file changes on disk.
+        <strong>Safe to point at a file you did not write.</strong>
+        <code>mhr</code> never contacts the network, never writes to the
+        file it watches, and always escapes raw HTML in a document rather
+        than executing it. See the README's
+        <a
+          href="https://github.com/chairulakmal/markdown-hot-reload#safety"
+          >Safety section</a
+        >
+        for the details.
       </div>
 
       <footer>

@@ -1,10 +1,16 @@
-<img src="assets/icon/mhr-icon.svg" alt="" width="64" height="64" />
+<img src="https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/assets/icon/mhr-icon.svg" alt="" width="64" height="64" />
 
-# mhr
+# Markdown Hot Reload
 
-`mhr` is a read-only, desktop GitHub-flavoured markdown viewer. Point it at a file and it opens a window that re-renders the moment the file changes on disk. It has no network access, by design, so a document renders the same offline as online. Below: what it does, how it works, how it keeps a document safe to open, how to install it, how to build and run it, what it supports, how to contribute a change, and where the source and further documentation live.
+[![crates.io](https://img.shields.io/crates/v/mhr.svg)](https://crates.io/crates/mhr)
+[![Snap Store](https://img.shields.io/badge/snap-markdown--hot--reload-orange.svg)](https://snapcraft.io/markdown-hot-reload)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chairulakmal/markdown-hot-reload/blob/main/LICENSE)
 
-https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118
+`mhr` is a desktop viewer for markdown you did not write: a plan an agent just produced, a README from a repository you cloned an hour ago, a file your editor is rewriting while you read it. It renders GitHub-flavoured markdown in a native window and re-renders the moment the file changes on disk. There is no server and no port, so nothing else on the machine can reach your document. It has no network access at all, and it never writes to the file it opens. Below: what it does, how it works, how it treats every document as untrusted input, how to install it, how to build and run it, what it supports, how to contribute a change, and where the source and further documentation live.
+
+[![A window showing rendered markdown beside the editor writing it](https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/docs/demo-poster.png)](https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118)
+
+Click the picture to play a 15-second demo.
 
 ## What it does
 
@@ -16,8 +22,9 @@ One Rust binary. `comrak` parses markdown to HTML, `notify` watches the file's p
 
 ## Safety
 
-A markdown file `mhr` opens can come from an editor, an agent, or a repository you do not control, not only from the person reading it. `mhr` treats every document as untrusted input.
+Treating every document as untrusted input is a design constraint here, not advice to the reader. Five guarantees follow from it, and the code enforces each one.
 
+- **No server and no port.** The native window is the whole app. Almost every other markdown previewer renders to a localhost port and opens a browser tab, which means any other process on the machine can read the document. `mhr` opens no socket.
 - **No network access.** `index.html` sets `connect-src 'none'` in its Content-Security-Policy, so anything that needs the network fails immediately instead of working locally and leaking data elsewhere.
 - **Raw HTML is escaped, never executed.** A document that embeds `<script>`, or any other raw tag, shows it as text on the page rather than running it. `src/render.rs` has tests that check this directly.
 - **Read-only.** `mhr` never writes to the file it watches. There is no editing surface.
@@ -27,9 +34,23 @@ The design invariants behind each of these, and the tests that guard them, are s
 
 ## Install
 
-Every package is built for x86_64, which is also called amd64. There is no arm64 build yet. Nobody has asked for one so far, so please open an issue if you need it.
+Three ways to install, covered below in this order. `cargo install mhr` builds from source and works wherever the Rust toolchain does. The snap is the better choice on a Linux desktop, because it bundles its own WebKitGTK and updates itself. A `.deb` and a tarball are attached to every release for anyone who wants neither.
 
-The snap is the recommended install on any distribution that runs snapd. Ubuntu includes snapd by default. The snap bundles its own WebKitGTK and updates itself:
+```
+cargo install mhr
+```
+
+This compiles the crate on your machine, so it needs Rust 1.88 or newer, which [rustup](https://rustup.rs) installs. On Linux it also needs three system packages, because the webview is WebKitGTK. On Ubuntu and Debian:
+
+```
+sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
+```
+
+Install those first. Without them the build fails at the linker, and the error does not say which package is missing. Linux is the only platform with a released build today, so a `cargo install` on macOS or Windows is untested rather than supported. See Platforms below.
+
+Every prebuilt package below is built for x86_64, which is also called amd64. There is no arm64 build yet. Nobody has asked for one so far, so please open an issue if you need it.
+
+The snap is the recommended install on any distribution that runs snapd. Ubuntu includes snapd by default:
 
 ```
 sudo snap install markdown-hot-reload
@@ -42,19 +63,13 @@ Running the snap from a terminal can print lines like `Could not open /sys/class
 
 Each [release](https://github.com/chairulakmal/markdown-hot-reload/releases) also ships a `.deb` for Ubuntu 24.04, Debian 13, and newer, and an `x86_64-unknown-linux-gnu` tarball for every other distribution. Neither one updates itself, because there is no apt repository for `mhr`.
 
-[The install guide](https://mhr.chairulakmal.com/) is the full version: all three paths step by step, how to check a download against its published checksum, and how to remove each one.
+[The install guide](https://mhr.chairulakmal.com/) is the full version: the snap, the `.deb` and the tarball step by step, how to check a download against its published checksum, and how to remove each one.
 
 ## Building and running
 
-There is no npm, no bundler, and no separate frontend build step. The only toolchain is Cargo, and you need Rust 1.88 or newer, which [rustup](https://rustup.rs) installs. An older compiler is refused with a clear message rather than failing part way through the build.
+There is no npm, no bundler, and no separate frontend build step. The only toolchain is Cargo, plus the same prerequisites a `cargo install` needs: Rust 1.88 or newer and, on Linux, the three WebKitGTK packages listed under Install above. An older compiler is refused with a clear message rather than failing part way through the build.
 
-On Linux, the webview is WebKitGTK, so three system packages are also required. On Ubuntu and Debian:
-
-```
-sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
-```
-
-Then build and run:
+Clone the repository, then build and run:
 
 ```
 cargo build --release
@@ -101,6 +116,7 @@ Contributor notes, including design invariants, decisions taken, and traps alrea
 ## Links
 
 - Install guide for snap, `.deb`, and tarball: [mhr.chairulakmal.com](https://mhr.chairulakmal.com/)
+- Crate: [crates.io/crates/mhr](https://crates.io/crates/mhr)
 - Snap Store listing: [snapcraft.io/markdown-hot-reload](https://snapcraft.io/markdown-hot-reload)
 - Source: [github.com/chairulakmal/markdown-hot-reload](https://github.com/chairulakmal/markdown-hot-reload)
 - Report a problem: [issue tracker](https://github.com/chairulakmal/markdown-hot-reload/issues)

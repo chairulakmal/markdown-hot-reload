@@ -14,7 +14,7 @@ env:
   # come from a compiler that was chosen. Matches the dev machine. Bump it
   # deliberately, and never below rust-version in Cargo.toml.
   RUST_VERSION: 1.97.1
-  # Pinned so packaging behaviour changes only when this file changes,
+  # Pinned so packaging behavior changes only when this file changes,
   # not whenever crates.io publishes a new cargo-deb release.
   CARGO_DEB_VERSION: 3.7.0
 
@@ -41,7 +41,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      # Three places carry the version and a mismatch ships mislabelled files.
+      # Three places carry the version and a mismatch ships mislabeled files.
       - name: Check the tag against Cargo.toml and snapcraft.yaml
         run: |
           tag="${GITHUB_REF_NAME#v}"

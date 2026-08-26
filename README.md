@@ -6,7 +6,7 @@
 [![Snap Store](https://img.shields.io/badge/snap-markdown--hot--reload-orange.svg)](https://snapcraft.io/markdown-hot-reload)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chairulakmal/markdown-hot-reload/blob/main/LICENSE)
 
-`mhr` is a desktop viewer for markdown you did not write: a plan an agent just produced, a README from a repository you cloned an hour ago, a file your editor is rewriting while you read it. It renders GitHub-flavoured markdown in a native window and re-renders the moment the file changes on disk. There is no server and no port, so nothing else on the machine can reach your document. It has no network access at all, and it never writes to the file it opens. Below: what it does, how it works, how it treats every document as untrusted input, how to install it, how to build and run it, what it supports, how to contribute a change, and where the source and further documentation live.
+`mhr` is a desktop viewer for markdown you did not write: a plan an agent just produced, a README from a repository you cloned an hour ago, a file your editor is rewriting while you read it. It renders GitHub-flavored markdown in a native window and re-renders the moment the file changes on disk. There is no server and no port, so nothing else on the machine can reach your document. It has no network access at all, and it never writes to the file it opens. Below: what it does, how it works, how it treats every document as untrusted input, how to install it, how to build and run it, what it supports, which platforms it targets, how to contribute a change, and where the source and further documentation live.
 
 [![A window showing rendered markdown beside the editor writing it](https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/docs/demo-poster.png)](https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118)
 
@@ -34,7 +34,7 @@ The design invariants behind each of these, and the tests that guard them, are d
 
 ## Install
 
-Three ways to install, covered below in this order. `cargo install mhr` builds from source and works wherever the Rust toolchain does. The snap is the better choice on a Linux desktop, because it bundles its own WebKitGTK and updates itself. A `.deb` and a tarball are attached to every release for anyone who wants neither.
+Four ways to install, covered below in this order. `cargo install mhr` builds from source and works wherever the Rust toolchain does. The snap is the better choice on a Linux desktop, because it bundles its own WebKitGTK and updates itself. A `.deb` and a tarball are attached to every release for anyone who wants neither.
 
 ```
 cargo install mhr
@@ -57,13 +57,13 @@ sudo snap install markdown-hot-reload
 sudo snap alias markdown-hot-reload.mhr mhr
 ```
 
-The second command creates the `mhr` command. It is needed because the snap installs itself as `markdown-hot-reload.mhr`. A bare `mhr` alias needs approval from the Snap Store, and that request is currently under review. The alias works on your own machine whatever the Store decides.
+The second command creates the `mhr` command. It is needed because the snap installs itself as `markdown-hot-reload.mhr`. A bare `mhr` alias needs approval from the Snap Store, and that request is under review. The alias works on your own machine whatever the Store decides.
 
 Running the snap from a terminal can print lines like `Could not open /sys/class/dmi/id/chassis_type` or `This call is not available inside the sandbox`. These come from GTK probing hardware and desktop details that Snap's confinement blocks on purpose. They are harmless: the window still opens and renders the file normally, so it is safe to ignore them.
 
 Each [release](https://github.com/chairulakmal/markdown-hot-reload/releases) also ships a `.deb` for Ubuntu 24.04, Debian 13, and newer, and an `x86_64-unknown-linux-gnu` tarball for every other distribution. Neither one updates itself, because there is no apt repository for `mhr`.
 
-[The install guide](https://mhr.chairulakmal.com/) is the full version: the snap, the `.deb` and the tarball step by step, how to check a download against its published checksum, and how to remove each one.
+[The install guide](https://mhr.chairulakmal.com/) is the full version: all four paths step by step, how to check a download against its published checksum, and how to update or remove each one.
 
 ## Building and running
 
@@ -84,7 +84,7 @@ cargo run -- fixtures/kitchen-sink.md
 
 Every save re-renders the window, so a change is visible immediately. `fixtures/kitchen-sink.md` exercises every markdown feature the app supports, making it the fastest way to confirm a rendering change did not break something else.
 
-`cargo test` runs the render pipeline tests, and `cargo clippy --all-targets` should report no warnings. [`AGENTS.md`](AGENTS.md) lists the full command set CI runs.
+`cargo test` runs the render, math, CLI, asset, and watcher tests, and `cargo clippy --all-targets` should report no warnings. [`AGENTS.md`](AGENTS.md) lists the full command set CI runs.
 
 ## What it supports
 
@@ -115,7 +115,7 @@ Contributor notes, including design invariants, decisions taken, and traps alrea
 
 ## Links
 
-- Install guide for snap, `.deb`, and tarball: [mhr.chairulakmal.com](https://mhr.chairulakmal.com/)
+- Install guide for cargo, the snap, the `.deb`, and the tarball: [mhr.chairulakmal.com](https://mhr.chairulakmal.com/)
 - Crate: [crates.io/crates/mhr](https://crates.io/crates/mhr)
 - Snap Store listing: [snapcraft.io/markdown-hot-reload](https://snapcraft.io/markdown-hot-reload)
 - Source: [github.com/chairulakmal/markdown-hot-reload](https://github.com/chairulakmal/markdown-hot-reload)

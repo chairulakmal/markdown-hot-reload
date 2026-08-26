@@ -43,7 +43,7 @@ pub fn escape_html(s: &str) -> String {
 }
 
 /// Highlights to CSS classes rather than inline styles. Passing a theme name
-/// here would bake one theme's colours into the HTML, including a
+/// here would bake one theme's colors into the HTML, including a
 /// `background-color` on the `<pre>` that no stylesheet can override, so a dark
 /// page would show a white code block. The classes let `highlight.css` pick the
 /// palette from `prefers-color-scheme` instead, and leave the block's own
@@ -214,7 +214,7 @@ mod tests {
     }
 
     /// Highlighting has to arrive as classes. An inline `style` would carry one
-    /// theme's colours, and the `background-color` syntect puts on the `<pre>`
+    /// theme's colors, and the `background-color` syntect puts on the `<pre>`
     /// in theme mode cannot be overridden from a stylesheet, so a dark page
     /// would show a white code block.
     #[test]

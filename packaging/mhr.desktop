@@ -2,7 +2,7 @@
 Type=Application
 Name=mhr
 GenericName=Markdown Viewer
-Comment=Read-only GitHub-flavoured markdown viewer that reloads on save
+Comment=Read-only GitHub-flavored markdown viewer that reloads on save
 Exec=mhr %f
 Icon=mhr
 StartupWMClass=mhr

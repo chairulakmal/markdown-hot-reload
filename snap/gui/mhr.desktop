@@ -2,7 +2,7 @@
 Type=Application
 Name=mhr
 GenericName=Markdown Viewer
-Comment=Read-only GitHub-flavoured markdown viewer that reloads on save
+Comment=Read-only GitHub-flavored markdown viewer that reloads on save
 # snapd validates this against the app's wrapper name, markdown-hot-reload.mhr,
 # and silently drops the whole line when it does not match, leaving an entry
 # with no command. The bare `mhr` alias is not accepted here even once granted,

@@ -2,7 +2,7 @@ name: markdown-hot-reload
 # The Store slug stays the long name; mhr is the upstream command, set below
 # so search and the listing page both show what people actually type.
 title: mhr
-version: '0.1.1' # keep in sync with the [package] version in Cargo.toml
+version: '0.1.2' # keep in sync with the [package] version in Cargo.toml
 license: MIT
 # Points at the vendored SVG rather than a copy under snap/gui/, so the Store
 # listing and the app both track the one source file.

@@ -31,4 +31,4 @@ Requires `docker` (daemon reachable) and an authenticated `gh` CLI. Run it from 
 
 Read `$OUT_DIR/before.png` and `$OUT_DIR/after.png` yourself and describe what they show; do not report success on process-alive alone. If anything looks wrong, `$OUT_DIR/mhr.log` has the process's stderr/stdout, and `--keep` leaves the container up for `docker exec -it <name> bash` to dig further.
 
-This complements, not replaces, `cargo test --locked` and a real run on akmal's machine for anything that needs an actual GPU or platform-specific input handling: Xvfb gives software rendering only, and this only ever runs the Linux `.deb` path.
+This complements, not replaces, `cargo test --locked` and a real run on the maintainer's machine for anything that needs an actual GPU or platform-specific input handling: Xvfb gives software rendering only, and this only ever runs the Linux `.deb` path.

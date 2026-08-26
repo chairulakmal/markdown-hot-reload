@@ -38,7 +38,7 @@ Building the snap locally needs LXD, which `snapcraft pack` sets up on first run
 
 `fixtures/kitchen-sink.md` exercises every supported GFM feature. Edit it from a second terminal to test reload.
 
-The GUI cannot be verified from a headless tool call. Add a test to `src/render.rs` for anything checkable from HTML output, and hand the run command to akmal for anything visual.
+The GUI cannot be verified from a headless tool call. Add a test to `src/render.rs` for anything checkable from HTML output, and hand the run command to the maintainer for anything visual.
 
 ## How changes land
 

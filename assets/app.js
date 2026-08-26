@@ -33,11 +33,16 @@
         : "default",
     });
     for (const block of blocks) {
+      // Saved before the first render, because that render replaces the
+      // block's text (the diagram source) with the rendered SVG markup, and
+      // a theme-change redraw needs the original source back.
+      const source = block.dataset.source ?? block.textContent;
+      block.dataset.source = source;
       block.dataset.drawn = "1";
       try {
         const { svg } = await mermaid.render(
           `mermaid-${Math.random().toString(36).slice(2)}`,
-          block.textContent,
+          source,
         );
         block.innerHTML = svg;
       } catch (error) {
@@ -46,6 +51,17 @@
       }
     }
   }
+
+  // The rest of the page follows prefers-color-scheme live through CSS; an
+  // already-drawn diagram is a static SVG with colors baked in, so it needs
+  // an explicit redraw to keep up with an OS theme switch that isn't paired
+  // with a file save.
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    for (const block of content.querySelectorAll("pre.mermaid[data-drawn]")) {
+      delete block.dataset.drawn;
+    }
+    void drawDiagrams();
+  });
 
   // Morphing rather than replacing innerHTML is what preserves scroll position,
   // open <details> elements, and text selection across a reload.

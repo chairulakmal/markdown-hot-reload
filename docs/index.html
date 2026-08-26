@@ -6,7 +6,7 @@
     <title>mhr: install on Linux</title>
     <meta
       name="description"
-      content="Install mhr on Linux four ways: the snap in one command, the .deb on Ubuntu 24.04 or Debian 13, the tarball on any x86_64 distribution, or cargo install mhr from crates.io. Includes checksum verification and how to remove each one. mhr is a read-only, offline GitHub-flavoured markdown viewer."
+      content="Install mhr on Linux four ways: the snap in one command, the .deb on Ubuntu 24.04 or Debian 13, the tarball on any x86_64 distribution, or cargo install mhr from crates.io. Includes checksum verification and how to update or remove each one. mhr is a read-only, offline GitHub-flavoured markdown viewer."
     />
     <link rel="canonical" href="https://mhr.chairulakmal.com/" />
     <meta property="og:type" content="website" />
@@ -329,7 +329,7 @@
           Debian 13, a tarball for every other x86_64 distribution, and
           <code>cargo install mhr</code>, which builds it from source. This
           page covers all four, including how to check a download against its
-          published checksum and how to remove each one.
+          published checksum and how to update or remove each one.
         </p>
         <nav class="toc" aria-label="Sections on this page">
           <strong>On this page:</strong>
@@ -350,6 +350,7 @@
             </li>
             <li><a href="#tarball">The tarball, for other distributions</a></li>
             <li><a href="#cargo">From crates.io, with cargo</a></li>
+            <li><a href="#updating-it">Updating it</a></li>
             <li><a href="#removing-it">Removing it</a></li>
           </ol>
         </nav>
@@ -423,9 +424,18 @@
       <h2 id="which-package">Which package to use</h2>
       <p>
         <strong>Use the snap unless you have a reason not to.</strong> It is
-        the only package that updates itself. The other two are installed once
-        and stay at that version until you repeat the steps by hand.
+        the only package that updates itself. The other three are installed
+        once and stay at that version until you repeat the steps by hand.
       </p>
+      <div class="note">
+        <strong>Installing non-interactively?</strong> If a script, a CI job,
+        or an agent is doing the install rather than a person at a desktop,
+        prefer <a href="#cargo"><code>cargo install mhr</code></a> instead.
+        It is one command, with no release page to read, no filename to
+        template, and no checksum step, and it builds the binary from the
+        published source on crates.io rather than asking you to trust a
+        prebuilt one.
+      </div>
       <div class="scroll">
         <table class="facts">
           <thead>
@@ -690,6 +700,19 @@ mhr notes.md</code></pre>
         that may work rather than something that should.
       </p>
 
+      <h2 id="updating-it">Updating it</h2>
+      <p>Use the line that matches how you installed it:</p>
+      <pre><code>sudo snap refresh markdown-hot-reload   # snap, only needed if you don't want to wait for the automatic refresh
+# .deb:     download and verify a newer release the same way (see <a href="#deb">The .deb</a>), then run the install command again
+# tarball:  download and verify a newer release the same way (see <a href="#tarball">The tarball</a>), then overwrite /usr/local/bin/mhr
+cargo install mhr                       # cargo, reinstalls whatever is newest on crates.io</code></pre>
+      <p>
+        The snap is the only one of the four that updates on its own: snapd
+        checks for a new revision in the background, usually within a day of
+        release. The other three stay at the version you installed until you
+        repeat the command above.
+      </p>
+
       <h2 id="removing-it">Removing it</h2>
       <p>Use the line that matches how you installed it:</p>
       <pre><code>sudo snap remove markdown-hot-reload   # snap
@@ -698,7 +721,8 @@ sudo rm /usr/local/bin/mhr             # tarball
 cargo uninstall mhr                    # cargo</code></pre>
       <p>
         <code>mhr</code> writes no configuration files and no cache, so
-        nothing is left behind after any of these.
+        nothing is left behind after any of these. Removing the snap also
+        removes the <code>mhr</code> alias you created for it.
       </p>
 
       <footer>

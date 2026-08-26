@@ -10,16 +10,16 @@ Safety guarantees: the webview's Content-Security-Policy blocks all network acce
 
 - [README](https://github.com/chairulakmal/markdown-hot-reload/blob/main/README.md): what it does, how to install it, what markdown features it supports
 - [Contributor notes](https://github.com/chairulakmal/markdown-hot-reload/blob/main/AGENTS.md): architecture, design invariants, and the tests behind each safety guarantee
-- [Install guide](https://mhr.chairulakmal.com/): all four install paths step by step, with checksum verification and removal
+- [Install guide](https://mhr.chairulakmal.com/): all four install paths step by step, with checksum verification, updating, and removal
 - [Crate](https://crates.io/crates/mhr): published as `mhr`, buildable with `cargo install mhr`
 - [Releases](https://github.com/chairulakmal/markdown-hot-reload/releases): prebuilt packages and changelog
 
 ## Install
 
-- Snap, recommended (any distribution with snapd): `sudo snap install markdown-hot-reload`, then `sudo snap alias markdown-hot-reload.mhr mhr` to create the `mhr` command. It is the only package that updates itself.
+- From source, recommended for scripted or agent-driven installs: `cargo install mhr`. Needs Rust 1.88 or newer and, on Linux, `libwebkit2gtk-4.1-dev`, `libgtk-3-dev` and `pkg-config` installed first, or the build fails at the linker. One command, no release page to read, no filename to template, no checksum step, and it builds from the published source on crates.io rather than a prebuilt binary. Compiles on the user's machine, so it takes minutes, and updates are manual. Only Linux is tested; see Platforms below.
+- Snap, best on a Linux desktop for a human installing interactively (any distribution with snapd): `sudo snap install markdown-hot-reload`, then `sudo snap alias markdown-hot-reload.mhr mhr` to create the `mhr` command. It is the only package that updates itself.
 - Debian 13 / Ubuntu 24.04 or newer: `.deb` package on the releases page, installed with `sudo apt install ./mhr_*.deb`. Updates are manual, because there is no apt repository.
 - Other x86_64 Linux: tarball on the releases page, plus WebKitGTK 4.1 from your package manager. Updates are manual.
-- From source, any platform with a Rust toolchain: `cargo install mhr`. Needs Rust 1.88 or newer and, on Linux, `libwebkit2gtk-4.1-dev`, `libgtk-3-dev` and `pkg-config` installed first, or the build fails at the linker. Compiles on the user's machine, so it takes minutes, and updates are manual. Only Linux is tested; see Platforms below.
 
 ## Platforms
 

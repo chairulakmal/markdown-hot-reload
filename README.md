@@ -14,7 +14,7 @@ Click the picture to play a 15-second demo.
 
 ## What it does
 
-Run `mhr notes.md`, a window opens with the rendered markdown, and every time you (or an editor, or an agent) save that file, the window updates in place without losing your scroll position or open `<details>` elements. There is no editing surface; `mhr` never writes to the watched file.
+Run `mhr notes.md`. A window opens with the rendered markdown, and every time you (or an editor, or an agent) save that file, the window updates in place without losing your scroll position or open `<details>` elements. There is no editing surface; `mhr` never writes to the watched file.
 
 ## How it works
 
@@ -30,7 +30,7 @@ Treating every document as untrusted input is a design constraint here, not advi
 - **Read-only.** `mhr` never writes to the file it watches. There is no editing surface.
 - **No `unsafe` code in this crate.** `Cargo.toml` forbids the `unsafe` keyword at the compiler level (`[lints.rust] unsafe_code = "forbid"`), not only by convention. This does not extend to dependencies, which are ordinary Rust crates and may use `unsafe` internally.
 
-The design invariants behind each of these, and the tests that guard them, are spelled out in [`AGENTS.md`](AGENTS.md).
+The design invariants behind each of these, and the tests that guard them, are detailed in [`AGENTS.md`](AGENTS.md).
 
 ## Install
 
@@ -67,7 +67,7 @@ Each [release](https://github.com/chairulakmal/markdown-hot-reload/releases) als
 
 ## Building and running
 
-There is no npm, no bundler, and no separate frontend build step. The only toolchain is Cargo, plus the same prerequisites a `cargo install` needs: Rust 1.88 or newer and, on Linux, the three WebKitGTK packages listed under Install above. An older compiler is refused with a clear message rather than failing part way through the build.
+There is no npm, no bundler, and no separate frontend build step. The only toolchain is Cargo, plus the same prerequisites a `cargo install` needs: Rust 1.88 or newer and, on Linux, the three WebKitGTK packages listed under Install above. An older compiler is refused with a clear message rather than failing midway through the build.
 
 Clone the repository, then build and run:
 
@@ -84,7 +84,7 @@ cargo run -- fixtures/kitchen-sink.md
 
 Every save re-renders the window, so a change is visible immediately. `fixtures/kitchen-sink.md` exercises every markdown feature the app supports, making it the fastest way to confirm a rendering change did not break something else.
 
-`cargo test` runs the render pipeline tests, and `cargo clippy --all-targets` should stay clean. [`AGENTS.md`](AGENTS.md) lists the full command set CI runs.
+`cargo test` runs the render pipeline tests, and `cargo clippy --all-targets` should report no warnings. [`AGENTS.md`](AGENTS.md) lists the full command set CI runs.
 
 ## What it supports
 

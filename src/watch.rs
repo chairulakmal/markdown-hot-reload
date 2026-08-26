@@ -88,7 +88,7 @@ mod tests {
             let path = std::env::temp_dir().join(name);
             std::fs::create_dir_all(&path).expect("temp dir is creatable");
             // Watch events report resolved paths, and /tmp is a symlink on some
-            // platforms, so an uncanonicalised path here would fail the parent
+            // platforms, so an uncanonicalized path here would fail the parent
             // comparison in is_target for reasons unrelated to the test.
             let path = std::fs::canonicalize(&path).expect("temp dir is canonical");
             Self(path)
@@ -179,13 +179,13 @@ mod tests {
     /// The whole directory is watched, so everything in it that is not the
     /// target has to be filtered back out.
     #[test]
-    fn ignores_its_neighbours_in_the_watched_directory() {
+    fn ignores_its_neighbors_in_the_watched_directory() {
         let dir = TempDir::new();
         let target = dir.join("notes.md");
         std::fs::write(&target, "here").expect("fixture is writable");
 
         let (_debouncer, events) = watching(&target);
-        std::fs::write(dir.join("other.md"), "unrelated").expect("neighbour is writable");
+        std::fs::write(dir.join("other.md"), "unrelated").expect("neighbor is writable");
 
         assert!(
             matches!(
@@ -204,7 +204,7 @@ mod tests {
 
     /// The comparison is exact, so what it accepts is worth pinning: `Path`
     /// compares by components, which is what lets a plain `==` stand in for a
-    /// normalising match.
+    /// normalizing match.
     #[test]
     fn matches_a_spelling_that_differs_only_in_separators() {
         let target = Path::new("/docs/notes.md");
@@ -234,7 +234,7 @@ mod tests {
     }
 
     #[test]
-    fn does_not_match_a_neighbour() {
+    fn does_not_match_a_neighbor() {
         assert!(!is_target(
             Path::new("/docs/other.md"),
             Path::new("/docs/notes.md")

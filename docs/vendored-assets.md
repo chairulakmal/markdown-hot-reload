@@ -20,7 +20,7 @@ To refresh any file, download it, replace it in place, and rebuild.
 | `latex.css` | 0.8.0 | `github.com/carloskiki/pulldown-latex` release `0.8.0`, `styles.css` |
 | `font/*.woff2` | 0.8.0 | `github.com/carloskiki/pulldown-latex` release `0.8.0`, `font/` |
 | `icon/*.svg` | original | the project's own mark, four variants, see below |
-| `icon/window-icon.rgba` | generated | rasterised from `icon/mhr-icon.svg`, see below |
+| `icon/window-icon.rgba` | generated | rasterized from `icon/mhr-icon.svg`, see below |
 
 Mermaid is 3.5 MB raw and dominates the binary, so it is loaded only when a document actually contains a diagram.
 
@@ -30,7 +30,7 @@ Mermaid is 3.5 MB raw and dominates the binary, so it is loaded only when a docu
 
 ## The icon set
 
-The icon set is the project's own mark: a 100x100 grid split into an ink pane holding an `m` and a red pane holding a `d`, all strokes 7 units, both letters on one baseline. `mhr-icon.svg` is the primary, `mhr-icon-mono.svg` is one-colour, `mhr-icon-on-dark.svg` inverts the left pane, and `mhr-icon-16.svg` thickens the strokes to 8 units and sets `shape-rendering="crispEdges"` for 16px. The palette is ink `#201e1d`, red `#ec3013`, ground `#f3f2f2`, and nothing is rounded: corner radius is 0 everywhere, including any app-icon mask. The 4-unit channel between the panes is part of the mark, so never close it, never recolour the panes into two tints of red, and never letterbox the mark inside a rounded container.
+The icon set is the project's own mark: a 100x100 grid split into an ink pane holding an `m` and a red pane holding a `d`, all strokes 7 units, both letters on one baseline. `mhr-icon.svg` is the primary, `mhr-icon-mono.svg` is one-color, `mhr-icon-on-dark.svg` inverts the left pane, and `mhr-icon-16.svg` thickens the strokes to 8 units and sets `shape-rendering="crispEdges"` for 16px. The palette is ink `#201e1d`, red `#ec3013`, ground `#f3f2f2`, and nothing is rounded: corner radius is 0 everywhere, including any app-icon mask. The 4-unit channel between the panes is part of the mark, so never close it, never recolor the panes into two tints of red, and never letterbox the mark inside a rounded container.
 
 ## window-icon.rgba
 
@@ -47,7 +47,7 @@ open('assets/icon/window-icon.rgba', 'wb').write(
 "
 ```
 
-That uses the librsvg loader behind GdkPixbuf, which is already present on any machine that can build this app. `rsvg-convert` or Inkscape would do as well; what matters is that the bitmap is rasterised from the SVG rather than drawn again by hand.
+That uses the librsvg loader behind GdkPixbuf, which is already present on any machine that can build this app. `rsvg-convert` or Inkscape would do as well; what matters is that the bitmap is rasterized from the SVG rather than drawn again by hand.
 
 ## latex.css and the fonts
 

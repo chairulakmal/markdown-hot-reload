@@ -6,7 +6,7 @@
     <title>mhr: install on Linux</title>
     <meta
       name="description"
-      content="Install mhr on Linux four ways: the snap in one command, the .deb on Ubuntu 24.04 or Debian 13, the tarball on any x86_64 distribution, or cargo install mhr from crates.io. Includes checksum verification and how to update or remove each one. mhr is a read-only, offline GitHub-flavoured markdown viewer."
+      content="Install mhr on Linux four ways: the snap in one command, the .deb on Ubuntu 24.04 or Debian 13, the tarball on any x86_64 distribution, or cargo install mhr from crates.io. Includes checksum verification and how to update or remove each one. mhr is a read-only, offline GitHub-flavored markdown viewer."
     />
     <link rel="canonical" href="https://mhr.chairulakmal.com/" />
     <meta property="og:type" content="website" />
@@ -14,7 +14,7 @@
     <meta property="og:title" content="mhr: install on Linux" />
     <meta
       property="og:description"
-      content="Install the snap in one command, the .deb on Ubuntu and Debian, the tarball anywhere else, or build it from crates.io with cargo. A read-only, offline GitHub-flavoured markdown viewer for Linux."
+      content="Install the snap in one command, the .deb on Ubuntu and Debian, the tarball anywhere else, or build it from crates.io with cargo. A read-only, offline GitHub-flavored markdown viewer for Linux."
     />
     <meta name="twitter:card" content="summary" />
     <!--
@@ -42,9 +42,9 @@
             "@id": "https://mhr.chairulakmal.com/#app",
             "name": "mhr",
             "alternateName": "markdown-hot-reload",
-            "description": "A read-only, offline GitHub-flavoured markdown viewer. It opens a window that re-renders the moment the file changes on disk, has no network access, and never writes to the file it watches.",
+            "description": "A read-only, offline GitHub-flavored markdown viewer. It opens a window that re-renders the moment the file changes on disk, has no network access, and never writes to the file it watches.",
             "applicationCategory": "DeveloperApplication",
-            "operatingSystem": "Ubuntu 24.04 or newer, Debian 13 or newer, any Linux with snapd",
+            "operatingSystem": "Any x86_64 Linux: the snap needs snapd, the .deb needs Ubuntu 24.04 or Debian 13 or newer",
             "processorRequirements": "x86_64",
             "softwareVersion": "0.1.2",
             "url": "https://mhr.chairulakmal.com/",
@@ -302,9 +302,16 @@
         color: var(--fg-muted);
         margin-top: 1rem;
       }
-      nav.toc ol {
+      nav.toc ol,
+      nav.toc ul {
         margin: 0.4rem 0 0;
         padding-left: 1.25rem;
+      }
+      /* The step headings carry their own numbers, so a numbered sublist here
+         would print a second, conflicting sequence beside them. */
+      nav.toc ul {
+        list-style: none;
+        padding-left: 1rem;
       }
       nav.toc li {
         margin: 0.15rem 0;
@@ -323,7 +330,7 @@
       <header>
         <h1>Install mhr on Linux</h1>
         <p class="lede">
-          <code>mhr</code> is a read-only GitHub-flavoured markdown viewer.
+          <code>mhr</code> is a read-only GitHub-flavored markdown viewer.
           There are four ways to install it: the snap, which is one command
           and updates itself, the <code>.deb</code> for Ubuntu 24.04 and
           Debian 13, a tarball for every other x86_64 distribution, and
@@ -338,37 +345,39 @@
             <li><a href="#which-package">Which package to use</a></li>
             <li>
               <a href="#snap">The snap, recommended</a>
-              <ol>
+              <ul>
                 <li><a href="#snap-update">Updating</a></li>
                 <li><a href="#snap-remove">Removing</a></li>
-              </ol>
+              </ul>
             </li>
             <li>
               <a href="#deb">The .deb, for Ubuntu and Debian</a>
-              <ol>
+              <ul>
                 <li><a href="#requirements">Requirements</a></li>
                 <li><a href="#in-one-block">All four steps in one block</a></li>
-                <li><a href="#pick-a-release">Pick a release</a></li>
-                <li><a href="#download">Download the package and its checksums</a></li>
-                <li><a href="#verify">Verify the checksum</a></li>
-                <li><a href="#install">Install it</a></li>
+                <li><a href="#pick-a-release">1. Pick a release</a></li>
+                <li>
+                  <a href="#download">2. Download the package and its checksums</a>
+                </li>
+                <li><a href="#verify">3. Verify the checksum</a></li>
+                <li><a href="#install">4. Install it</a></li>
                 <li><a href="#deb-update">Updating</a></li>
                 <li><a href="#deb-remove">Removing</a></li>
-              </ol>
+              </ul>
             </li>
             <li>
               <a href="#tarball">The tarball, for other distributions</a>
-              <ol>
+              <ul>
                 <li><a href="#tarball-update">Updating</a></li>
                 <li><a href="#tarball-remove">Removing</a></li>
-              </ol>
+              </ul>
             </li>
             <li>
               <a href="#cargo">From crates.io, with cargo</a>
-              <ol>
+              <ul>
                 <li><a href="#cargo-update">Updating</a></li>
                 <li><a href="#cargo-remove">Removing</a></li>
-              </ol>
+              </ul>
             </li>
           </ol>
         </nav>
@@ -430,10 +439,12 @@
           </tr>
           <tr>
             <th scope="row">Architecture</th>
-            <td>x86_64 (amd64) only, no arm64 build yet</td>
+            <td>
+              Prebuilt packages are x86_64 (amd64) only, no arm64 build yet
+            </td>
           </tr>
           <tr>
-            <th scope="row">Licence</th>
+            <th scope="row">License</th>
             <td>MIT</td>
           </tr>
         </tbody>
@@ -448,11 +459,10 @@
       <div class="note">
         <strong>Installing non-interactively?</strong> If a script, a CI job,
         or an agent is doing the install rather than a person at a desktop,
-        prefer <a href="#cargo"><code>cargo install mhr</code></a> instead.
-        It is one command, with no release page to read, no filename to
-        template, and no checksum step, and it builds the binary from the
-        published source on crates.io rather than asking you to trust a
-        prebuilt one.
+        use <a href="#cargo"><code>cargo install mhr</code></a>. It is one
+        command, with no release page to read, no filename to template, and no
+        checksum step, and it builds the binary from the published source on
+        crates.io rather than asking you to trust a prebuilt one.
       </div>
       <div class="scroll">
         <table class="facts">
@@ -520,9 +530,8 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
         The second command creates the <code>mhr</code> command. It is needed
         because the snap installs itself as
         <code>markdown-hot-reload.mhr</code>. A bare <code>mhr</code> alias
-        needs Snap Store approval, and that request is currently under review.
-        The alias command works on your own machine whatever the Store
-        decides.
+        needs Snap Store approval, and that request is under review. The alias
+        command works on your own machine whatever the Store decides.
       </p>
       <p>Then open any markdown file:</p>
       <pre><code>mhr notes.md</code></pre>
@@ -538,7 +547,7 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
       <p>
         snapd refreshes installed snaps on its own, usually within a day of a
         new release, so there is normally nothing to do. To update
-        immediately instead of waiting:
+        immediately:
       </p>
       <pre><code>sudo snap refresh markdown-hot-reload</code></pre>
       <p>
@@ -562,10 +571,10 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
 
       <h2 id="deb">The .deb, for Ubuntu and Debian</h2>
       <p>
-        Choose the <code>.deb</code> if you would rather install through
-        <code>apt</code> and use your system's own WebKitGTK than a bundled
-        copy. It installs the command as <code>mhr</code> straight away, with
-        no alias step.
+        Choose the <code>.deb</code> if you prefer installing through
+        <code>apt</code> and using your system's own WebKitGTK rather than a
+        bundled copy. It installs the command as <code>mhr</code> directly,
+        with no alias step.
       </p>
       <h3 id="requirements">Requirements</h3>
       <p>
@@ -688,9 +697,9 @@ mhr notes.md</code></pre>
       <h2 id="tarball">The tarball, for other distributions</h2>
       <p>
         Every release ships a plain <code>x86_64-unknown-linux-gnu</code>
-        tarball. Use it on any distribution that is not Debian based and does
+        tarball. Use it on any distribution that is not Debian-based and does
         not run snapd. It contains the <code>mhr</code> binary, the README,
-        and the licence, inside a directory named after the version:
+        and the license, inside a directory named after the version:
       </p>
       <pre><code>TAG=v0.1.2
 BASE=https://github.com/chairulakmal/markdown-hot-reload/releases/download

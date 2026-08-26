@@ -21,12 +21,12 @@ pub fn index_url() -> String {
     }
 }
 
-/// Side of the pre-rasterised window icon, in pixels.
+/// Side of the pre-rasterized window icon, in pixels.
 pub const ICON_SIZE: u32 = 128;
 
 /// The window icon as raw RGBA. `tao` wants pixels rather than an encoded
 /// image, and decoding a PNG or an SVG at runtime would mean a dependency, so
-/// `icon/window-icon.rgba` is rasterised ahead of time from `icon/mhr-icon.svg`
+/// `icon/window-icon.rgba` is rasterized ahead of time from `icon/mhr-icon.svg`
 /// and embedded as pixels. `docs/vendored-assets.md` in the repository records
 /// the command that regenerates it; the published crate excludes `docs/`.
 pub fn icon_rgba() -> Option<Vec<u8>> {
@@ -110,7 +110,7 @@ mod tests {
     /// The generated and vendored stylesheets, and the fonts in a subdirectory.
     /// A path mistake here breaks silently rather than loudly: math would still
     /// render, just with the wrong font and no environment alignment, and code
-    /// would still render, just with no colours.
+    /// would still render, just with no colors.
     #[test]
     fn embeds_the_vendored_stylesheets_and_fonts() {
         for path in [
@@ -125,7 +125,7 @@ mod tests {
         }
     }
 
-    /// The four brand SVGs and the pre-rasterised window icon. The favicon
+    /// The four brand SVGs and the pre-rasterized window icon. The favicon
     /// links in `index.html` name two of these by path, and a rename would
     /// leave the page silently falling back to a blank icon.
     #[test]
@@ -145,7 +145,7 @@ mod tests {
     /// a regenerated blob at the wrong size would only show up as a missing
     /// icon at runtime. Checked here so the size mismatch fails the build.
     #[test]
-    fn rasterised_icon_is_the_size_the_window_asks_for() {
+    fn rasterized_icon_is_the_size_the_window_asks_for() {
         let rgba = super::icon_rgba().expect("window icon is embedded");
         assert_eq!(
             rgba.len(),

@@ -6,7 +6,7 @@ edition = "2024"
 # only needs 1.85. Declaring it also lets cargo's MSRV-aware resolver pick
 # dependency versions that actually build here.
 rust-version = "1.88"
-description = "Read-only GitHub-flavoured markdown viewer that re-renders when the file changes on disk"
+description = "Read-only GitHub-flavored markdown viewer that re-renders when the file changes on disk"
 license = "MIT"
 # The crate, the GitHub repo and the snap each carry a different name on
 # purpose. `mhr` is what gets typed at a shell; the long name is what someone
@@ -44,7 +44,7 @@ and it has no network access, so a document renders identically offline."""
 assets = [
     ["target/release/mhr", "usr/bin/", "755"],
     ["packaging/mhr.desktop", "usr/share/applications/", "644"],
-    # Resolves Icon=mhr in the desktop entry. Scalable rather than a rasterised
+    # Resolves Icon=mhr in the desktop entry. Scalable rather than a rasterized
     # hicolor size, so the one SVG serves every resolution.
     ["assets/icon/mhr-icon.svg", "usr/share/icons/hicolor/scalable/apps/mhr.svg", "644"],
     ["README.md", "usr/share/doc/mhr/README.md", "644"],

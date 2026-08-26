@@ -1,6 +1,6 @@
 # mhr
 
-> A read-only, offline GitHub-flavoured markdown viewer for the desktop. Point it at a file and it opens a window that re-renders the moment the file changes on disk. It has no network access and no editing surface.
+> A read-only, offline GitHub-flavored markdown viewer for the desktop. Point it at a file and it opens a window that re-renders the moment the file changes on disk. It has no network access and no editing surface.
 
 mhr is a single Rust binary with no npm, no bundler, and no build step for the frontend. It parses markdown to HTML with comrak, watches the file's parent directory with notify, and renders through a system webview (wry and tao). Parsing, syntax highlighting, math conversion, and HTML escaping all happen in Rust; the small amount of JavaScript only morphs the DOM and draws Mermaid diagrams.
 

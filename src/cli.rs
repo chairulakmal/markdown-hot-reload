@@ -9,7 +9,7 @@ use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
 
 pub const USAGE: &str = "\
-mhr, a read-only viewer for GitHub-flavoured markdown. It opens a window and
+mhr, a read-only viewer for GitHub-flavored markdown. It opens a window and
 re-renders whenever the file changes on disk. It never writes to the file.
 
 Usage:
@@ -61,7 +61,7 @@ pub fn parse<I: IntoIterator<Item = OsString>>(args: I) -> Result<Request> {
 
 /// Resolves an opened argument to a path worth watching.
 ///
-/// Canonicalising here rather than at the point of use matters for more than
+/// Canonicalizing here rather than at the point of use matters for more than
 /// tidiness: `watch` derives the directory it watches from this path, and a
 /// relative path would make that directory depend on the working directory at
 /// the time of each call.

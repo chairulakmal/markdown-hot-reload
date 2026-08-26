@@ -7,7 +7,7 @@ license: MIT
 # Points at the vendored SVG rather than a copy under snap/gui/, so the Store
 # listing and the app both track the one source file.
 icon: assets/icon/mhr-icon.svg
-summary: Read-only GitHub-flavoured markdown viewer that reloads on save
+summary: Read-only GitHub-flavored markdown viewer that reloads on save
 description: |
   mhr watches a markdown file and re-renders it in a native window every
   time the file changes on disk. Rendering happens entirely offline: there

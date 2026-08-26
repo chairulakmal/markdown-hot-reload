@@ -1,6 +1,6 @@
 # Agent notes
 
-Working notes for agents on `mhr`, a read-only GitHub-flavoured markdown viewer that re-renders when the file changes on disk. The rule that overrides every other consideration: **no npm, no `package.json`, no frontend build step, and it must render identically with networking disabled.** What follows, in order: what the app is, the invariants, the commands, how changes land on `main`, traps already paid for, where vendored assets are documented, and how the app is distributed.
+Working notes for agents on `mhr`, a read-only GitHub-flavored markdown viewer that re-renders when the file changes on disk. The rule that overrides every other consideration: **no npm, no `package.json`, no frontend build step, and it must render identically with networking disabled.** What follows, in order: what the app is, the invariants, the commands, how changes land on `main`, traps already paid for, where vendored assets are documented, and how the app is distributed.
 
 ## What it is
 
@@ -24,7 +24,7 @@ Breaking any of these is a design change, not a refactor. Raise it rather than d
 ```
 cargo fmt --all -- --check           # CI fails on a formatting diff, so check before pushing
 cargo clippy --locked --all-targets  # lint levels come from [lints] in Cargo.toml, not from flags here
-cargo deny check                     # licence and advisory policy for the dependency tree, from deny.toml
+cargo deny check                     # license and advisory policy for the dependency tree, from deny.toml
 cargo test --locked                  # render pipeline and its escaping guarantees, math validation, CLI parsing, the watcher
 cargo build --locked --release
 ./target/release/mhr fixtures/kitchen-sink.md
@@ -60,7 +60,7 @@ The `changes` job follows from the first two bullets. It compares changed files 
 - **Passing a theme name to syntect bakes it into the HTML.** `SyntectAdapter::new(Some(theme))` writes inline `style` attributes on every span *and* a `background-color` on the `<pre>`, which no stylesheet can override, so a dark page gets a white code block. `SyntectAdapterBuilder::new().css_with_class_prefix("hl-")` emits classes and leaves the background to `--code-bg`. `src/render.rs` asserts no `style=` reaches the page.
 - **comrak puts the codefence language on the `<code>` tag, not `<pre>`.** Use `plugins.render.codefence_renderers`, which dispatches by language, rather than branching inside a `SyntaxHighlighterAdapter`.
 - **comrak does not emit MathML.** It renders a math node as `<span data-math-style>` with the LaTeX left raw, and has no plugin hook for math, unlike code fences. `src/render.rs` overrides `NodeValue::Math` through `create_formatter!`, which hands over the literal before comrak escapes it, so `src/math.rs` never has to unescape HTML to recover what the author wrote.
-- **`pulldown-latex` does not escape everything it echoes.** `\operatorname{...}` passes its argument through untouched, and a parse error quotes the failing source back inside `<merror>`. Both put document-controlled markup on the page. `src/math.rs` validates the converter's output against an element and attribute allowlist and discards the whole conversion on anything unrecognised. Do not replace that check with trust in the crate; `src/math.rs` has tests carrying both payloads.
+- **`pulldown-latex` does not escape everything it echoes.** `\operatorname{...}` passes its argument through untouched, and a parse error quotes the failing source back inside `<merror>`. Both put document-controlled markup on the page. `src/math.rs` validates the converter's output against an element and attribute allowlist and discards the whole conversion on anything unrecognized. Do not replace that check with trust in the crate; `src/math.rs` has tests carrying both payloads.
 - **A valid `$a < b$` converts to `<mo><</mo>`, with the `<` unescaped.** The HTML tokenizer only starts a tag when a letter, `/`, `!` or `?` follows the `<`. Any validator over this output must follow the same rule or it rejects ordinary arithmetic.
 - **Custom protocol origins differ by platform.** WebKit serves `mhr://localhost/`, WebView2 rewrites to `http://mhr.localhost/`. The CSP and `assets::index_url` both account for this.
 - **`rust-toolchain.toml` does not pin the compiler cargo actually runs.** One was tried here and removed. It only tells rustup which toolchain to select, while cargo resolves `rustc` from `PATH`, so a system rustc ahead of the rustup shim still wins. The fix is machine-level: remove the distribution's `rustc` package, or put the shim directory ahead of `/usr/bin`, then confirm `which -a rustc` prints one path. Ubuntu 24.04 packages 1.75, below this crate's minimum, and `apt` can reinstall it whenever another package build-depends on system Rust. The repo's own guards: `rust-version = "1.88"` in `Cargo.toml` makes cargo refuse an older compiler with a clear message, and the `rust-deps` part in `snap/snapcraft.yaml` installs a current toolchain so the snap build does not fall back to the system rustc on core24.
@@ -80,6 +80,6 @@ CI builds the snap on every pull request and every push to `main` that touches m
 
 Cutting an actual release, version bump through tag through Snap Store promotion, is [`docs/releasing.md`](docs/releasing.md). Read it before tagging; it exists because a snap can pass every check above and still fail to open a window, and the order it lays out is how that gets caught before a tag makes any promise about it.
 
-Snap Store and GitHub Releases are the only planned channels. Flathub was considered and dropped, not deferred: one maintainer, and a second packaging manifest and Store listing costs more upkeep than the extra reach is worth. Do not propose adding it back without the author raising it first.
+The Snap Store, GitHub Releases and crates.io are the only planned channels. Flathub was considered and dropped, not deferred: one maintainer, and a second packaging manifest and Store listing costs more upkeep than the extra reach is worth. Do not propose adding it back without the author raising it first.
 
 An apt repository was considered and dropped for the same reason. Hosting one is free, since `Packages` and a signed `Release` are static files GitHub Pages can serve, but it would commit signed `.deb` binaries into this repository's history forever, put a GPG signing key in the Actions secrets, and ask a user for three setup commands where the snap needs one. Automatic updates are the only problem it would solve, and the snap already solves that. So the `.deb` and the tarball stay manual installs, and the install guide says so in both sections. Same rule as Flathub: do not propose it without the author raising it first.

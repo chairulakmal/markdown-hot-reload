@@ -6,7 +6,7 @@
 //! quotes the offending source back inside `<merror>`. Either one lets a
 //! document put live markup on the page, so nothing the converter returns is
 //! trusted until [`is_trusted`] has checked it against an allowlist of `MathML`
-//! elements and attributes. Anything unrecognised discards the whole conversion,
+//! elements and attributes. Anything unrecognized discards the whole conversion,
 //! and the caller shows the escaped LaTeX instead.
 //!
 //! The content security policy in `index.html` would also stop these payloads,
@@ -23,7 +23,7 @@ use pulldown_latex::{Parser, Storage, push_mathml};
 /// `annotation` and `annotation-xml` are left out because
 /// `<annotation-xml encoding="text/html">` is an HTML integration point: the
 /// parser reads its children as HTML instead of `MathML`, which is the one place
-/// inside a `<math>` subtree where arbitrary markup would be honoured. Nothing
+/// inside a `<math>` subtree where arbitrary markup would be honored. Nothing
 /// needs them here, since [`config`] never sets `RenderConfig::annotation`.
 ///
 /// `merror` is left out so that a LaTeX parse error fails the check and falls
@@ -65,7 +65,7 @@ const ELEMENTS: &[&str] = &[
 /// that [`ELEMENTS`] refuses.
 ///
 /// `style` is here because the converter uses it for real layout work, spacing
-/// and colour, not only for error borders. Its value is confined by the rules in
+/// and color, not only for error borders. Its value is confined by the rules in
 /// [`is_trusted`]: it must be double-quoted and can contain no `<` or `>`, so it
 /// cannot end the attribute or open a tag. CSS in a style attribute cannot run
 /// script in any browser this targets, and a URL inside one would still have to
@@ -192,7 +192,7 @@ fn tag_name(s: &str) -> Option<(&str, &str)> {
 /// Consumes a start tag's attributes up to and including its `>`, returning
 /// whether the tag closed itself and the rest of the input.
 ///
-/// `MathML` is foreign content, where a browser honours `/>`, so `<mspace />`
+/// `MathML` is foreign content, where a browser honors `/>`, so `<mspace />`
 /// opens nothing and must not be pushed onto the stack of open tags.
 fn attributes(mut s: &str) -> Option<(bool, &str)> {
     loop {

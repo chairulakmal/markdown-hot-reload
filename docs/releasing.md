@@ -1,6 +1,6 @@
 # Releasing
 
-This document is the procedure for cutting an `mhr` release. The point that matters most: the snap is tested on a real desktop before the git tag is created, not after, because a snap can pass every automated check and still fail to open a window. Below: the channel and tag ladder, the order of operations from version bump to Snap Store promotion, why that order is a real fix for a real failure, and the shortcut allowed for a patch release.
+This document is the procedure for cutting an `mhr` release. The point that matters most: the snap is tested on a real desktop before the git tag is created, not after, because a snap can pass every automated check and still fail to open a window. Below: the channel and tag ladder, the order of operations from version bump through the crates.io and Snap Store publishes, why that order is a real fix for a real failure, and the shortcut allowed for a patch release.
 
 - [Channel and tag ladder](#channel-and-tag-ladder)
 - [Order of operations](#order-of-operations)
@@ -45,8 +45,9 @@ The snap and the deb install the same two desktop entries, and they are indistin
 **Publish**
 
 11. Tag `vX.Y.Z` (or `vX.Y.Z-alpha` / `-beta`), signed, and push it. This triggers the `release` workflow, which drafts a GitHub Release with the deb, the tarball and `SHA256SUMS` attached, and marks it a prerelease automatically for a hyphenated tag.
-12. Review the draft, replace the generated notes with real ones, publish.
-13. Promote the revision already sitting on `edge`, rather than uploading again: `snapcraft release <snap> <revision> stable`. This way the bits verified in step 9 are exactly the bits that get released.
+12. Publish to crates.io from a worktree checked out at the tag, not from the branch that produced it: `git worktree add --detach <path> vX.Y.Z`, then `cargo publish --locked` from `<path>`, then `git worktree remove <path>`. A branch can carry commits the tag does not, and a crates.io version can be yanked but never replaced or deleted, so the tree has to match the tag exactly at the moment of upload. A first publish of a brand new crate needs a token scoped `publish-new`; `publish-update` alone cannot create it. A `400 Bad Request: A verified email address is required` means the crates.io account's email is unverified, which is different from unset: the confirmation link has to be clicked, not just the address saved. A `403` instead means the token itself is wrong, so tell the two apart before troubleshooting the wrong thing. The crates.io listing page, README included, is a snapshot taken at publish time; nothing there updates again until the next `cargo publish`.
+13. Review the GitHub Release draft, replace the generated notes with real ones, publish.
+14. Promote the revision already sitting on `edge`, rather than uploading again: `snapcraft release <snap> <revision> stable`. This way the bits verified in step 9 are exactly the bits that get released.
 
 ## Why the snap is tested before the tag exists
 

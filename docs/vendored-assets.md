@@ -26,7 +26,7 @@ Mermaid is 3.5 MB raw and dominates the binary, so it is loaded only when a docu
 
 ## highlight.css
 
-`highlight.css` is generated rather than downloaded. It is the two syntax-highlighting palettes, `InspiredGitHub` for a light page and `base16-ocean.dark` for a dark one, produced by syntect's `css_for_theme_with_class_style` with `ClassStyle::SpacedPrefixed { prefix: "hl-" }`. Each palette sits inside its own `prefers-color-scheme` media query, because the two themes do not emit the same selector set: the light theme has rules the dark one has no answer for, and some of them are specific enough to win an override. Regenerate it with a throwaway crate depending on `syntect` at the version in `Cargo.lock`; the file's own header comment records the exact call. The dead `.hl-code` rule is dropped on the way out, since the `<pre>` never carries that class and the rule's `background-color` would fight `--code-bg`.
+`highlight.css` is generated rather than downloaded. It is the two syntax-highlighting palettes, `InspiredGitHub` for a light page and `base16-ocean.dark` for a dark one, produced by syntect's `css_for_theme_with_class_style` with `ClassStyle::SpacedPrefixed { prefix: "hl-" }`. Each palette sits inside its own `prefers-color-scheme` media query, because the two themes do not emit the same selector set: the light theme has rules the dark one does not cover, and some of them are specific enough to take precedence. Regenerate it with a throwaway crate depending on `syntect` at the version in `Cargo.lock`; the file's own header comment records the exact call. The dead `.hl-code` rule is removed during generation, since the `<pre>` never carries that class and the rule's `background-color` would conflict with `--code-bg`.
 
 ## The icon set
 

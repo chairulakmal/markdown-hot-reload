@@ -46,7 +46,7 @@
             "applicationCategory": "DeveloperApplication",
             "operatingSystem": "Ubuntu 24.04 or newer, Debian 13 or newer, any Linux with snapd",
             "processorRequirements": "x86_64",
-            "softwareVersion": "0.1.1",
+            "softwareVersion": "0.1.2",
             "url": "https://mhr.chairulakmal.com/",
             "downloadUrl": "https://github.com/chairulakmal/markdown-hot-reload/releases",
             "installUrl": "https://mhr.chairulakmal.com/",
@@ -99,7 +99,7 @@
                 "@type": "HowToStep",
                 "name": "Pick a release",
                 "url": "https://mhr.chairulakmal.com/#pick-a-release",
-                "text": "Choose a tag from the releases page, for example v0.1.1, and set TAG to it."
+                "text": "Choose a tag from the releases page, for example v0.1.2, and set TAG to it."
               },
               {
                 "@type": "HowToStep",
@@ -375,9 +375,9 @@
       </header>
 
       <div class="note">
-        <strong>v0.1.1 is the current release.</strong> See the
+        <strong>v0.1.2 is the current release.</strong> See the
         <a
-          href="https://github.com/chairulakmal/markdown-hot-reload/releases/tag/v0.1.1"
+          href="https://github.com/chairulakmal/markdown-hot-reload/releases/tag/v0.1.2"
           target="_blank"
           rel="noopener noreferrer"
           >release notes</a
@@ -580,7 +580,7 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
         Each step is explained on its own below. To install without reading
         further, run these lines in an empty directory:
       </p>
-      <pre><code>TAG=v0.1.1
+      <pre><code>TAG=v0.1.2
 BASE=https://github.com/chairulakmal/markdown-hot-reload/releases/download
 
 curl -LO "$BASE/$TAG/SHA256SUMS"
@@ -604,7 +604,7 @@ mhr --version                              # prints the installed version</code>
           rel="noopener noreferrer"
           >releases page</a
         >
-        and note the tag you want, for example <code>v0.1.1</code>. The tags
+        and note the tag you want, for example <code>v0.1.2</code>. The tags
         <code>v0.1.0-alpha</code> and <code>v0.1.0-beta</code> are marked
         <strong>Pre-release</strong> on purpose. That was the plan during
         early development, not a sign anything was broken.
@@ -615,14 +615,14 @@ mhr --version                              # prints the installed version</code>
         Set <code>TAG</code> to the tag you picked, then download both files
         into the same directory:
       </p>
-      <pre><code>TAG=v0.1.1
+      <pre><code>TAG=v0.1.2
 
 curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/$TAG/SHA256SUMS"
 curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/$TAG/mhr_${TAG#v}-1_amd64.deb"</code></pre>
       <p>
         <code>${TAG#v}</code> strips the leading <code>v</code>, because the
-        tag is <code>v0.1.1</code> while the file is
-        <code>mhr_0.1.1-1_amd64.deb</code>.
+        tag is <code>v0.1.2</code> while the file is
+        <code>mhr_0.1.2-1_amd64.deb</code>.
         <code>SHA256SUMS</code> covers the <code>.deb</code> and the tarball.
         It does not cover the "Source code" archives GitHub generates on its
         own.
@@ -692,7 +692,7 @@ mhr notes.md</code></pre>
         not run snapd. It contains the <code>mhr</code> binary, the README,
         and the licence, inside a directory named after the version:
       </p>
-      <pre><code>TAG=v0.1.1
+      <pre><code>TAG=v0.1.2
 BASE=https://github.com/chairulakmal/markdown-hot-reload/releases/download
 DIR="mhr-${TAG#v}-x86_64-unknown-linux-gnu"
 

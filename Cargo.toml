@@ -15,6 +15,12 @@ repository = "https://github.com/chairulakmal/markdown-hot-reload"
 readme = "README.md"
 keywords = ["markdown", "viewer", "preview", "gfm", "live-reload"]
 categories = ["command-line-utilities", "text-processing"]
+# None of these is needed to build the crate or run its tests. `CLAUDE.md` is a
+# symlink to `AGENTS.md` and cargo follows it, so leaving it in ships the same
+# file twice. `packaging/` stays, because `[package.metadata.deb]` below reads
+# `packaging/mhr.desktop`, and dropping it would break `cargo deb` for anyone
+# building from the published crate.
+exclude = ["docs/", "snap/", ".github/", ".claude/", "CLAUDE.md", "deny.toml"]
 
 # `$auto` runs dpkg-shlibdeps against the linked binary, so the WebKitGTK and
 # GTK versions in Depends come from the build machine instead of a hand-written

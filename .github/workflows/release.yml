@@ -41,8 +41,10 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      # Three places carry the version and a mismatch ships mislabeled files.
-      - name: Check the tag against Cargo.toml and snapcraft.yaml
+      # Four places carry the version. A mismatch in the first three ships
+      # mislabeled files; one in the install page hands visitors a download
+      # command for a release they did not ask for.
+      - name: Check the tag against Cargo.toml, snapcraft.yaml and the install page
         run: |
           tag="${GITHUB_REF_NAME#v}"
           crate=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
@@ -51,6 +53,36 @@ jobs:
             echo "tag $tag, Cargo.toml $crate, snapcraft.yaml $snap"
             exit 1
           fi
+          # docs/index.html names the current release about ten times, and a
+          # partial bump is the failure this catches, so the rule is that
+          # every version string on the page equals the tag, rather than a
+          # count of them that any new sentence would break. A prerelease
+          # suffix marks a historical tag quoted on purpose (v0.1.0-alpha)
+          # and is skipped; the deb's -1 revision is not one of those and
+          # stays in scope. Not in ci, where the page correctly names the
+          # previous release until the day this runs.
+          case "$GITHUB_REF_NAME" in
+            *-*)
+              echo "prerelease tag: the install page names the current stable release, so it is left alone"
+              ;;
+            *)
+              fix="bump the page on main, then move the tag to that commit"
+              # Also catches the page losing the version entirely, which the
+              # scan below would read as "nothing stale" and wave through.
+              if ! grep -qF "$tag" docs/index.html; then
+                echo "docs/index.html does not name $tag anywhere: $fix"
+                exit 1
+              fi
+              stale=$(grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z][0-9A-Za-z.]*)?' docs/index.html \
+                | grep -v -- '-' \
+                | grep -vFx "$tag" \
+                | sort -u || true)
+              if [ -n "$stale" ]; then
+                echo "docs/index.html still names $(echo "$stale" | tr '\n' ' ')but the tag is $tag: $fix"
+                exit 1
+              fi
+              ;;
+          esac
 
       - name: cargo build
         run: cargo build --locked --release

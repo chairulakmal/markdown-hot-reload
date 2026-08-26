@@ -181,22 +181,54 @@
       }
     </script>
     <style>
+      /*
+        Colors, fonts and spacing follow mdBook's default themes, Light and
+        Navy, so this page and any future mdBook documentation read as one
+        site. Values are from mdBook's own variables.css and general.css.
+        Two deliberate departures: mdBook sets the root font-size to 62.5% so
+        that 1rem is 10px, which this page does not, so mdBook's rem figures
+        are written here in px or em instead; and --border has no mdBook
+        equivalent, because the demo frame and the footer rule are components
+        mdBook does not have.
+      */
       :root {
-        --fg: #1f2328;
-        --fg-muted: #59636e;
-        --bg: #ffffff;
-        --border: #d1d9e0;
-        --code-bg: #f6f8fa;
-        --link: #0969da;
+        color-scheme: var(--color-scheme);
+        --mono-font: "Source Code Pro", Consolas, "Ubuntu Mono", Menlo,
+          "DejaVu Sans Mono", monospace;
+        --code-font-size: 0.875em;
+      }
+      :root {
+        --fg: hsl(0, 0%, 0%);
+        --fg-muted: #747474;
+        --bg: hsl(0, 0%, 100%);
+        --border: hsl(0, 0%, 88%);
+        --link: #20609f;
+        --code-bg: #f6f7f6;
+        --code-fg: #000000;
+        --inline-code-color: #301900;
+        --quote-bg: hsl(197, 37%, 96%);
+        --quote-border: hsl(197, 37%, 91%);
+        --table-border-color: hsl(0, 0%, 95%);
+        --table-header-bg: hsl(0, 0%, 80%);
+        --table-alternate-bg: hsl(0, 0%, 97%);
+        --color-scheme: light;
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --fg: #f0f6fc;
-          --fg-muted: #9198a1;
-          --bg: #0d1117;
-          --border: #3d444d;
-          --code-bg: #151b23;
-          --link: #4493f8;
+          --fg: #bcbdd0;
+          --fg-muted: #737480;
+          --bg: hsl(226, 23%, 11%);
+          --border: hsl(226, 23%, 20%);
+          --link: #2b79a2;
+          --code-bg: #1d1f21;
+          --code-fg: #c5c8c6;
+          --inline-code-color: #c5c8c6;
+          --quote-bg: hsl(226, 15%, 17%);
+          --quote-border: hsl(226, 15%, 22%);
+          --table-border-color: hsl(226, 23%, 16%);
+          --table-header-bg: hsl(226, 23%, 31%);
+          --table-alternate-bg: hsl(226, 23%, 14%);
+          --color-scheme: dark;
         }
       }
       body {
@@ -204,10 +236,13 @@
         padding: 2.5rem 1.25rem 4rem;
         background: var(--bg);
         color: var(--fg);
-        font: 16px/1.6 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+        /* Open Sans is mdBook's body face. It is not vendored here, so the
+           system stack below is what most visitors will actually see. */
+        font: 16px/1.45 "Open Sans", -apple-system, "Segoe UI", Helvetica,
+          Arial, sans-serif;
       }
       main {
-        max-width: 46rem;
+        max-width: 750px;
         margin: 0 auto;
       }
       h1 {
@@ -216,13 +251,11 @@
       }
       h2 {
         font-size: 1.2rem;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 0.4rem;
-        margin-top: 2.5rem;
+        margin-top: 2.5em;
       }
       h3 {
         font-size: 1rem;
-        margin-top: 1.75rem;
+        margin-top: 2.5em;
         margin-bottom: 0.3rem;
       }
       p {
@@ -236,25 +269,35 @@
       }
       a {
         color: var(--link);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      /* Without this, inline code inside a link keeps the code color and,
+         with underlines gone, stops looking like a link at all. mdBook has
+         the same rule for the same reason. */
+      a code {
+        color: var(--link);
       }
       code {
-        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-family: var(--mono-font);
+        color: var(--inline-code-color);
         background: var(--code-bg);
-        border-radius: 0.25rem;
-        padding: 0.15em 0.35em;
-        font-size: 0.9em;
+        border-radius: 3px;
+        padding: 0.1em 0.3em;
+        font-size: var(--code-font-size);
       }
       pre {
         background: var(--code-bg);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
+        color: var(--code-fg);
         padding: 1rem;
         overflow-x: auto;
       }
       pre code {
         background: none;
+        color: inherit;
         padding: 0;
-        font-size: 0.85rem;
       }
       .facts {
         border-collapse: collapse;
@@ -264,23 +307,38 @@
       }
       .facts th,
       .facts td {
-        border: 1px solid var(--border);
-        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--table-border-color);
+        padding: 3px 20px;
         text-align: left;
         vertical-align: top;
       }
       .facts th {
-        color: var(--fg-muted);
         font-weight: 600;
         white-space: nowrap;
+      }
+      .facts thead {
+        background: var(--table-header-bg);
       }
       .facts thead th {
         color: var(--fg);
       }
+      /* mdBook stripes even rows rather than ruling every cell heavily. */
+      .facts tbody tr:nth-child(2n) {
+        background: var(--table-alternate-bg);
+      }
+      .snap-badge {
+        display: inline-block;
+        margin: 0.5rem 0 1rem;
+      }
+      .snap-badge img {
+        display: block;
+        height: 40px;
+        width: auto;
+      }
       .video-frame {
         height: 26rem;
         max-height: 60vh;
-        border-radius: 0.5rem;
+        border-radius: 3px;
         border: 1px solid var(--border);
         background: var(--code-bg);
         overflow: hidden;
@@ -291,11 +349,16 @@
         height: 100%;
         object-fit: contain;
       }
+      /* mdBook's blockquote: a tinted band ruled top and bottom, with no
+         left accent bar. Its own rule pads 0 20px and relies on the <p>
+         inside for vertical space, which these notes do not have. */
       .note {
-        border-left: 3px solid var(--link);
-        padding: 0.1rem 1rem;
-        color: var(--fg-muted);
-        margin: 1rem 0;
+        background: var(--quote-bg);
+        border-top: 0.1em solid var(--quote-border);
+        border-bottom: 0.1em solid var(--quote-border);
+        color: var(--fg);
+        padding: 0.75rem 20px;
+        margin: 20px 0;
       }
       nav.toc {
         font-size: 0.9rem;
@@ -524,6 +587,26 @@
         snapd by default. The snap bundles its own WebKitGTK, so it does not
         depend on what your system has installed:
       </p>
+      <a
+        class="snap-badge"
+        href="https://snapcraft.io/markdown-hot-reload"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <picture>
+          <source
+            srcset="https://snapcraft.io/static/images/badges/en/snap-store-white.svg"
+            media="(prefers-color-scheme: dark)"
+          />
+          <img
+            src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg"
+            alt="Get it from the Snap Store"
+            width="182"
+            height="52"
+            loading="lazy"
+          />
+        </picture>
+      </a>
       <pre><code>sudo snap install markdown-hot-reload
 sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
       <p>

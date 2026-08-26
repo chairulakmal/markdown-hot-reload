@@ -336,7 +336,13 @@
           <ol>
             <li><a href="#what-is-mhr">What is mhr</a></li>
             <li><a href="#which-package">Which package to use</a></li>
-            <li><a href="#snap">The snap, recommended</a></li>
+            <li>
+              <a href="#snap">The snap, recommended</a>
+              <ol>
+                <li><a href="#snap-update">Updating</a></li>
+                <li><a href="#snap-remove">Removing</a></li>
+              </ol>
+            </li>
             <li>
               <a href="#deb">The .deb, for Ubuntu and Debian</a>
               <ol>
@@ -346,12 +352,24 @@
                 <li><a href="#download">Download the package and its checksums</a></li>
                 <li><a href="#verify">Verify the checksum</a></li>
                 <li><a href="#install">Install it</a></li>
+                <li><a href="#deb-update">Updating</a></li>
+                <li><a href="#deb-remove">Removing</a></li>
               </ol>
             </li>
-            <li><a href="#tarball">The tarball, for other distributions</a></li>
-            <li><a href="#cargo">From crates.io, with cargo</a></li>
-            <li><a href="#updating-it">Updating it</a></li>
-            <li><a href="#removing-it">Removing it</a></li>
+            <li>
+              <a href="#tarball">The tarball, for other distributions</a>
+              <ol>
+                <li><a href="#tarball-update">Updating</a></li>
+                <li><a href="#tarball-remove">Removing</a></li>
+              </ol>
+            </li>
+            <li>
+              <a href="#cargo">From crates.io, with cargo</a>
+              <ol>
+                <li><a href="#cargo-update">Updating</a></li>
+                <li><a href="#cargo-remove">Removing</a></li>
+              </ol>
+            </li>
           </ol>
         </nav>
       </header>
@@ -516,9 +534,15 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
         blocks on purpose. They are harmless: the window still opens and
         renders the file normally, so it is safe to ignore them.
       </p>
+      <h3 id="snap-update">Updating</h3>
       <p>
-        snapd refreshes installed snaps on its own, so a new release of
-        <code>mhr</code> arrives without you doing anything. The
+        snapd refreshes installed snaps on its own, usually within a day of a
+        new release, so there is normally nothing to do. To update
+        immediately instead of waiting:
+      </p>
+      <pre><code>sudo snap refresh markdown-hot-reload</code></pre>
+      <p>
+        The
         <a
           href="https://snapcraft.io/markdown-hot-reload"
           target="_blank"
@@ -526,6 +550,14 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
           >Snap Store listing</a
         >
         shows the version currently published.
+      </p>
+
+      <h3 id="snap-remove">Removing</h3>
+      <pre><code>sudo snap remove markdown-hot-reload</code></pre>
+      <p>
+        This also removes the <code>mhr</code> alias created for it.
+        <code>mhr</code> writes no configuration files and no cache, so
+        nothing else is left behind.
       </p>
 
       <h2 id="deb">The .deb, for Ubuntu and Debian</h2>
@@ -558,9 +590,9 @@ sudo apt install ./mhr_*.deb
 mhr --version                              # prints the installed version</code></pre>
       <div class="note">
         <strong>The <code>.deb</code> does not update itself.</strong> There
-        is no apt repository for <code>mhr</code>, so <code>apt upgrade</code>
-        will never bring you a new version. To update, repeat these steps with
-        a newer tag. The snap above avoids this.
+        is no apt repository for <code>mhr</code>, so
+        <code>apt upgrade</code> will never bring you a new version. See
+        <a href="#deb-update">Updating</a> below. The snap above avoids this.
       </div>
 
       <h3 id="pick-a-release">1. Pick a release</h3>
@@ -632,6 +664,27 @@ curl -LO "https://github.com/chairulakmal/markdown-hot-reload/releases/download/
       <pre><code>mhr --version
 mhr notes.md</code></pre>
 
+      <h3 id="deb-update">Updating</h3>
+      <p>
+        There is no apt repository for <code>mhr</code>, so
+        <code>apt upgrade</code> never brings a new version. Repeat the
+        <a href="#in-one-block">steps above</a> with a newer tag from the
+        <a
+          href="https://github.com/chairulakmal/markdown-hot-reload/releases"
+          target="_blank"
+          rel="noopener noreferrer"
+          >releases page</a
+        >; <code>apt install</code> replaces the old package with the new
+        one.
+      </p>
+
+      <h3 id="deb-remove">Removing</h3>
+      <pre><code>sudo apt remove mhr</code></pre>
+      <p>
+        <code>mhr</code> writes no configuration files and no cache, so
+        nothing else is left behind.
+      </p>
+
       <h2 id="tarball">The tarball, for other distributions</h2>
       <p>
         Every release ships a plain <code>x86_64-unknown-linux-gnu</code>
@@ -655,6 +708,20 @@ sudo install -m 755 "$DIR/mhr" /usr/local/bin/mhr</code></pre>
         confirm the install:
       </p>
       <pre><code>mhr --version</code></pre>
+
+      <h3 id="tarball-update">Updating</h3>
+      <p>
+        There is no update mechanism. Download and verify a newer release the
+        same way as above, then overwrite the binary:
+      </p>
+      <pre><code>sudo install -m 755 "$DIR/mhr" /usr/local/bin/mhr</code></pre>
+
+      <h3 id="tarball-remove">Removing</h3>
+      <pre><code>sudo rm /usr/local/bin/mhr</code></pre>
+      <p>
+        <code>mhr</code> writes no configuration files and no cache, so
+        nothing else is left behind.
+      </p>
 
       <h2 id="cargo">From crates.io, with cargo</h2>
       <p>
@@ -689,8 +756,7 @@ mhr --version
 mhr notes.md</code></pre>
       <p>
         cargo puts the binary in <code>~/.cargo/bin</code>, which rustup
-        already adds to your <code>PATH</code>. To update later, run
-        <code>cargo install mhr</code> again.
+        already adds to your <code>PATH</code>.
       </p>
       <p>
         This is the only install path that is not built here, so it is also
@@ -700,30 +766,15 @@ mhr notes.md</code></pre>
         that may work rather than something that should.
       </p>
 
-      <h2 id="updating-it">Updating it</h2>
-      <p>Use the line that matches how you installed it:</p>
-      <pre><code>sudo snap refresh markdown-hot-reload   # snap, only needed if you don't want to wait for the automatic refresh
-# .deb:     download and verify a newer release the same way (see <a href="#deb">The .deb</a>), then run the install command again
-# tarball:  download and verify a newer release the same way (see <a href="#tarball">The tarball</a>), then overwrite /usr/local/bin/mhr
-cargo install mhr                       # cargo, reinstalls whatever is newest on crates.io</code></pre>
+      <h3 id="cargo-update">Updating</h3>
+      <pre><code>cargo install mhr</code></pre>
       <p>
-        The snap is the only one of the four that updates on its own: snapd
-        checks for a new revision in the background, usually within a day of
-        release. The other three stay at the version you installed until you
-        repeat the command above.
+        This reinstalls whatever is newest on crates.io, overwriting the old
+        binary.
       </p>
 
-      <h2 id="removing-it">Removing it</h2>
-      <p>Use the line that matches how you installed it:</p>
-      <pre><code>sudo snap remove markdown-hot-reload   # snap
-sudo apt remove mhr                    # .deb
-sudo rm /usr/local/bin/mhr             # tarball
-cargo uninstall mhr                    # cargo</code></pre>
-      <p>
-        <code>mhr</code> writes no configuration files and no cache, so
-        nothing is left behind after any of these. Removing the snap also
-        removes the <code>mhr</code> alias you created for it.
-      </p>
+      <h3 id="cargo-remove">Removing</h3>
+      <pre><code>cargo uninstall mhr</code></pre>
 
       <footer>
         <a

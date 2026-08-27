@@ -78,9 +78,9 @@
               },
               {
                 "@type": "HowToStep",
-                "name": "Create the mhr command",
+                "name": "Add the mhr command if it is missing",
                 "url": "https://mhr.chairulakmal.com/#snap",
-                "text": "Run sudo snap alias markdown-hot-reload.mhr mhr. The snap installs its command as markdown-hot-reload.mhr, because a bare mhr alias needs Snap Store approval and that request is under review."
+                "text": "A fresh install creates the mhr command automatically, because the Snap Store granted a bare mhr alias. On an existing install that has not refreshed yet, run sudo snap alias markdown-hot-reload.mhr mhr to add it now."
               }
             ]
           },
@@ -620,10 +620,7 @@
             </tr>
             <tr>
               <th scope="row">Command name</th>
-              <td>
-                <code>markdown-hot-reload.mhr</code> until you run the alias
-                command
-              </td>
+              <td><code>mhr</code></td>
               <td><code>mhr</code></td>
               <td><code>mhr</code></td>
               <td><code>mhr</code></td>
@@ -658,14 +655,13 @@
         snapd by default. The snap bundles its own WebKitGTK, so it does not
         depend on what your system has installed:
       </p>
-      <pre><code>sudo snap install markdown-hot-reload
-sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
+      <pre><code>sudo snap install markdown-hot-reload</code></pre>
       <p>
-        The second command creates the <code>mhr</code> command. It is needed
-        because the snap installs itself as
-        <code>markdown-hot-reload.mhr</code>. A bare <code>mhr</code> alias
-        needs Snap Store approval, and that request is under review. The alias
-        command works on your own machine whatever the Store decides.
+        This also gives you the <code>mhr</code> command. The Snap Store
+        grants it as an automatic alias. On an existing install that has not
+        refreshed yet, <code>mhr</code> can be missing; run
+        <code>sudo snap alias markdown-hot-reload.mhr mhr</code> to add it
+        now.
       </p>
       <p>Then open any markdown file:</p>
       <pre><code>mhr notes.md</code></pre>
@@ -707,8 +703,7 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
       <p>
         Choose the <code>.deb</code> if you prefer installing through
         <code>apt</code> and using your system's own WebKitGTK rather than a
-        bundled copy. It installs the command as <code>mhr</code> directly,
-        with no alias step.
+        bundled copy. It installs the command as <code>mhr</code>.
       </p>
       <h3 id="requirements">Requirements</h3>
       <p>

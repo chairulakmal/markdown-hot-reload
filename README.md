@@ -3,7 +3,7 @@
 # Markdown Hot Reload
 
 [![crates.io](https://img.shields.io/crates/v/mhr.svg)](https://crates.io/crates/mhr)
-[![Snap Store](https://img.shields.io/badge/snap-markdown--hot--reload-orange.svg)](https://snapcraft.io/markdown-hot-reload)
+[![markdown-hot-reload](https://snapcraft.io/markdown-hot-reload/badge.svg)](https://snapcraft.io/markdown-hot-reload)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chairulakmal/markdown-hot-reload/blob/main/LICENSE)
 
 This README describes Markdown Hot Reload (`mhr`), a desktop viewer for GitHub-flavored markdown that re-renders a file every time it changes on disk. The most important point: `mhr` has no network access and never writes to the file it opens, so you can safely view markdown you did not write, such as a plan an agent produced or a README from a repository you cloned an hour ago. The sections below cover what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
@@ -60,10 +60,9 @@ The snap is the recommended install on any distribution that runs snapd. Ubuntu 
 
 ```
 sudo snap install markdown-hot-reload
-sudo snap alias markdown-hot-reload.mhr mhr
 ```
 
-The second command creates the `mhr` command. It is needed because the snap installs itself as `markdown-hot-reload.mhr`. A bare `mhr` alias needs approval from the Snap Store, and that request is under review. The alias works on your own machine whatever the Store decides.
+This also gives you the `mhr` command. The Snap Store grants it as an automatic alias. On an existing install that has not refreshed yet, `mhr` can be missing; run `sudo snap alias markdown-hot-reload.mhr mhr` to add it now.
 
 Running the snap from a terminal can print lines such as `Could not open /sys/class/dmi/id/chassis_type` or `This call is not available inside the sandbox`. GTK prints these when Snap's confinement blocks it from probing hardware and desktop details. They are harmless. The window still opens and renders the file, so you can ignore them.
 

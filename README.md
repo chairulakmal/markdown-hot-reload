@@ -5,7 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/mhr.svg)](https://crates.io/crates/mhr)
 [![Snap Store](https://snapcraft.io/markdown-hot-reload/badge.svg)](https://snapcraft.io/markdown-hot-reload)
 
-This README describes Markdown Hot Reload (`mhr`), a desktop viewer for GitHub-flavored markdown that re-renders a file every time it changes on disk. The most important point: `mhr` has no network access and never writes to the file it opens, so you can safely view markdown you did not write, such as a plan an agent produced or a README from a repository you cloned an hour ago. The sections below cover what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
+This README describes Markdown Hot Reload (`mhr`), a Linux desktop viewer for GitHub-flavored markdown that re-renders a file every time it changes on disk. The most important point: `mhr` has no network access and never writes to the file it opens, so you can safely view markdown you did not write, such as a plan an agent produced or a README from a repository you cloned an hour ago. The sections below cover what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
 
 [![A window showing rendered markdown beside the editor writing it](https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/docs/demo-poster.png)](https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118)
 
@@ -110,7 +110,7 @@ Images are the one gap. `mhr` reads only the single file you name. A local image
 
 ## Platforms
 
-Linux is the primary target. macOS is next. Windows is nice-to-have.
+Linux is the only platform `mhr` is built and tested on. Every release ships Linux packages only. `cargo install mhr` may compile on macOS or Windows, since the webview library supports both, but nothing there is tested. macOS is the next target. Windows is nice-to-have.
 
 ## Contributing
 

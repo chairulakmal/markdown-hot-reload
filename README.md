@@ -3,8 +3,7 @@
 # Markdown Hot Reload
 
 [![crates.io](https://img.shields.io/crates/v/mhr.svg)](https://crates.io/crates/mhr)
-[![markdown-hot-reload](https://snapcraft.io/markdown-hot-reload/badge.svg)](https://snapcraft.io/markdown-hot-reload)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chairulakmal/markdown-hot-reload/blob/main/LICENSE)
+[![Snap Store](https://snapcraft.io/markdown-hot-reload/badge.svg)](https://snapcraft.io/markdown-hot-reload)
 
 This README describes Markdown Hot Reload (`mhr`), a desktop viewer for GitHub-flavored markdown that re-renders a file every time it changes on disk. The most important point: `mhr` has no network access and never writes to the file it opens, so you can safely view markdown you did not write, such as a plan an agent produced or a README from a repository you cloned an hour ago. The sections below cover what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
 
@@ -15,6 +14,12 @@ Click the picture to play a 15-second demo.
 ## What it does
 
 Run `mhr notes.md`. A native window opens and shows the rendered markdown. Each time the file is saved, by you, your editor, or an agent, the window updates in place. Your scroll position and open `<details>` sections stay as they were. There is no editing surface, and `mhr` never writes to the file.
+
+While the window is open, the terminal that started `mhr` is blocked. Add `&` to the end of the command to get your prompt back:
+
+```
+mhr TODO.md &
+```
 
 ## How it works
 
@@ -40,6 +45,8 @@ Check out [the install guide](https://mhr.chairulakmal.com/) for the full versio
 
 Every prebuilt package is built for x86_64, also called amd64. There is no arm64 build yet. Open an issue if you need one.
 
+The snap and the `.deb` add `mhr` to your file manager's "Open With" menu for markdown (.md) files. The tarball and `cargo install` install only the binary, with no menu entry.
+
 ### cargo install
 
 ```
@@ -62,7 +69,7 @@ The snap is the recommended install on any distribution that runs snapd. Ubuntu 
 sudo snap install markdown-hot-reload
 ```
 
-This also gives you the `mhr` command. The Snap Store grants it as an automatic alias. On an existing install that has not refreshed yet, `mhr` can be missing; run `sudo snap alias markdown-hot-reload.mhr mhr` to add it now.
+The snap's own command is `markdown-hot-reload.mhr`. The Snap Store also grants `mhr` as a short name for it, so `mhr` is what you type. An install made before the Store granted that name may not have it until snapd updates the snap. To add it now, run `sudo snap alias markdown-hot-reload.mhr mhr`.
 
 Running the snap from a terminal can print lines such as `Could not open /sys/class/dmi/id/chassis_type` or `This call is not available inside the sandbox`. GTK prints these when Snap's confinement blocks it from probing hardware and desktop details. They are harmless. The window still opens and renders the file, so you can ignore them.
 

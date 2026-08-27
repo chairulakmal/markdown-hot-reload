@@ -2,6 +2,8 @@
 
 > A read-only, offline GitHub-flavored markdown viewer for the desktop. Point it at a file and it opens a window that re-renders the moment the file changes on disk. It has no network access and no editing surface.
 
+Usage: `mhr <file.md>` takes exactly one file argument and runs until the window is closed. A script or an agent should start it in the background, `mhr TODO.md &`, rather than waiting for it to exit.
+
 mhr is a single Rust binary with no npm, no bundler, and no build step for the frontend. It parses markdown to HTML with comrak, watches the file's parent directory with notify, and renders through a system webview (wry and tao). Parsing, syntax highlighting, math conversion, and HTML escaping all happen in Rust; the small amount of JavaScript only morphs the DOM and draws Mermaid diagrams.
 
 Safety guarantees: the webview's Content-Security-Policy blocks all network access (`connect-src 'none'`), so a document renders the same offline as online. Raw HTML in a document is always escaped, never executed, since documents are treated as untrusted input. mhr never writes to the file it watches. The crate forbids `unsafe` code at the compiler level.
@@ -17,7 +19,7 @@ Safety guarantees: the webview's Content-Security-Policy blocks all network acce
 ## Install
 
 - From source, recommended for scripted or agent-driven installs: `cargo install mhr`. Needs Rust 1.88 or newer and, on Linux, `libwebkit2gtk-4.1-dev`, `libgtk-3-dev` and `pkg-config` installed first, or the build fails at the linker. One command, no release page to read, no filename to template, no checksum step, and it builds from the published source on crates.io rather than a prebuilt binary. Compiles on the user's machine, so it takes minutes, and updates are manual. Only Linux is tested; see Platforms below.
-- Snap, best on a Linux desktop for a human installing interactively (any distribution with snapd): `sudo snap install markdown-hot-reload`, then `sudo snap alias markdown-hot-reload.mhr mhr` to create the `mhr` command. It is the only package that updates itself.
+- Snap, best on a Linux desktop for a human installing interactively (any distribution with snapd): `sudo snap install markdown-hot-reload`, which provides the `mhr` command. It is the only package that updates itself.
 - Debian 13 / Ubuntu 24.04 or newer: `.deb` package on the releases page, installed with `sudo apt install ./mhr_*.deb`. Updates are manual, because there is no apt repository.
 - Other x86_64 Linux: tarball on the releases page, plus WebKitGTK 4.1 from your package manager. Updates are manual.
 

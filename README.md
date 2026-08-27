@@ -6,7 +6,7 @@
 [![Snap Store](https://img.shields.io/badge/snap-markdown--hot--reload-orange.svg)](https://snapcraft.io/markdown-hot-reload)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/chairulakmal/markdown-hot-reload/blob/main/LICENSE)
 
-`mhr` is a desktop viewer for markdown you did not write: a plan an agent just produced, a README from a repository you cloned an hour ago, a file your editor is rewriting while you read it. It renders GitHub-flavored markdown in a native window and re-renders the moment the file changes on disk. There is no server and no port, so nothing else on the machine can reach your document. It has no network access at all, and it never writes to the file it opens. Below: what it does, how it works, how it treats every document as untrusted input, how to install it, how to build and run it, what it supports, which platforms it targets, how to contribute a change, and where the source and further documentation live.
+This README describes Markdown Hot Reload (`mhr`), a desktop viewer for GitHub-flavored markdown that re-renders a file every time it changes on disk. The most important point: `mhr` has no network access and never writes to the file it opens, so you can safely view markdown you did not write, such as a plan an agent produced or a README from a repository you cloned an hour ago. The sections below cover what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
 
 [![A window showing rendered markdown beside the editor writing it](https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/docs/demo-poster.png)](https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118)
 
@@ -14,43 +14,49 @@ Click the picture to play a 15-second demo.
 
 ## What it does
 
-Run `mhr notes.md`. A window opens with the rendered markdown, and every time you (or an editor, or an agent) save that file, the window updates in place without losing your scroll position or open `<details>` elements. There is no editing surface; `mhr` never writes to the watched file.
+Run `mhr notes.md`. A native window opens and shows the rendered markdown. Each time the file is saved, by you, your editor, or an agent, the window updates in place. Your scroll position and open `<details>` sections stay as they were. There is no editing surface, and `mhr` never writes to the file.
 
 ## How it works
 
-One Rust binary. `comrak` parses markdown to HTML, `notify` watches the file's parent directory, and `wry` and `tao` host a system webview that receives the new HTML through `evaluate_script`. The frontend is a static HTML shell plus a small amount of vanilla JavaScript, both compiled into the binary by `rust-embed`. Parsing, syntax highlighting, math conversion, and escaping all happen in Rust. JavaScript only morphs the DOM and draws Mermaid diagrams.
+One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file's parent directory for changes. `wry` and `tao` host a system webview, which receives the new HTML through `evaluate_script`. The frontend is a static HTML file plus a small amount of plain JavaScript, both compiled into the binary by `rust-embed`. All parsing, syntax highlighting, math conversion, and escaping happen in Rust. The JavaScript only updates the DOM and draws Mermaid diagrams.
 
 ## Safety
 
-Treating every document as untrusted input is a design constraint here, not advice to the reader. Five guarantees follow from it, and the code enforces each one.
+`mhr` treats every document as untrusted input. This is a design constraint, not advice to the reader. Five guarantees follow from it, and the code enforces each one.
 
-- **No server and no port.** The native window is the whole app. Almost every other markdown previewer renders to a localhost port and opens a browser tab, which means any other process on the machine can read the document. `mhr` opens no socket.
-- **No network access.** `index.html` sets `connect-src 'none'` in its Content-Security-Policy, so anything that needs the network fails immediately instead of working locally and leaking data elsewhere.
-- **Raw HTML is escaped, never executed.** A document that embeds `<script>`, or any other raw tag, shows it as text on the page rather than running it. `src/render.rs` has tests that check this directly.
+- **No server and no port.** The native window is the whole app. Most other markdown viewers render to a localhost port and open a browser tab, so any other process on the machine can read the document. `mhr` opens no socket.
+- **No network access.** `index.html` sets `connect-src 'none'` in its Content-Security-Policy. Anything that needs the network fails immediately, instead of working on your machine and leaking data on someone else's.
+- **Raw HTML is escaped, never executed.** A document that contains `<script>`, or any other raw tag, shows it as text on the page. It does not run. `src/render.rs` has tests that check this.
 - **Read-only.** `mhr` never writes to the file it watches. There is no editing surface.
-- **No `unsafe` code in this crate.** `Cargo.toml` forbids the `unsafe` keyword at the compiler level (`[lints.rust] unsafe_code = "forbid"`), not only by convention. This does not extend to dependencies, which are ordinary Rust crates and may use `unsafe` internally.
+- **No `unsafe` code in this crate.** `Cargo.toml` forbids the `unsafe` keyword at the compiler level (`[lints.rust] unsafe_code = "forbid"`). Dependencies are ordinary Rust crates and may use `unsafe` internally.
 
-The design invariants behind each of these, and the tests that guard them, are detailed in [`AGENTS.md`](AGENTS.md).
+For the design invariants behind each guarantee, and the tests that protect them, check [`AGENTS.md`](AGENTS.md).
 
 ## Install
 
-Four ways to install, covered below in this order. `cargo install mhr` builds from source and works wherever the Rust toolchain does. The snap is the better choice on a Linux desktop, because it bundles its own WebKitGTK and updates itself. A `.deb` and a tarball are attached to every release for anyone who wants neither.
+`mhr` has four install methods, listed here in order. `cargo install mhr` builds from source and works anywhere the Rust toolchain runs. On a Linux desktop, the snap is the better choice: it bundles its own WebKitGTK and updates itself. Every release also attaches a `.deb` and a tarball for people who want neither.
+
+Check out [the install guide](https://mhr.chairulakmal.com/) for the full version: every path step by step, how to verify a download against its published checksum, and how to update or remove each one.
+
+Every prebuilt package is built for x86_64, also called amd64. There is no arm64 build yet. Open an issue if you need one.
+
+### cargo install
 
 ```
 cargo install mhr
 ```
 
-This compiles the crate on your machine, so it needs Rust 1.88 or newer, which [rustup](https://rustup.rs) installs. On Linux it also needs three system packages, because the webview is WebKitGTK. On Ubuntu and Debian:
+This builds the crate on your machine, so it needs Rust 1.88 or newer, which [rustup](https://rustup.rs) installs. On Linux it also needs three system packages, because the webview uses WebKitGTK. On Ubuntu and Debian:
 
 ```
 sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
 ```
 
-Install those first. Without them the build fails at the linker, and the error does not say which package is missing. Linux is the only platform with a released build today, so a `cargo install` on macOS or Windows is untested rather than supported. See Platforms below.
+Install these first. Without them, the build fails at the linker with an error that does not name the missing package. Linux is the only platform with a released build today, so `cargo install` on macOS or Windows is untested, not supported. See Platforms below.
 
-Every prebuilt package below is built for x86_64, which is also called amd64. There is no arm64 build yet, so open an issue if you need one.
+### snap
 
-The snap is the recommended install on any distribution that runs snapd. Ubuntu includes snapd by default:
+The snap is the recommended install on any distribution that runs snapd. Ubuntu includes snapd by default.
 
 ```
 sudo snap install markdown-hot-reload
@@ -59,15 +65,15 @@ sudo snap alias markdown-hot-reload.mhr mhr
 
 The second command creates the `mhr` command. It is needed because the snap installs itself as `markdown-hot-reload.mhr`. A bare `mhr` alias needs approval from the Snap Store, and that request is under review. The alias works on your own machine whatever the Store decides.
 
-Running the snap from a terminal can print lines like `Could not open /sys/class/dmi/id/chassis_type` or `This call is not available inside the sandbox`. These come from GTK probing hardware and desktop details that Snap's confinement blocks on purpose. They are harmless: the window still opens and renders the file normally, so it is safe to ignore them.
+Running the snap from a terminal can print lines such as `Could not open /sys/class/dmi/id/chassis_type` or `This call is not available inside the sandbox`. GTK prints these when Snap's confinement blocks it from probing hardware and desktop details. They are harmless. The window still opens and renders the file, so you can ignore them.
 
-Each [release](https://github.com/chairulakmal/markdown-hot-reload/releases) also ships a `.deb` for Ubuntu 24.04, Debian 13, and newer, and an `x86_64-unknown-linux-gnu` tarball for every other distribution. Neither one updates itself, because there is no apt repository for `mhr`.
+### .deb and tarball
 
-[The install guide](https://mhr.chairulakmal.com/) is the full version: all four paths step by step, how to check a download against its published checksum, and how to update or remove each one.
+Every [release](https://github.com/chairulakmal/markdown-hot-reload/releases) also ships a `.deb` for Ubuntu 24.04, Debian 13, and newer, plus an `x86_64-unknown-linux-gnu` tarball for other distributions. Neither one updates itself, because `mhr` has no apt repository.
 
 ## Building and running
 
-There is no npm, no bundler, and no separate frontend build step. The only toolchain is Cargo, plus the same prerequisites a `cargo install` needs: Rust 1.88 or newer and, on Linux, the three WebKitGTK packages listed under Install above. An older compiler is refused with a clear message rather than failing midway through the build.
+There is no npm, no bundler, and no separate frontend build step. The only toolchain is Cargo, plus the prerequisites `cargo install` needs: Rust 1.88 or newer and, on Linux, the three WebKitGTK packages from the Install section. An older compiler is refused with a clear message.
 
 Clone the repository, then build and run:
 
@@ -82,19 +88,19 @@ To work on `mhr` itself, run it against the fixture document and edit that file 
 cargo run -- fixtures/kitchen-sink.md
 ```
 
-Every save re-renders the window, so a change is visible immediately. `fixtures/kitchen-sink.md` exercises every markdown feature the app supports, making it the fastest way to confirm a rendering change did not break something else.
+Every save re-renders the window. `fixtures/kitchen-sink.md` uses every markdown feature the app supports, so it is the fastest way to check that a rendering change did not break something else.
 
-`cargo test --locked` runs the render, math, CLI, asset, and watcher tests, and `cargo clippy --locked --all-targets` should report no warnings. The Contributing section below lists the full command set CI runs, and [`AGENTS.md`](AGENTS.md) explains why `--locked` is not optional.
+`cargo test --locked` runs the render, math, CLI, asset, and watcher tests. `cargo clippy --locked --all-targets` should report no warnings. The Contributing section lists the full command set that CI runs, and [`AGENTS.md`](AGENTS.md) explains why `--locked` is required.
 
 ## What it supports
 
 - GitHub Flavored Markdown: tables, task lists, strikethrough, autolinks, footnotes, alerts, description lists, superscript, multiline block quotes
 - Syntax-highlighted fenced code blocks
-- Inline and display math (`$...$`, `$$...$$`, and GitHub's `` $`...`$ ``), converted to MathML offline. LaTeX that does not parse shows its own source rather than a broken render
-- Mermaid diagrams, loaded on demand so documents without one pay no cost
-- Front matter, parsed and stripped from the rendered output rather than shown as a stray paragraph
+- Inline and display math (`$...$`, `$$...$$`, and GitHub's `` $`...`$ ``), converted to MathML offline. LaTeX that does not parse shows its own source instead of a broken render
+- Mermaid diagrams, loaded on demand, so a document without a diagram loads nothing extra
+- Front matter, parsed and removed from the output instead of shown as a stray paragraph
 
-Images are the one gap. `mhr` reads only the file you point it at, so a local image beside the document, `![](diagram.png)`, does not display, and a remote image is blocked by the lack of network access. An image embedded as a `data:` URI does display.
+Images are the one gap. `mhr` reads only the single file you name. A local image next to the document (`![](diagram.png)`) does not display. A remote image is blocked, because there is no network access. An image embedded as a `data:` URI does display.
 
 ## Platforms
 
@@ -107,7 +113,7 @@ Linux is the primary target. macOS is next. Windows is nice-to-have.
 Two things are required before a merge:
 
 - **Signed commits.** An unsigned commit is rejected. GitHub explains the setup in [Managing commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification).
-- **A passing `ci` check.** It runs `cargo fmt --all -- --check`, `cargo clippy --locked --all-targets`, `cargo deny check`, `cargo test --locked`, and `cargo build --locked --release` on Ubuntu 24.04. Run those locally first before opening a PR.
+- **A passing `ci` check.** It runs `cargo fmt --all -- --check`, `cargo clippy --locked --all-targets`, `cargo deny check`, `cargo test --locked`, and `cargo build --locked --release` on Ubuntu 24.04. Run those locally first.
 
 Contributor notes, including design invariants, decisions taken, and traps already checked for, live in [`AGENTS.md`](AGENTS.md). How the vendored frontend assets are refreshed is in [`docs/vendored-assets.md`](docs/vendored-assets.md).
 

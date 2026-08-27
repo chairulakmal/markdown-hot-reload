@@ -231,6 +231,13 @@
           --color-scheme: dark;
         }
       }
+      html {
+        scroll-behavior: smooth;
+        /* Anchor jumps land a little below the top edge rather than flush
+           against it. There is no fixed header to clear, this is breathing
+           room. */
+        scroll-padding-top: 2rem;
+      }
       body {
         margin: 0;
         padding: 2.5rem 1.25rem 4rem;
@@ -241,9 +248,21 @@
         font: 16px/1.45 "Open Sans", -apple-system, "Segoe UI", Helvetica,
           Arial, sans-serif;
       }
+      /* Two columns on the desktop: a table of contents that stays in view
+         while you scroll, then the content itself, still capped at mdBook's
+         reading width. The single-column fallback is in the max-width media
+         query near the end of this stylesheet. */
       main {
-        max-width: 750px;
+        max-width: 1040px;
         margin: 0 auto;
+        display: grid;
+        grid-template-columns: 210px minmax(0, 750px);
+        justify-content: center;
+        gap: 3rem;
+        align-items: start;
+      }
+      .content {
+        min-width: 0;
       }
       h1 {
         font-size: 1.75rem;
@@ -293,6 +312,10 @@
         color: var(--code-fg);
         padding: 1rem;
         overflow-x: auto;
+        /* Drop below the floated Snap Store badge rather than shrinking to
+           sit beside it. overflow-x already makes this a block formatting
+           context, which would otherwise wrap around the float. */
+        clear: both;
       }
       pre code {
         background: none;
@@ -327,8 +350,8 @@
         background: var(--table-alternate-bg);
       }
       .snap-badge {
-        display: inline-block;
-        margin: 0.5rem 0 1rem;
+        float: right;
+        margin: 0.25rem 0 0.75rem 1.5rem;
       }
       .snap-badge img {
         display: block;
@@ -361,9 +384,15 @@
         margin: 20px 0;
       }
       nav.toc {
-        font-size: 0.9rem;
+        position: sticky;
+        top: 2rem;
+        align-self: start;
+        /* When the list is taller than the window, the sidebar scrolls on
+           its own rather than pushing the layout or clipping. */
+        max-height: calc(100vh - 4rem);
+        overflow-y: auto;
+        font-size: 0.85rem;
         color: var(--fg-muted);
-        margin-top: 1rem;
       }
       nav.toc ol,
       nav.toc ul {
@@ -386,10 +415,75 @@
         color: var(--fg-muted);
         font-size: 0.9rem;
       }
+      /* Below this width there is no room for a side rail, so the table of
+         contents returns to the top of the page in normal flow. */
+      @media (max-width: 1000px) {
+        main {
+          grid-template-columns: minmax(0, 750px);
+          gap: 1.5rem;
+        }
+        nav.toc {
+          position: static;
+          max-height: none;
+          overflow: visible;
+          font-size: 0.9rem;
+        }
+        .snap-badge {
+          float: none;
+          margin: 0.5rem 0 1rem;
+        }
+      }
     </style>
   </head>
   <body>
     <main>
+      <nav class="toc" aria-label="Sections on this page">
+        <strong>On this page:</strong>
+        <ol>
+          <li><a href="#what-is-mhr">What is mhr</a></li>
+          <li><a href="#which-package">Which package to use</a></li>
+          <li>
+            <a href="#snap">The snap, recommended</a>
+            <ul>
+              <li><a href="#snap-update">Updating</a></li>
+              <li><a href="#snap-remove">Removing</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#deb">The .deb, for Ubuntu and Debian</a>
+            <ul>
+              <li><a href="#requirements">Requirements</a></li>
+              <li><a href="#in-one-block">All four steps in one block</a></li>
+              <li><a href="#pick-a-release">1. Pick a release</a></li>
+              <li>
+                <a href="#download">2. Download the package and its checksums</a>
+              </li>
+              <li><a href="#verify">3. Verify the checksum</a></li>
+              <li><a href="#install">4. Install it</a></li>
+              <li><a href="#deb-update">Updating</a></li>
+              <li><a href="#deb-remove">Removing</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#tarball">The tarball, for other distributions</a>
+            <ul>
+              <li><a href="#tarball-update">Updating</a></li>
+              <li><a href="#tarball-remove">Removing</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#cargo">From crates.io, with cargo</a>
+            <ul>
+              <li><a href="#cargo-update">Updating</a></li>
+              <li><a href="#cargo-remove">Removing</a></li>
+            </ul>
+          </li>
+        </ol>
+      </nav>
+
+      <!-- Grid column beside the sidebar. This wrapper is layout only and
+           adds no indentation level to what it contains. -->
+      <div class="content">
       <header>
         <h1>Install mhr on Linux</h1>
         <p class="lede">
@@ -401,49 +495,6 @@
           page covers all four, including how to check a download against its
           published checksum and how to update or remove each one.
         </p>
-        <nav class="toc" aria-label="Sections on this page">
-          <strong>On this page:</strong>
-          <ol>
-            <li><a href="#what-is-mhr">What is mhr</a></li>
-            <li><a href="#which-package">Which package to use</a></li>
-            <li>
-              <a href="#snap">The snap, recommended</a>
-              <ul>
-                <li><a href="#snap-update">Updating</a></li>
-                <li><a href="#snap-remove">Removing</a></li>
-              </ul>
-            </li>
-            <li>
-              <a href="#deb">The .deb, for Ubuntu and Debian</a>
-              <ul>
-                <li><a href="#requirements">Requirements</a></li>
-                <li><a href="#in-one-block">All four steps in one block</a></li>
-                <li><a href="#pick-a-release">1. Pick a release</a></li>
-                <li>
-                  <a href="#download">2. Download the package and its checksums</a>
-                </li>
-                <li><a href="#verify">3. Verify the checksum</a></li>
-                <li><a href="#install">4. Install it</a></li>
-                <li><a href="#deb-update">Updating</a></li>
-                <li><a href="#deb-remove">Removing</a></li>
-              </ul>
-            </li>
-            <li>
-              <a href="#tarball">The tarball, for other distributions</a>
-              <ul>
-                <li><a href="#tarball-update">Updating</a></li>
-                <li><a href="#tarball-remove">Removing</a></li>
-              </ul>
-            </li>
-            <li>
-              <a href="#cargo">From crates.io, with cargo</a>
-              <ul>
-                <li><a href="#cargo-update">Updating</a></li>
-                <li><a href="#cargo-remove">Removing</a></li>
-              </ul>
-            </li>
-          </ol>
-        </nav>
       </header>
 
       <div class="note">
@@ -582,11 +633,6 @@
       </div>
 
       <h2 id="snap">The snap, recommended</h2>
-      <p>
-        The snap runs on any distribution that has snapd. Ubuntu includes
-        snapd by default. The snap bundles its own WebKitGTK, so it does not
-        depend on what your system has installed:
-      </p>
       <a
         class="snap-badge"
         href="https://snapcraft.io/markdown-hot-reload"
@@ -607,6 +653,11 @@
           />
         </picture>
       </a>
+      <p>
+        The snap runs on any distribution that has snapd. Ubuntu includes
+        snapd by default. The snap bundles its own WebKitGTK, so it does not
+        depend on what your system has installed:
+      </p>
       <pre><code>sudo snap install markdown-hot-reload
 sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
       <p>
@@ -877,6 +928,7 @@ mhr notes.md</code></pre>
         &middot; MIT licensed &middot;
         <a href="/llms.txt">llms.txt</a>
       </footer>
+      </div>
     </main>
   </body>
 </html>

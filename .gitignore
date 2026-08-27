@@ -16,3 +16,9 @@
 
 # Claude Code runtime state, not project tooling.
 /.claude/scheduled_tasks.lock
+
+# proptest writes a failing case's RNG seed here. It is regenerated on demand
+# and a missing directory is not an error, so a clean clone tests the same.
+# A counterexample worth keeping becomes a normal #[test] with that input,
+# which survives a change to the generator; a seed does not.
+/proptest-regressions

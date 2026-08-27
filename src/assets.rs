@@ -65,6 +65,14 @@ pub fn handler(
     }
 }
 
+/// Reads one embedded file as text. Test-only, so that `main.rs` can pair
+/// `INIT_SCRIPT` against the `app.js` it has to agree with without `Asset`
+/// itself becoming part of the crate's surface.
+#[cfg(test)]
+pub fn embedded_text(path: &str) -> Option<String> {
+    Asset::get(path).map(|f| String::from_utf8_lossy(&f.data).into_owned())
+}
+
 fn not_found() -> Response<Cow<'static, [u8]>> {
     Response::builder()
         .status(404)
@@ -200,6 +208,49 @@ mod tests {
         assert_eq!(mime_for("LICENSE"), "application/octet-stream");
     }
 
+    /// Offline is enforced by the policy, not merely intended, so the two
+    /// directives that enforce it are pinned here. A stray `'unsafe-inline'`
+    /// in `script-src`, or a `connect-src` that permits anything, would leave
+    /// the app rendering identically on this machine and differently on one
+    /// with no network, which is the failure the invariant exists to prevent.
+    #[test]
+    fn the_policy_forbids_network_access_and_inline_script() {
+        let csp = shell();
+        assert!(csp.contains("connect-src 'none'"), "{csp}");
+        assert!(csp.contains("base-uri 'none'"), "{csp}");
+        assert!(csp.contains("form-action 'none'"), "{csp}");
+
+        let script_src = directive(&csp, "script-src");
+        assert!(
+            !script_src.contains("unsafe-inline") && !script_src.contains("unsafe-eval"),
+            "script-src relaxed: {script_src}"
+        );
+        for directive_name in ["default-src", "script-src", "img-src", "font-src"] {
+            let value = directive(&csp, directive_name);
+            assert!(
+                !value.contains("https:") && !value.contains("http:")
+                    || value.contains("http://mhr.localhost"),
+                "{directive_name} reaches off-origin: {value}"
+            );
+        }
+    }
+
+    fn shell() -> String {
+        String::from_utf8_lossy(&Asset::get("index.html").expect("shell is embedded").data)
+            .into_owned()
+    }
+
+    /// Pulls one directive's value out of the policy so a test can assert about
+    /// `script-src` without matching text that belongs to `style-src`, which
+    /// legitimately carries `'unsafe-inline'`.
+    fn directive<'a>(csp: &'a str, name: &str) -> &'a str {
+        let start = csp
+            .find(&format!("{name} "))
+            .unwrap_or_else(|| panic!("policy has no {name} directive"));
+        let rest = &csp[start..];
+        &rest[..rest.find(';').unwrap_or(rest.len())]
+    }
+
     /// `WebView2` rewrites a custom scheme to `http://<scheme>.localhost`, so
     /// the URL the webview is pointed at has to match the origin it will end up
     /// with, and the CSP in `index.html` has to allow both spellings.
@@ -214,8 +265,7 @@ mod tests {
             assert_eq!(url, format!("{SCHEME}://localhost/index.html"));
         }
 
-        let csp =
-            String::from_utf8_lossy(&Asset::get("index.html").expect("shell").data).into_owned();
+        let csp = shell();
         assert!(csp.contains(&format!("{SCHEME}:")), "CSP misses the scheme");
         assert!(
             csp.contains(&format!("http://{SCHEME}.localhost")),

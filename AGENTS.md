@@ -15,8 +15,8 @@ Breaking any of these is a design change, not a refactor. Raise it rather than d
 - **No npm.** No `package.json`, no bundler, no `node_modules`. Frontend dependencies are vendored files in `assets/`.
 - **Offline is enforced, not intended.** `index.html` sets `connect-src 'none'` and `img-src 'self'`, so anything needing the network fails loudly instead of working locally and failing elsewhere.
 - **Read-only.** No editing surface, no writing to the watched file, ever.
-- **`render.unsafe_` stays false.** Documents come from agents and editors, so raw HTML is escaped rather than executed. `src/render.rs` tests assert this; do not weaken them without an explicit decision.
-- **No `unsafe` in this crate.** `Cargo.toml` sets `[lints.rust] unsafe_code = "forbid"`, enforced by the compiler, not review. This is separate from comrak's `render.unsafe_` above, which is about HTML in documents. If a platform binding ever seems to need `unsafe`, that is a discussion, not a lint to relax.
+- **`render.r#unsafe` stays false.** Documents come from agents and editors, so raw HTML is escaped rather than executed. `src/render.rs` tests assert this; do not weaken them without an explicit decision.
+- **No `unsafe` in this crate.** `Cargo.toml` sets `[lints.rust] unsafe_code = "forbid"`, enforced by the compiler, not review. This is separate from comrak's `render.r#unsafe` above, which is about HTML in documents. If a platform binding ever seems to need `unsafe`, that is a discussion, not a lint to relax.
 - **Parsing, highlighting, and escaping happen in Rust.** JavaScript only morphs the DOM and draws diagrams.
 
 ## Commands
@@ -35,6 +35,10 @@ These five are what the `ci` job runs, in that order. Run them before opening a 
 `--locked` is part of the command, not decoration. Without it, cargo quietly rewrites `Cargo.lock` when it drifts from `Cargo.toml`, and the run passes against a dependency graph nobody committed.
 
 The snap build needs LXD, which `snapcraft pack` sets up on first run. CI builds it on every pull request and every push to `main` that touches more than prose, so there is rarely a reason to run it by hand. The build takes 7 to 9 minutes; the `timeout-minutes: 45` on that job is a ceiling for a stuck build, not an estimate.
+
+Property tests run under proptest with a fresh random seed each run, so a failure that appears once may not reappear. When one fails, proptest prints the shrunk counterexample and writes an RNG seed to `proptest-regressions/`, which is gitignored: the seed replays a stream, not a value, so it only reproduces the failure while the generator is unchanged, and a CI runner is discarded before anyone could commit it anyway. **Turn the shrunk counterexample into an ordinary `#[test]` with that literal input.** That is what survives a change to the strategy, and it is the record that belongs in the repository. `PROPTEST_CASES=20000 cargo test --locked` runs the whole suite at eighty times the default case count in about six seconds, which is worth doing before touching `render.rs` or `math.rs`.
+
+A property over rendered HTML must assert on tag openings, not on substrings that merely look like markup. Body text carries unescaped quotes and equals signs, so a document can legitimately render the literal text `href="javascript:` inside a `<code>` block. Two versions of `to_html_never_emits_a_tag_it_does_not_generate` asserted on attribute shapes and failed on innocent documents before this was narrowed to `<` openings, which only a real tag can produce.
 
 `fixtures/kitchen-sink.md` exercises every supported GFM feature. Edit it from a second terminal to test reload.
 

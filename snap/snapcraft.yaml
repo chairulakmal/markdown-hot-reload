@@ -22,8 +22,8 @@ grade: stable
 confinement: strict
 
 apps:
-  # Installs as `markdown-hot-reload.mhr` until a bare `mhr` alias is
-  # requested from the Snap Store after publishing.
+  # Installs as `markdown-hot-reload.mhr`. The Snap Store granted a bare
+  # `mhr` automatic alias on 2026-08-27, so a fresh install also gets `mhr`.
   mhr:
     command: bin/mhr
     extensions: [gnome]

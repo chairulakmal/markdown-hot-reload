@@ -74,13 +74,7 @@
                 "@type": "HowToStep",
                 "name": "Install the snap",
                 "url": "https://mhr.chairulakmal.com/#snap",
-                "text": "Run sudo snap install markdown-hot-reload."
-              },
-              {
-                "@type": "HowToStep",
-                "name": "Create the mhr command",
-                "url": "https://mhr.chairulakmal.com/#snap",
-                "text": "Run sudo snap alias markdown-hot-reload.mhr mhr. The snap installs its command as markdown-hot-reload.mhr, because a bare mhr alias needs Snap Store approval and that request is under review."
+                "text": "Run sudo snap install markdown-hot-reload. That installs the mhr command."
               }
             ]
           },
@@ -531,6 +525,12 @@
         <code>mhr</code> never writes to the file it watches.
       </p>
       <p>
+        While the window is open, the terminal that started
+        <code>mhr</code> is blocked. Add <code>&amp;</code> to the end of the
+        command to get your prompt back:
+      </p>
+      <pre><code>mhr TODO.md &amp;</code></pre>
+      <p>
         <strong>It is safe to point at a file you did not write.</strong>
         <code>mhr</code> never contacts the network, because its webview's
         Content-Security-Policy sets <code>connect-src 'none'</code>, and it
@@ -552,6 +552,10 @@
             <td><code>mhr &lt;file.md&gt;</code>, one file argument, required</td>
           </tr>
           <tr>
+            <th scope="row">Platform</th>
+            <td>Linux only, macOS and Windows are untested</td>
+          </tr>
+          <tr>
             <th scope="row">Architecture</th>
             <td>
               Prebuilt packages are x86_64 (amd64) only, no arm64 build yet
@@ -569,6 +573,8 @@
         <strong>Use the snap unless you have a reason not to.</strong> It is
         the only package that updates itself. The other three are installed
         once and stay at that version until you repeat the steps by hand.
+        Whichever one you pick, the command you run afterwards is
+        <code>mhr</code>.
       </p>
       <div class="note">
         <strong>Installing non-interactively?</strong> If a script, a CI job,
@@ -619,14 +625,11 @@
               <td>Minutes, it compiles on your machine</td>
             </tr>
             <tr>
-              <th scope="row">Command name</th>
-              <td>
-                <code>markdown-hot-reload.mhr</code> until you run the alias
-                command
-              </td>
-              <td><code>mhr</code></td>
-              <td><code>mhr</code></td>
-              <td><code>mhr</code></td>
+              <th scope="row">Right-click to open</th>
+              <td>Yes, in "Open With"</td>
+              <td>Yes, in "Open With"</td>
+              <td>No, binary only</td>
+              <td>No, binary only</td>
             </tr>
           </tbody>
         </table>
@@ -658,16 +661,11 @@
         snapd by default. The snap bundles its own WebKitGTK, so it does not
         depend on what your system has installed:
       </p>
-      <pre><code>sudo snap install markdown-hot-reload
-sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
+      <pre><code>sudo snap install markdown-hot-reload</code></pre>
       <p>
-        The second command creates the <code>mhr</code> command. It is needed
-        because the snap installs itself as
-        <code>markdown-hot-reload.mhr</code>. A bare <code>mhr</code> alias
-        needs Snap Store approval, and that request is under review. The alias
-        command works on your own machine whatever the Store decides.
+        That installs the <code>mhr</code> command. Use it to open any markdown
+        file:
       </p>
-      <p>Then open any markdown file:</p>
       <pre><code>mhr notes.md</code></pre>
       <p>
         Running the snap from a terminal can print lines like
@@ -698,7 +696,7 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
       <h3 id="snap-remove">Removing</h3>
       <pre><code>sudo snap remove markdown-hot-reload</code></pre>
       <p>
-        This also removes the <code>mhr</code> alias created for it.
+        This also removes the <code>mhr</code> command.
         <code>mhr</code> writes no configuration files and no cache, so
         nothing else is left behind.
       </p>
@@ -707,8 +705,7 @@ sudo snap alias markdown-hot-reload.mhr mhr</code></pre>
       <p>
         Choose the <code>.deb</code> if you prefer installing through
         <code>apt</code> and using your system's own WebKitGTK rather than a
-        bundled copy. It installs the command as <code>mhr</code> directly,
-        with no alias step.
+        bundled copy. It installs the command as <code>mhr</code>.
       </p>
       <h3 id="requirements">Requirements</h3>
       <p>

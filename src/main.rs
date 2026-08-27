@@ -147,3 +147,85 @@ fn title(path: &Path) -> String {
     );
     format!("{name} · mhr")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{INIT_SCRIPT, NOTICE_VANISHED, read_and_render, title};
+    use std::path::Path;
+
+    /// `INIT_SCRIPT` and `app.js` are two files in two languages that have to
+    /// agree on two names. Rust queues renders into `window.__q` behind a
+    /// placeholder `window.__render`; `app.js` replaces the placeholder and
+    /// drains the queue. Rename either name on one side and reloading stops
+    /// working with no error anywhere: the placeholder keeps swallowing every
+    /// render into an array nothing reads. Nothing else in the suite pairs
+    /// them, because one is a Rust string and the other an embedded asset.
+    #[test]
+    fn the_reload_handshake_uses_the_same_names_on_both_sides() {
+        let app_js = crate::assets::embedded_text("app.js").expect("app.js is embedded");
+
+        assert_eq!(
+            shared_globals(INIT_SCRIPT),
+            shared_globals(&app_js),
+            "the two sides of the reload handshake name different globals"
+        );
+        assert_eq!(
+            shared_globals(INIT_SCRIPT),
+            ["q", "render"].map(String::from).into_iter().collect(),
+            "the handshake changed shape; check that push() still agrees"
+        );
+    }
+
+    /// Every `window.__name` identifier in `source`, whole rather than by
+    /// prefix. A `contains("window.__q")` check would be satisfied by
+    /// `window.__queue`, so a rename on one side only would pass it.
+    fn shared_globals(source: &str) -> std::collections::BTreeSet<String> {
+        source
+            .match_indices("window.__")
+            .map(|(i, m)| {
+                source[i + m.len()..]
+                    .chars()
+                    .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+                    .collect()
+            })
+            .collect()
+    }
+
+    /// The title bar is the only place the filename is shown, so a path with
+    /// no file name still has to produce something rather than an empty title.
+    #[test]
+    fn titles_the_window_after_the_file() {
+        assert_eq!(title(Path::new("/docs/notes.md")), "notes.md · mhr");
+        assert_eq!(title(Path::new("/")), "/ · mhr");
+    }
+
+    /// A read failure reaches the webview as HTML, so the path and the
+    /// operating system's message both have to be escaped on the way in. The
+    /// path is attacker-controlled in the sense that matters here: it is
+    /// whatever was typed at the shell, and it is spliced into a document.
+    #[test]
+    fn escapes_the_path_and_the_error_in_a_read_failure_notice() {
+        let html = read_and_render(Path::new("<script>alert(1)</script>.md"));
+        assert!(html.contains("mhr-notice"), "{html}");
+        assert!(!html.contains("<script"), "{html}");
+        assert!(html.contains("&lt;script&gt;"), "{html}");
+    }
+
+    #[test]
+    fn renders_a_file_it_can_read() {
+        let html = read_and_render(Path::new("fixtures/kitchen-sink.md"));
+        assert!(html.contains("<table>"), "{html}");
+        assert!(
+            !html.contains("mhr-notice"),
+            "read reported a failure: {html}"
+        );
+    }
+
+    /// Both notices are spliced into the page as HTML, so they have to be
+    /// valid on their own rather than relying on the caller to wrap them.
+    #[test]
+    fn the_vanished_notice_is_self_contained_markup() {
+        assert!(NOTICE_VANISHED.starts_with("<p class=\"mhr-notice\">"));
+        assert!(NOTICE_VANISHED.ends_with("</p>"));
+    }
+}

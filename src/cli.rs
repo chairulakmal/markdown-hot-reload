@@ -81,10 +81,52 @@ pub fn open(arg: &OsStr) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::{Request, open, parse};
+    use proptest::prelude::*;
     use std::ffi::OsString;
 
     fn parse_args(args: &[&str]) -> super::Result<Request> {
         parse(args.iter().map(OsString::from))
+    }
+
+    proptest! {
+        /// Generalizes `reads_a_file_argument` below: any single argument that
+        /// does not start with `-` is a filename to open, whatever it is,
+        /// never something `parse` tries to interpret.
+        ///
+        /// The generator is weighted toward strings that look like options
+        /// without being ones, because a bare `\PC*` almost never produces a
+        /// leading `-` and so never approaches the boundary this is about.
+        #[test]
+        fn parses_any_non_flag_argument_as_open(
+            name in prop_oneof![
+                1 => "\\PC*",
+                1 => "[-]{0,3}(h|help|V|version|x)[\\PC]{0,4}",
+            ]
+            .prop_filter("must not look like an option", |s: &String| !s.starts_with('-'))
+        ) {
+            let request = parse([OsString::from(name.clone())]).expect("non-flag argument parses");
+            prop_assert_eq!(request, Request::Open(OsString::from(name)));
+        }
+
+        /// A path is bytes, not text, and this is the branch where that
+        /// matters: `to_str` returns `None`, so none of the option arms can
+        /// match and the argument has to fall through to `Open` carrying its
+        /// bytes unchanged. `accepts_a_filename_that_is_not_utf8` below checks
+        /// one such sequence; this checks that no sequence behaves otherwise.
+        ///
+        /// The leading `0x80` guarantees invalid UTF-8 whatever follows, and
+        /// also guarantees the argument cannot begin with `-`.
+        #[cfg(unix)]
+        #[test]
+        fn parses_any_non_utf8_argument_as_open(tail in prop::collection::vec(any::<u8>(), 0..24)) {
+            use std::os::unix::ffi::OsStringExt;
+
+            let mut bytes = vec![0x80];
+            bytes.extend(tail);
+            let arg = OsString::from_vec(bytes);
+            prop_assert!(arg.to_str().is_none());
+            prop_assert_eq!(parse([arg.clone()]).expect("bytes are a filename"), Request::Open(arg));
+        }
     }
 
     #[test]

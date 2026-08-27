@@ -82,7 +82,7 @@ fn options() -> Options<'static> {
     o.render.gfm_quirks = true;
     o.render.tasklist_classes = true;
 
-    // render.unsafe_ stays false: documents are written by agents and editors,
+    // render.r#unsafe stays false: documents are written by agents and editors,
     // so raw HTML is escaped rather than executed. Revisit with an ammonia
     // allowlist if <details> and aligned images become worth the risk.
 
@@ -174,7 +174,132 @@ pub fn to_html(markdown: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::to_html;
+    use super::{escape_html, to_html};
+    use proptest::prelude::*;
+
+    /// Markdown built from fragments that mean something to the parser, rather
+    /// than arbitrary Unicode.
+    ///
+    /// This distinction decides whether the property below tests anything at
+    /// all. A generator over `\PC*` never produces the substring `<script`, so
+    /// it passes 20,000 cases against a build with raw HTML rendering turned
+    /// on: the assertion holds only because the input never asks the question.
+    /// Drawing from a vocabulary of delimiters, tag starts and event-handler
+    /// attributes puts the dangerous shapes in front of comrak in every case,
+    /// and shrinks to a readable counterexample when one fails.
+    fn markdown_ish() -> impl Strategy<Value = String> {
+        let token = prop::sample::select(vec![
+            "<script",
+            ">",
+            "</script>",
+            "<img src=x onerror=alert(1)>",
+            "<",
+            "javascript:",
+            "`",
+            "```",
+            "~~~",
+            "$",
+            "$$",
+            "\\operatorname{",
+            "}",
+            "|",
+            "---",
+            "\n",
+            "\n\n",
+            "> ",
+            "- [ ] ",
+            "[a](",
+            ")",
+            "#",
+            "&",
+            "\"",
+            "'",
+            "\\",
+            "mermaid",
+            "html",
+            "text",
+            "![a](",
+            "<iframe",
+            "<object",
+            "data:text/html,",
+            "vbscript:",
+        ]);
+        prop::collection::vec(token, 0..24).prop_map(|parts| parts.concat())
+    }
+
+    proptest! {
+        /// Escaping has to be reversible in exactly one pass, which is a
+        /// stronger claim than "no raw angle bracket survives" and the reason
+        /// this is a round trip rather than a substring check.
+        ///
+        /// Both claims reject a missing `replace`. Only this one rejects the
+        /// ordering bug: escape `<` before `&` and every `<` comes out as
+        /// `&amp;lt;`, so the reader sees the literal text `&lt;` on the page.
+        /// That mutation passes the substring form, since no raw `<` survives
+        /// it either.
+        #[test]
+        fn escape_html_round_trips_in_one_pass(s in markdown_ish()) {
+            let escaped = escape_html(&s);
+            prop_assert!(!escaped.contains('<'), "{escaped}");
+            prop_assert!(!escaped.contains('>'), "{escaped}");
+            prop_assert_eq!(unescape_once(&escaped), s);
+        }
+
+        /// `render.r#unsafe` stays false, which buys two things at once: raw
+        /// HTML in the document is escaped rather than executed, and a link or
+        /// image URL in a scripting scheme is blanked rather than echoed into
+        /// an attribute. This is the general form of
+        /// `escapes_raw_html_rather_than_executing_it` below, and it is worth
+        /// having only because `markdown_ish` actually feeds comrak the
+        /// payloads: it fails on a build with raw HTML turned on, which the
+        /// arbitrary-Unicode version it replaced did not.
+        ///
+        /// The assertion is on tag openings only, and that narrowness is
+        /// deliberate. A `<` reaches the output only from a tag this renderer
+        /// emitted, because every other path escapes it, so `<script` in the
+        /// output is proof of a real tag. Nothing else about the output is
+        /// safe to match by substring: body text carries unescaped quotes and
+        /// equals signs, so a document is free to render the literal text
+        /// `href="javascript:` inside a `<code>` block, where it is inert.
+        /// Two earlier versions of this test asserted on those shapes and
+        /// failed on innocent documents. URL blanking is checked instead by
+        /// `blanks_link_and_image_urls_in_scripting_schemes` below, which can
+        /// look at a known attribute because it controls the input.
+        #[test]
+        fn to_html_never_emits_a_tag_it_does_not_generate(s in markdown_ish()) {
+            let html = to_html(&s).to_lowercase();
+            for tag in ["<script", "<iframe", "<object", "<embed", "<style", "<form", "<base"] {
+                prop_assert!(!html.contains(tag), "{tag} reached the page: {html}");
+            }
+        }
+    }
+
+    /// Decodes the three entities [`escape_html`] writes, scanning left to
+    /// right so each one is decoded exactly once. Decoding by three successive
+    /// `replace` calls would undo double-escaping instead of revealing it.
+    fn unescape_once(s: &str) -> String {
+        let mut out = String::with_capacity(s.len());
+        let mut rest = s;
+        while let Some(i) = rest.find('&') {
+            out.push_str(&rest[..i]);
+            rest = &rest[i..];
+            let (entity, decoded) = if rest.starts_with("&amp;") {
+                ("&amp;", '&')
+            } else if rest.starts_with("&lt;") {
+                ("&lt;", '<')
+            } else if rest.starts_with("&gt;") {
+                ("&gt;", '>')
+            } else {
+                out.push('&');
+                rest = &rest[1..];
+                continue;
+            };
+            out.push(decoded);
+            rest = &rest[entity.len()..];
+        }
+        out.push_str(rest);
+        out
+    }
 
     #[test]
     fn renders_gfm_tables() {
@@ -279,6 +404,27 @@ mod tests {
         let html = to_html("<script>alert(1)</script>\n\n<img src=x onerror=alert(1)>");
         assert!(!html.contains("<script"), "{html}");
         assert!(!html.contains("onerror"), "{html}");
+    }
+
+    /// A URL in a scripting scheme is blanked rather than carried into the
+    /// attribute. This is the same `render.r#unsafe` switch as the test above,
+    /// on a path that escaping alone would not cover: the href is generated by
+    /// comrak, so there is no raw markup for the escaper to catch.
+    #[test]
+    fn blanks_link_and_image_urls_in_scripting_schemes() {
+        for markdown in [
+            "[a](javascript:alert(1))",
+            "![a](javascript:alert(1))",
+            "[a](JaVaScRiPt:alert(1))",
+            "[a](vbscript:alert(1))",
+            "[a](data:text/html,<script>alert(1)</script>)",
+        ] {
+            let html = to_html(markdown);
+            assert!(
+                html.contains(r#"href="""#) || html.contains(r#"src="""#),
+                "{markdown} kept its URL: {html}"
+            );
+        }
     }
 
     /// A mermaid fence bypasses syntect, so it must still be escaped on the way out.

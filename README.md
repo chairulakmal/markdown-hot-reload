@@ -18,7 +18,7 @@ Run `mhr notes.md`. A window opens with the rendered markdown, and every time yo
 
 ## How it works
 
-One Rust binary. `comrak` parses markdown to HTML, `notify` watches the file's parent directory, and `wry` and `tao` host a system webview that receives the new HTML through `evaluate_script`. The frontend is a static HTML shell plus about sixty lines of vanilla JavaScript, both compiled into the binary by `rust-embed`. Parsing, syntax highlighting, math conversion, and escaping all happen in Rust. JavaScript only morphs the DOM and draws Mermaid diagrams.
+One Rust binary. `comrak` parses markdown to HTML, `notify` watches the file's parent directory, and `wry` and `tao` host a system webview that receives the new HTML through `evaluate_script`. The frontend is a static HTML shell plus a small amount of vanilla JavaScript, both compiled into the binary by `rust-embed`. Parsing, syntax highlighting, math conversion, and escaping all happen in Rust. JavaScript only morphs the DOM and draws Mermaid diagrams.
 
 ## Safety
 
@@ -48,7 +48,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
 
 Install those first. Without them the build fails at the linker, and the error does not say which package is missing. Linux is the only platform with a released build today, so a `cargo install` on macOS or Windows is untested rather than supported. See Platforms below.
 
-Every prebuilt package below is built for x86_64, which is also called amd64. There is no arm64 build yet. Nobody has asked for one so far, so please open an issue if you need it.
+Every prebuilt package below is built for x86_64, which is also called amd64. There is no arm64 build yet, so open an issue if you need one.
 
 The snap is the recommended install on any distribution that runs snapd. Ubuntu includes snapd by default:
 
@@ -84,7 +84,7 @@ cargo run -- fixtures/kitchen-sink.md
 
 Every save re-renders the window, so a change is visible immediately. `fixtures/kitchen-sink.md` exercises every markdown feature the app supports, making it the fastest way to confirm a rendering change did not break something else.
 
-`cargo test` runs the render, math, CLI, asset, and watcher tests, and `cargo clippy --all-targets` should report no warnings. [`AGENTS.md`](AGENTS.md) lists the full command set CI runs.
+`cargo test --locked` runs the render, math, CLI, asset, and watcher tests, and `cargo clippy --locked --all-targets` should report no warnings. The Contributing section below lists the full command set CI runs, and [`AGENTS.md`](AGENTS.md) explains why `--locked` is not optional.
 
 ## What it supports
 
@@ -95,8 +95,6 @@ Every save re-renders the window, so a change is visible immediately. `fixtures/
 - Front matter, parsed and stripped from the rendered output rather than shown as a stray paragraph
 
 Images are the one gap. `mhr` reads only the file you point it at, so a local image beside the document, `![](diagram.png)`, does not display, and a remote image is blocked by the lack of network access. An image embedded as a `data:` URI does display.
-
-Raw HTML in a document is always escaped, never executed. Documents come from agents and editors, not a trusted author, so `mhr` treats them as untrusted input.
 
 ## Platforms
 

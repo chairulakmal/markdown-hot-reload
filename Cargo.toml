@@ -61,6 +61,13 @@ serde_json = "1.0.151"
 tao = "0.36.0"
 wry = "0.56.1"
 
+# fork and timeout are off: they run each case in a child process to catch a
+# crashing or hanging one, which nothing under test here does, and they would
+# otherwise pull rusty-fork and its own transitive deps into a tree this
+# project keeps deliberately small.
+[dev-dependencies]
+proptest = { version = "1", default-features = false, features = ["std"] }
+
 # Lint levels live here rather than in a CI invocation, so `cargo clippy` gives
 # every contributor the same bar the pipeline enforces. The code already passes
 # pedantic with zero warnings, and contains no `unsafe`, so both are free today

@@ -225,7 +225,193 @@ fn attributes(mut s: &str) -> Option<(bool, &str)> {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_trusted, to_mathml};
+    use super::{ELEMENTS, is_trusted, to_mathml};
+    use proptest::prelude::*;
+
+    /// Element names a browser would act on and `ELEMENTS` therefore omits.
+    const REFUSED: &[&str] = &[
+        "script",
+        "iframe",
+        "object",
+        "embed",
+        "style",
+        "annotation",
+        "annotation-xml",
+        "merror",
+        "img",
+        "svg",
+        "form",
+        "a",
+        "base",
+    ];
+
+    /// Well-formed documents: balanced tags, mostly allowlisted names and
+    /// attributes, with a refused one mixed in often enough to matter.
+    ///
+    /// This shape is what makes the two conditional properties below worth
+    /// running. `tag_soup` produces a trusted verdict about 8% of the time and
+    /// every one of those is a string with no tags in it at all, so a property
+    /// guarded on `is_trusted(..)` reads as passing while testing nothing.
+    /// Generating documents the scanner can actually accept is what puts the
+    /// allowlist itself under test rather than the reject path.
+    fn mathml_doc() -> impl Strategy<Value = String> {
+        let text = prop::sample::select(vec!["x", "1", "<", "&", "+", " ", ""]);
+        text.prop_map(String::from)
+            .prop_recursive(4, 48, 3, |child| {
+                (
+                    // Weighted so a whole document is allowlisted often enough
+                    // to reach the assertions, and refused often enough that a
+                    // widened allowlist is noticed.
+                    prop_oneof![
+                        6 => prop::sample::select(ELEMENTS.to_vec()),
+                        1 => prop::sample::select(REFUSED.to_vec()),
+                    ],
+                    prop::collection::vec(
+                        prop_oneof![
+                            4 => prop::sample::select(vec![
+                                " class=\"a\"", " style=\"color:red\"",
+                                " display=\"block\"", " width=\"1em\"",
+                            ]),
+                            1 => prop::sample::select(vec![
+                                " onclick=\"alert(1)\"", " encoding=\"text/html\"",
+                                " href=\"javascript:alert(1)\"", " class=a",
+                            ]),
+                        ],
+                        0..2,
+                    ),
+                    prop::collection::vec(child, 0..3),
+                )
+                    .prop_map(|(name, attrs, kids)| {
+                        let attrs = attrs.concat();
+                        if kids.is_empty() {
+                            format!("<{name}{attrs} />")
+                        } else {
+                            format!("<{name}{attrs}>{}</{name}>", kids.concat())
+                        }
+                    })
+            })
+    }
+
+    /// Tag soup drawn from the pieces this scanner has to tell apart:
+    /// allowlisted tags, refused tags, allowed and disallowed attributes, the
+    /// quoting forms, and the bare `<` that ordinary arithmetic produces. Its
+    /// job is the reject and panic paths, where malformed input is the point.
+    ///
+    /// Arbitrary Unicode is the wrong alphabet for a scanner whose whole job is
+    /// this grammar. It never assembles a start tag, so it can only ever
+    /// exercise the "literal text" arm of the match.
+    fn tag_soup() -> impl Strategy<Value = String> {
+        let token = prop::sample::select(vec![
+            "<math",
+            "<mi",
+            "<mo",
+            "<mrow",
+            "<mspace",
+            "</math>",
+            "</mi>",
+            "</mo>",
+            "</mrow>",
+            "<script",
+            "</script>",
+            "<merror",
+            "</merror>",
+            "<annotation-xml",
+            "<mi",
+            ">",
+            "/>",
+            " class=\"a\"",
+            " style=\"x\"",
+            " onclick=\"alert(1)\"",
+            " encoding=\"text/html\"",
+            " class=a",
+            " class='a'",
+            " class",
+            "=\"",
+            "\"",
+            "<",
+            "x",
+            "<!--",
+            "-->",
+            "<?",
+            " ",
+            "\n",
+            "\t",
+        ]);
+        prop::collection::vec(token, 0..24).prop_map(|parts| parts.concat())
+    }
+
+    proptest! {
+        /// `is_trusted` is a hand-rolled scanner that slices `html` on byte
+        /// offsets it computes itself, so a bad offset would panic rather than
+        /// reject, taking the whole render down instead of falling back to the
+        /// escaped LaTeX. Arbitrary Unicode is the right alphabet for this one
+        /// specifically, because multi-byte characters are what put a slice
+        /// off a `char` boundary; `(?s)` keeps the control characters that
+        /// `attributes` trims on, which `\PC` would have excluded.
+        #[test]
+        fn is_trusted_never_panics(s in "(?s).*") {
+            let _ = is_trusted(&s);
+        }
+
+        #[test]
+        fn is_trusted_never_panics_on_tag_soup(s in tag_soup()) {
+            let _ = is_trusted(&s);
+        }
+
+        #[test]
+        fn is_trusted_never_panics_on_a_well_formed_document(s in mathml_doc()) {
+            let _ = is_trusted(&s);
+        }
+
+        /// The invariant the allowlist exists to provide, stated over the
+        /// whole grammar rather than one hand-placed `<script>`: nothing
+        /// `is_trusted` accepts may contain a tag a browser would act on.
+        ///
+        /// The substring check is sound here because a `<` followed by a
+        /// letter always enters the start-tag arm of the scan, and an
+        /// attribute value carrying a `<` is refused outright. So a refused
+        /// name cannot hide in text or in an attribute: if the string holds
+        /// `<script` at all, a trusting verdict is a bug.
+        #[test]
+        fn nothing_trusted_contains_a_refused_tag(html in mathml_doc()) {
+            if is_trusted(&html) {
+                for name in REFUSED {
+                    prop_assert!(
+                        !html.contains(&format!("<{name}")),
+                        "trusted a document containing <{name}: {html}"
+                    );
+                }
+            }
+        }
+
+        /// Every element the scanner accepts has to be one the allowlist
+        /// actually names, which is what stops a future edit to `tag_name`
+        /// from quietly widening what counts as a known element.
+        #[test]
+        fn trusting_a_document_means_every_tag_was_allowlisted(html in mathml_doc()) {
+            if is_trusted(&html) {
+                for (i, _) in html.match_indices('<') {
+                    let rest = &html[i + 1..];
+                    let rest = rest.strip_prefix('/').unwrap_or(rest);
+                    // A tag starts only when a letter follows, so `<1` in
+                    // `<mo><1</mo>` is text and has no element name to check.
+                    // Reading it as one is the mistake this scanner exists to
+                    // avoid, and the first run of this property made it.
+                    if !rest.starts_with(|c: char| c.is_ascii_alphabetic()) {
+                        continue;
+                    }
+                    let name: String = rest
+                        .chars()
+                        .take_while(|c| c.is_ascii_alphanumeric() || *c == '-')
+                        .collect();
+                    prop_assert!(
+                        ELEMENTS.contains(&name.as_str()),
+                        "trusted an unknown element <{name}>: {html}"
+                    );
+                }
+            }
+        }
+    }
 
     #[test]
     fn converts_inline_math() {

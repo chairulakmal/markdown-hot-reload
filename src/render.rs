@@ -174,7 +174,31 @@ pub fn to_html(markdown: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::to_html;
+    use super::{escape_html, to_html};
+    use proptest::prelude::*;
+
+    proptest! {
+        /// `escape_html` replaces every `<` and `>`, so none should survive
+        /// into the result no matter what the input looks like: this is the
+        /// general form that `escapes_raw_html_rather_than_executing_it` below
+        /// checks for two fixed payloads.
+        #[test]
+        fn escape_html_never_emits_a_raw_angle_bracket(s in "\\PC*") {
+            let escaped = escape_html(&s);
+            prop_assert!(!escaped.contains('<'), "{escaped}");
+            prop_assert!(!escaped.contains('>'), "{escaped}");
+        }
+
+        /// `render.unsafe_` stays false, so raw HTML in the document is always
+        /// escaped rather than executed. Fuzzing arbitrary text past comrak,
+        /// rather than only the two hand-written payloads below, is what
+        /// backs the crate's whole safety claim for agent-written input.
+        #[test]
+        fn to_html_never_emits_a_script_tag(s in "\\PC*") {
+            let html = to_html(&s);
+            prop_assert!(!html.to_lowercase().contains("<script"), "{html}");
+        }
+    }
 
     #[test]
     fn renders_gfm_tables() {

@@ -81,10 +81,24 @@ pub fn open(arg: &OsStr) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::{Request, open, parse};
+    use proptest::prelude::*;
     use std::ffi::OsString;
 
     fn parse_args(args: &[&str]) -> super::Result<Request> {
         parse(args.iter().map(OsString::from))
+    }
+
+    proptest! {
+        /// Generalizes `reads_a_file_argument` below: any single argument that
+        /// does not start with `-` is a filename to open, whatever it is,
+        /// never something `parse` tries to interpret.
+        #[test]
+        fn parses_any_non_flag_argument_as_open(
+            name in "\\PC*".prop_filter("must not look like an option", |s| !s.starts_with('-'))
+        ) {
+            let request = parse([OsString::from(name.clone())]).expect("non-flag argument parses");
+            prop_assert_eq!(request, Request::Open(OsString::from(name)));
+        }
     }
 
     #[test]

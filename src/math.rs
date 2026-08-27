@@ -226,6 +226,29 @@ fn attributes(mut s: &str) -> Option<(bool, &str)> {
 #[cfg(test)]
 mod tests {
     use super::{is_trusted, to_mathml};
+    use proptest::prelude::*;
+
+    proptest! {
+        /// `is_trusted` is a hand-rolled scanner that slices `html` on byte
+        /// offsets it computes itself; the thing worth fuzzing is that no
+        /// input, valid `MathML` or not, ever panics it, since a panic here
+        /// would take the whole render down instead of falling back to the
+        /// escaped LaTeX the way a rejection does.
+        #[test]
+        fn is_trusted_never_panics(s in "\\PC*") {
+            let _ = is_trusted(&s);
+        }
+
+        /// `script` is not in `ELEMENTS`, so wrapping arbitrary text around a
+        /// `<script>` tag must be refused regardless of what surrounds it.
+        /// This is the general form `rejects_unknown_elements_and_attributes`
+        /// below checks with one fixed payload.
+        #[test]
+        fn never_trusts_a_wrapped_script_tag(before in "\\PC*", after in "\\PC*") {
+            let html = format!("<math>{before}<script>alert(1)</script>{after}</math>");
+            prop_assert!(!is_trusted(&html), "{html}");
+        }
+    }
 
     #[test]
     fn converts_inline_math() {

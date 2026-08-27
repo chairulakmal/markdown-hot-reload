@@ -23,7 +23,7 @@ Keep the tag suffix and the snap channel in lockstep. The value of this ladder o
 
 **Prepare**
 
-1. Bump the version in `Cargo.toml`, `Cargo.lock` and `snap/snapcraft.yaml` together, on a branch. The `release` workflow's tag-check step fails closed if any of the three disagrees with the tag.
+1. Bump the version in `Cargo.toml`, `Cargo.lock` and `snap/snapcraft.yaml` together, on a branch. The `release` workflow's tag-check step fails closed if `Cargo.toml` or `snap/snapcraft.yaml` disagrees with the tag, and the `cargo build --locked` step later in the same workflow fails if `Cargo.lock` was not bumped with them.
 2. Bump `docs/index.html` on the same branch: the JSON-LD `softwareVersion`, the "is the current release" banner and its link to the release tag, and every `TAG=vX.Y.Z` example in the code blocks. Grep the file for the old version string and replace every hit. This page went stale twice while nothing checked it, so the same tag-check step now reads it too, and the rule it applies is that every version number on the page equals the tag. Two consequences: a partial bump fails the release instead of shipping, and a version number that names something other than `mhr` cannot be added to this page. A tag that carries a prerelease suffix skips the check, because the page describes the current stable release; `v0.1.0-alpha` and `v0.1.0-beta` are quoted on the page for that reason and are exempt.
 3. Open a pull request, let CI pass, merge. Note the merge commit and its CI run.
 

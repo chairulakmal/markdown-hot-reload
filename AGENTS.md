@@ -4,7 +4,7 @@ Working notes for agents on `mhr`, a read-only GitHub-flavored markdown viewer t
 
 ## What it is
 
-One Rust binary. `comrak` renders the markdown, `notify` watches the file's parent directory, and `wry` and `tao` host a system webview that receives the HTML through `evaluate_script`. The frontend is a static HTML shell plus about sixty lines of vanilla JavaScript, compiled in by `rust-embed`. [`README.md`](README.md) covers the architecture and supported feature set in full.
+One Rust binary. `comrak` renders the markdown, `notify` watches the file's parent directory, and `wry` and `tao` host a system webview that receives the HTML through `evaluate_script`. The frontend is a static HTML shell plus a small amount of vanilla JavaScript, compiled in by `rust-embed`. [`README.md`](README.md) covers the architecture and supported feature set in full.
 
 Linux is the primary target, macOS is next, Windows is nice-to-have.
 
@@ -13,7 +13,7 @@ Linux is the primary target, macOS is next, Windows is nice-to-have.
 Breaking any of these is a design change, not a refactor. Raise it rather than doing it quietly.
 
 - **No npm.** No `package.json`, no bundler, no `node_modules`. Frontend dependencies are vendored files in `assets/`.
-- **Offline is enforced, not intended.** `index.html` sets `connect-src 'none'` and `img-src 'self'`, so anything needing the network fails loudly instead of working locally and failing elsewhere.
+- **Offline is enforced, not intended.** `index.html` sets `connect-src 'none'`, and `img-src` allows only `'self'` and `data:`, so anything needing the network fails loudly instead of working locally and failing elsewhere.
 - **Read-only.** No editing surface, no writing to the watched file, ever.
 - **`render.r#unsafe` stays false.** Documents come from agents and editors, so raw HTML is escaped rather than executed. `src/render.rs` tests assert this; do not weaken them without an explicit decision.
 - **No `unsafe` in this crate.** `Cargo.toml` sets `[lints.rust] unsafe_code = "forbid"`, enforced by the compiler, not review. This is separate from comrak's `render.r#unsafe` above, which is about HTML in documents. If a platform binding ever seems to need `unsafe`, that is a discussion, not a lint to relax.
@@ -25,12 +25,17 @@ Breaking any of these is a design change, not a refactor. Raise it rather than d
 cargo fmt --all -- --check           # CI fails on a formatting diff, so check before pushing
 cargo clippy --locked --all-targets  # lint levels come from [lints] in Cargo.toml, not from flags here
 cargo deny check                     # license and advisory policy for the dependency tree, from deny.toml
-cargo test --locked                  # render pipeline and its escaping guarantees, math validation, CLI parsing, the watcher
+cargo test --locked                  # render and its escaping guarantees, math validation, CLI parsing, assets, the watcher
 cargo build --locked --release
-./target/release/mhr fixtures/kitchen-sink.md
 ```
 
 These five are what the `ci` job runs, in that order. Run them before opening a pull request; a failure in any of them blocks the merge.
+
+```
+./target/release/mhr fixtures/kitchen-sink.md
+```
+
+The GUI smoke check, run by hand after a build. It is not one of the CI five.
 
 `--locked` is part of the command, not decoration. Without it, cargo quietly rewrites `Cargo.lock` when it drifts from `Cargo.toml`, and the run passes against a dependency graph nobody committed.
 

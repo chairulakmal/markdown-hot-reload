@@ -39,7 +39,7 @@ For the design invariants behind each guarantee, and the tests that protect them
 
 ## Install
 
-`mhr` has four install methods, listed here in order. `cargo install mhr` builds from source and works anywhere the Rust toolchain runs. On a Linux desktop, the snap is the better choice: it bundles its own WebKitGTK and updates itself. Every release also attaches a `.deb` and a tarball for people who want neither.
+`mhr` has four install methods, listed here in order. `cargo install mhr` builds from source and needs only a Rust toolchain and a system webview, so it is the only path that could run beyond Linux, though only Linux is tested. On a Linux desktop, the snap is the better choice: it bundles its own WebKitGTK and updates itself. Every release also attaches a `.deb` and a tarball for people who want neither.
 
 Check out [the install guide](https://mhr.chairulakmal.com/) for the full version: every path step by step, how to verify a download against its published checksum, and how to update or remove each one.
 
@@ -53,13 +53,13 @@ The snap and the `.deb` add `mhr` to your file manager's "Open With" menu for ma
 cargo install mhr
 ```
 
-This builds the crate on your machine, so it needs Rust 1.88 or newer, which [rustup](https://rustup.rs) installs. On Linux it also needs three system packages, because the webview uses WebKitGTK. On Ubuntu and Debian:
+This builds the crate on your machine, so it needs Rust 1.88 or newer, which [rustup](https://rustup.rs) installs. On macOS and Windows that is the only prerequisite, because the webview is part of the operating system. On Linux the webview uses WebKitGTK, so it also needs three system packages. On Ubuntu and Debian:
 
 ```
 sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
 ```
 
-Install these first. Without them, the build fails at the linker with an error that does not name the missing package. Linux is the only platform with a released build today, so `cargo install` on macOS or Windows is untested, not supported. See Platforms below.
+Install these first. Without them, the build fails at the linker with an error that does not name the missing package. Linux is the only platform with a released and tested build today, so a `cargo install` on macOS or Windows may work but is unverified. See Platforms below.
 
 ### snap
 

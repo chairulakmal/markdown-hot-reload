@@ -149,7 +149,7 @@
           {
             "@type": "HowTo",
             "name": "Install mhr from crates.io with cargo",
-            "description": "Build mhr from source with cargo. This path needs a Rust toolchain and the WebKitGTK development packages, and it does not update itself.",
+            "description": "Build mhr from source with cargo. This path needs a Rust toolchain everywhere, plus the WebKitGTK development packages on Linux, and it does not update itself. Only Linux is tested; the macOS and Windows webview backends are supported by the library but untested here.",
             "totalTime": "PT5M",
             "tool": [
               { "@type": "HowToTool", "name": "rustup" },
@@ -161,7 +161,7 @@
                 "@type": "HowToStep",
                 "name": "Install the build prerequisites",
                 "url": "https://mhr.chairulakmal.com/#cargo",
-                "text": "Install Rust 1.88 or newer with rustup, then run sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config. Without those three packages the build fails at the linker without naming the missing package."
+                "text": "Install Rust 1.88 or newer with rustup. On Linux, also run sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config (the package names on Ubuntu and Debian); without those three packages the build fails at the linker without naming the missing package. macOS and Windows need no extra packages, because the webview is built into the operating system, but neither is tested."
               },
               {
                 "@type": "HowToStep",
@@ -601,7 +601,10 @@
               <td>Any distribution running snapd</td>
               <td>Ubuntu 24.04+, Debian 13+</td>
               <td>Any x86_64 Linux</td>
-              <td>Any Linux with a Rust toolchain</td>
+              <td>
+                Linux with a Rust toolchain; may build on macOS or Windows,
+                untested
+              </td>
             </tr>
             <tr>
               <th scope="row">Updates</th>
@@ -615,7 +618,7 @@
               <td>Bundled in the snap</td>
               <td><code>apt</code> installs it for you</td>
               <td>You install it yourself</td>
-              <td>You install the development packages yourself</td>
+              <td>On Linux, you install the development packages yourself</td>
             </tr>
             <tr>
               <th scope="row">Ready in</th>
@@ -876,16 +879,19 @@ sudo install -m 755 "$DIR/mhr" /usr/local/bin/mhr</code></pre>
         than seconds, and it does not update itself.
       </p>
       <p>
-        Two prerequisites first. Rust 1.88 or newer, which
+        Rust 1.88 or newer, which
         <a href="https://rustup.rs" target="_blank" rel="noopener noreferrer"
           >rustup</a
         >
-        installs, and the WebKitGTK development packages, because the window is
-        a WebKitGTK webview. On Ubuntu and Debian:
+        installs, is the only requirement on macOS and Windows, where the
+        webview is part of the operating system. On Linux the window is a
+        WebKitGTK webview, so you also need its development packages. On Ubuntu
+        and Debian:
       </p>
       <pre><code>sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config</code></pre>
       <div class="note">
-        <strong>Install those three packages before you run cargo.</strong>
+        <strong>On Linux, install those three packages before you run
+        cargo.</strong>
         Without them the build fails at the linker, and the error does not name
         the package that is missing.
       </div>
@@ -899,10 +905,12 @@ mhr notes.md</code></pre>
       </p>
       <p>
         This is the only install path that is not built here, so it is also
-        the only one that could work beyond Linux. Linux is the platform
-        <code>mhr</code> is released and tested on. macOS and Windows are
-        untested rather than supported, so treat a build there as something
-        that may work rather than something that should.
+        the only one that could work beyond Linux: <code>wry</code>, the
+        webview library, drives WKWebView on macOS and WebView2 on Windows, and
+        the source already carries the branches for both. Linux is still the
+        only platform <code>mhr</code> is released and tested on, so treat a
+        macOS or Windows build as something that may work rather than something
+        that should.
       </p>
 
       <h3 id="cargo-update">Updating</h3>

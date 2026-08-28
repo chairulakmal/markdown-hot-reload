@@ -17,6 +17,10 @@ const DEBOUNCE: Duration = Duration::from_millis(150);
 /// case below can be tested at all: an event loop needs a display, and the
 /// trap it guards against is invisible from a headless run otherwise.
 ///
+/// `target` must be canonical: the watched directory is derived from its
+/// parent, so a bare filename or a relative path would watch the wrong place.
+/// `cli::open` canonicalizes before this is called.
+///
 /// The returned debouncer must be kept alive for watching to continue.
 pub fn spawn<F>(target: PathBuf, notify: F) -> Result<impl Sized + Send + 'static>
 where

@@ -6,7 +6,7 @@ Usage: `mhr <file.md>` takes exactly one file argument and runs until the window
 
 mhr is a single Rust binary with no npm, no bundler, and no build step for the frontend. It parses markdown to HTML with comrak, watches the file's parent directory with notify, and renders through a system webview (wry and tao). Parsing, syntax highlighting, math conversion, and HTML escaping all happen in Rust; the small amount of JavaScript only morphs the DOM and draws Mermaid diagrams.
 
-Safety guarantees: the webview's Content-Security-Policy blocks all network access (`connect-src 'none'`), so a document renders the same offline as online. Raw HTML in a document is always escaped, never executed, since documents are treated as untrusted input. mhr never writes to the file it watches. The crate forbids `unsafe` code at the compiler level.
+Safety guarantees: there is no server and no localhost port, unlike browser-based markdown viewers; the native window is the whole app. The webview's Content-Security-Policy blocks all network access (`connect-src 'none'`), so a document renders the same offline as online. Raw HTML in a document is always escaped, never executed, since documents are treated as untrusted input. mhr never writes to the file it watches. The crate forbids `unsafe` code at the compiler level.
 
 ## Docs
 

@@ -5,7 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/mhr.svg)](https://crates.io/crates/mhr)
 [![Snap Store](https://snapcraft.io/markdown-hot-reload/badge.svg)](https://snapcraft.io/markdown-hot-reload)
 
-This README describes Markdown Hot Reload (`mhr`), a Linux desktop viewer for GitHub-flavored markdown that re-renders a file every time it changes on disk. The most important point: `mhr` has no network access and never writes to the file it opens, so you can safely view markdown you did not write, such as a plan an agent produced or a README from a repository you cloned an hour ago. The sections below cover what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
+This README describes Markdown Hot Reload (`mhr`), a Linux desktop viewer for GitHub-flavored markdown that re-renders a file every time it changes on disk. The most important point: `mhr` has no network access and never writes to the file it opens, so you can safely view markdown you did not write, such as a plan an agent wrote or a README from a repository you recently cloned. The sections below cover what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
 
 [![A window showing rendered markdown beside the editor writing it](https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/docs/demo-poster.png)](https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118)
 
@@ -39,7 +39,7 @@ For the design invariants behind each guarantee, and the tests that protect them
 
 ## Install
 
-`mhr` has four install methods, listed here in order. `cargo install mhr` builds from source and needs only a Rust toolchain and a system webview, so it is the only path that could run beyond Linux, though only Linux is tested. On a Linux desktop, the snap is the better choice: it bundles its own WebKitGTK and updates itself. Every release also attaches a `.deb` and a tarball for people who want neither.
+`mhr` has four install methods. `cargo install mhr` builds it from source. This is the most portable choice, and the only path that could run beyond Linux, though only Linux is tested. On a Linux desktop, the snap is usually better: one command, and it updates itself. Every release also attaches a `.deb` and a tarball for anyone who wants neither.
 
 Check out [the install guide](https://mhr.chairulakmal.com/) for the full version: every path step by step, how to verify a download against its published checksum, and how to update or remove each one.
 
@@ -59,7 +59,7 @@ This builds the crate on your machine, so it needs Rust 1.88 or newer, which [ru
 sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
 ```
 
-Install these first. Without them, the build fails at the linker with an error that does not name the missing package. Linux is the only platform with a released and tested build today, so a `cargo install` on macOS or Windows may work but is unverified. See Platforms below.
+Install these first. Without them, the build fails at the linker, with an error that does not name the missing package. Only Linux has a tested build, so a `cargo install` on macOS or Windows may work but is unverified. See Platforms below.
 
 ### snap
 

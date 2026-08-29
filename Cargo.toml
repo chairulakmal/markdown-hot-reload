@@ -51,6 +51,7 @@ assets = [
 ]
 
 [dependencies]
+ammonia = "4"
 anyhow = "1.0.104"
 comrak = { version = "0.54.0", default-features = false, features = ["syntect-fancy"] }
 notify = "8.2.0"

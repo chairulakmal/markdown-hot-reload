@@ -82,11 +82,54 @@ fn options() -> Options<'static> {
     o.render.gfm_quirks = true;
     o.render.tasklist_classes = true;
 
-    // render.r#unsafe stays false: documents are written by agents and editors,
-    // so raw HTML is escaped rather than executed. Revisit with an ammonia
-    // allowlist if <details> and aligned images become worth the risk.
+    // Raw HTML passes through comrak so that the GitHub-safe subset (tables,
+    // <details>, <kbd>, alignment) renders like it does on github.com. Nothing
+    // reaches the webview until `sanitize` has filtered it against an allowlist.
+    // The `tagfilter` extension above is the earlier pass that neutralises
+    // <script> and friends before the string is even built.
+    o.render.r#unsafe = true;
 
     o
+}
+
+/// Filters the rendered document against an allowlist before it reaches the
+/// webview. This is the whole reason `render.r#unsafe` can be true: a document
+/// may contain any HTML, and only the elements, attributes and URL schemes
+/// named here survive. GitHub's own sanitizer permits close to this set.
+///
+/// ammonia runs over the entire document, not only the document-authored
+/// spans, so the allowlist has to be a superset of what comrak and the math
+/// converter emit as well. A tag one of them generates that is missing here
+/// would be stripped from the output.
+fn sanitize(html: &str) -> String {
+    ammonia::Builder::default()
+        // `section` wraps the footnote list comrak emits; `input` is the
+        // task-list checkbox. Neither is in ammonia's default set.
+        .add_tags(["input", "section"])
+        .add_tags(math::ELEMENTS.iter().copied())
+        .add_generic_attributes(["class", "id", "align"])
+        // Every MathML attribute the converter can write, except `style`. The
+        // page carries no inline styles by design (see the syntect note in
+        // `AGENTS.md`); dropping it here costs at most some spacing on an
+        // exotic expression, which `math::is_trusted` had already accepted.
+        .add_generic_attributes(math::ATTRIBUTES.iter().copied().filter(|a| *a != "style"))
+        .add_tag_attributes("input", ["type", "checked", "disabled"])
+        .add_tag_attributes(
+            "a",
+            [
+                "aria-label",
+                "data-heading-content",
+                "data-footnote-ref",
+                "data-footnote-backref",
+                "data-footnote-backref-idx",
+            ],
+        )
+        .add_tag_attributes("section", ["data-footnotes"])
+        // A URL on the page may not point anywhere that fetches or executes.
+        // `connect-src 'none'` in the CSP is the backstop; this is the fence.
+        .url_schemes(HashSet::from(["http", "https", "mailto"]))
+        .clean(html)
+        .to_string()
 }
 
 // comrak has no plugin hook for math the way it has for code fences, and it
@@ -165,7 +208,7 @@ pub fn to_html(markdown: &str) -> String {
 
     let mut html = String::new();
     match MathFormatter::format_document_with_plugins(root, &options, &mut html, &plugins) {
-        Ok(()) => html,
+        Ok(()) => sanitize(&html),
         // Writing into a String cannot fail, so this arm exists only because
         // the formatter is generic over Write.
         Err(_) => String::from("<p class=\"mhr-notice\">Render failed.</p>"),
@@ -245,13 +288,11 @@ mod tests {
             prop_assert_eq!(unescape_once(&escaped), s);
         }
 
-        /// `render.r#unsafe` stays false, which buys two things at once: raw
-        /// HTML in the document is escaped rather than executed, and a link or
-        /// image URL in a scripting scheme is blanked rather than echoed into
-        /// an attribute. This is the general form of
-        /// `escapes_raw_html_rather_than_executing_it` below, and it is worth
-        /// having only because `markdown_ish` actually feeds comrak the
-        /// payloads: it fails on a build with raw HTML turned on, which the
+        /// `render.r#unsafe` is true, so a dangerous tag does reach the output
+        /// of comrak; `sanitize` is then the pass that has to remove it. This
+        /// is the general form of `neutralizes_dangerous_raw_html` below, and
+        /// it is worth having only because `markdown_ish` actually feeds comrak
+        /// the payloads: it fails without `sanitize`, which the
         /// arbitrary-Unicode version it replaced did not.
         ///
         /// The assertion is on tag openings only, and that narrowness is
@@ -262,8 +303,8 @@ mod tests {
         /// equals signs, so a document is free to render the literal text
         /// `href="javascript:` inside a `<code>` block, where it is inert.
         /// Two earlier versions of this test asserted on those shapes and
-        /// failed on innocent documents. URL blanking is checked instead by
-        /// `blanks_link_and_image_urls_in_scripting_schemes` below, which can
+        /// failed on innocent documents. URL filtering is checked instead by
+        /// `strips_link_and_image_urls_in_scripting_schemes` below, which can
         /// look at a known attribute because it controls the input.
         #[test]
         fn to_html_never_emits_a_tag_it_does_not_generate(s in markdown_ish()) {
@@ -399,31 +440,70 @@ mod tests {
     }
 
     /// The whole safety model of a viewer for agent-written files rests on this.
+    /// `render.r#unsafe` is true, so a dangerous tag reaches `sanitize`, which
+    /// must remove it: `<script>` is escaped to inert text by the tag filter,
+    /// and an inline event handler is dropped from an otherwise allowed tag.
     #[test]
-    fn escapes_raw_html_rather_than_executing_it() {
+    fn neutralizes_dangerous_raw_html() {
         let html = to_html("<script>alert(1)</script>\n\n<img src=x onerror=alert(1)>");
         assert!(!html.contains("<script"), "{html}");
         assert!(!html.contains("onerror"), "{html}");
-    }
 
-    /// A URL in a scripting scheme is blanked rather than carried into the
-    /// attribute. This is the same `render.r#unsafe` switch as the test above,
-    /// on a path that escaping alone would not cover: the href is generated by
-    /// comrak, so there is no raw markup for the escaper to catch.
-    #[test]
-    fn blanks_link_and_image_urls_in_scripting_schemes() {
         for markdown in [
-            "[a](javascript:alert(1))",
-            "![a](javascript:alert(1))",
-            "[a](JaVaScRiPt:alert(1))",
-            "[a](vbscript:alert(1))",
-            "[a](data:text/html,<script>alert(1)</script>)",
+            "<iframe src=x></iframe>",
+            "<object data=x></object>",
+            "<style>*{}</style>",
         ] {
             let html = to_html(markdown);
-            assert!(
-                html.contains(r#"href="""#) || html.contains(r#"src="""#),
-                "{markdown} kept its URL: {html}"
-            );
+            assert!(!html.contains("<iframe"), "{markdown}: {html}");
+            assert!(!html.contains("<object"), "{markdown}: {html}");
+            assert!(!html.contains("<style"), "{markdown}: {html}");
+        }
+    }
+
+    /// The GitHub-safe subset of raw HTML renders instead of being dropped,
+    /// which is what makes this a GitHub-flavored viewer rather than a
+    /// plain-CommonMark one. Block and inline both pass through.
+    #[test]
+    fn renders_the_github_safe_html_subset() {
+        let block = to_html("<details><summary>more</summary>hidden</details>");
+        assert!(block.contains("<details>"), "{block}");
+        assert!(block.contains("<summary>more</summary>"), "{block}");
+
+        let table = to_html("<table><tr><td>cell</td></tr></table>");
+        assert!(
+            table.contains("<table>") && table.contains("<td>cell</td>"),
+            "{table}"
+        );
+
+        let inline = to_html("press <kbd>Esc</kbd> now");
+        assert!(inline.contains("press <kbd>Esc</kbd> now"), "{inline}");
+    }
+
+    /// An inline `style` attribute never reaches the page. It is the one
+    /// document-controlled channel that a class allowlist does not close, and
+    /// `highlight.css` relies on nothing carrying its own colors.
+    #[test]
+    fn drops_style_attributes_from_raw_html() {
+        let html = to_html(r#"<p style="color:red">text</p>"#);
+        assert!(!html.contains("style="), "{html}");
+    }
+
+    /// A URL in a scripting scheme is dropped rather than carried into the
+    /// attribute. `render.r#unsafe` is true, so comrak no longer blanks these
+    /// itself; `sanitize` keeps only `http`, `https` and `mailto`, and removes
+    /// the whole attribute when the scheme is anything else.
+    #[test]
+    fn strips_link_and_image_urls_in_scripting_schemes() {
+        for (markdown, scheme) in [
+            ("[a](javascript:alert(1))", "javascript:"),
+            ("![a](javascript:alert(1))", "javascript:"),
+            ("[a](JaVaScRiPt:alert(1))", "avascript:"),
+            ("[a](vbscript:alert(1))", "vbscript:"),
+            ("[a](data:text/html,<script>alert(1)</script>)", "data:"),
+        ] {
+            let html = to_html(markdown);
+            assert!(!html.contains(scheme), "{markdown} kept its URL: {html}");
         }
     }
 
@@ -530,9 +610,23 @@ mod tests {
             "menv-with-eqn",
             "mhr-math-raw",
             "<pre class=\"mermaid\">",
+            // Raw HTML: the safe subset renders, block and inline.
+            "<details>",
+            "<kbd>Ctrl</kbd>",
         ];
         for needle in expected {
             assert!(html.contains(needle), "fixture missing {needle:?}\n{html}");
         }
+
+        // The same section carries a <script> tag and an inline event handler.
+        // The tag is escaped to inert text, the handler is dropped entirely.
+        assert!(
+            !html.contains("<script"),
+            "live script tag reached the page\n{html}"
+        );
+        assert!(
+            !html.contains("onerror"),
+            "event handler reached the page\n{html}"
+        );
     }
 }

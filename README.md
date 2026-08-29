@@ -23,7 +23,7 @@ mhr TODO.md &
 
 ## How it works
 
-One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file's parent directory for changes. `wry` and `tao` host a system webview, which receives the new HTML through `evaluate_script`. The frontend is a static HTML file plus a small amount of plain JavaScript, both compiled into the binary by `rust-embed`. All parsing, syntax highlighting, math conversion, and escaping happen in Rust. The JavaScript only updates the DOM and draws Mermaid diagrams.
+One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file's parent directory for changes. `wry` and `tao` host a system webview, which receives the new HTML through `evaluate_script`. The frontend is a static HTML file plus a small amount of plain JavaScript, both compiled into the binary by `rust-embed`. All parsing, syntax highlighting, math conversion, escaping, and HTML sanitization happen in Rust. The JavaScript only updates the DOM and draws Mermaid diagrams.
 
 ## Safety
 
@@ -31,7 +31,7 @@ One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file
 
 - **No server and no port.** The native window is the whole app. Most other markdown viewers render to a localhost port and open a browser tab, so any other process on the machine can read the document. `mhr` opens no socket.
 - **No network access.** `index.html` sets `connect-src 'none'` in its Content-Security-Policy. Anything that needs the network fails immediately, instead of working on your machine and leaking data on someone else's.
-- **Raw HTML is escaped, never executed.** A document that contains `<script>`, or any other raw tag, shows it as text on the page. It does not run. `src/render.rs` has tests that check this.
+- **Raw HTML is filtered to a safe subset.** A document can use the same HTML that GitHub allows, such as tables, `<details>`, and `<kbd>`, and it renders. Anything that could run, such as `<script>`, `<style>`, an event handler attribute, or a `javascript:` URL, is removed or shown as inert text. The rendered HTML passes through an allowlist sanitizer before it reaches the window. `src/render.rs` has tests that check this.
 - **Read-only.** `mhr` never writes to the file it watches. There is no editing surface.
 - **No `unsafe` code in this crate.** `Cargo.toml` forbids the `unsafe` keyword at the compiler level (`[lints.rust] unsafe_code = "forbid"`). Dependencies are ordinary Rust crates and may use `unsafe` internally.
 
@@ -105,6 +105,7 @@ Every save re-renders the window. `fixtures/kitchen-sink.md` uses every markdown
 - Inline and display math (`$...$`, `$$...$$`, and GitHub's `` $`...`$ ``), converted to MathML offline. LaTeX that does not parse shows its own source instead of a broken render
 - Mermaid diagrams, loaded on demand, so a document without a diagram loads nothing extra
 - Front matter, parsed and removed from the output instead of shown as a stray paragraph
+- A safe subset of raw HTML, the same tags GitHub allows, such as `<details>`, `<kbd>`, `<sub>`, and hand-written tables. Scripts, styles, event handlers, inline `style` attributes, and non-web URL schemes are removed
 
 Images are the one gap. `mhr` reads only the single file you name. A local image next to the document (`![](diagram.png)`) does not display. A remote image is blocked, because there is no network access. An image embedded as a `data:` URI does display.
 

@@ -610,9 +610,12 @@ mod tests {
             "menv-with-eqn",
             "mhr-math-raw",
             "<pre class=\"mermaid\">",
-            // Raw HTML: the safe subset renders, block and inline.
+            // Raw HTML: the safe subset renders, block and inline. The
+            // `align` attribute on the raw table's last column survives the
+            // sanitizer; no pipe table in the fixture sets one.
             "<details>",
             "<kbd>Ctrl</kbd>",
+            r#"align="right""#,
         ];
         for needle in expected {
             assert!(html.contains(needle), "fixture missing {needle:?}\n{html}");

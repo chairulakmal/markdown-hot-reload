@@ -99,6 +99,19 @@ The GitHub-safe subset of HTML renders. This disclosure widget is written as raw
 
 <details><summary>Click to expand</summary>Hidden body text.</details>
 
+This table is written as raw HTML, not as a pipe table, and it still renders as a real table with a right-aligned last column:
+
+<table>
+  <thead>
+    <tr><th>Tag</th><th>Renders</th><th align="right">Since</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>&lt;details&gt;</code></td><td>collapsible block</td><td align="right">0.1.3</td></tr>
+    <tr><td><code>&lt;kbd&gt;</code></td><td>keyboard key</td><td align="right">0.1.3</td></tr>
+    <tr><td><code>&lt;table&gt;</code></td><td>this table</td><td align="right">0.1.3</td></tr>
+  </tbody>
+</table>
+
 Inline tags work too: press <kbd>Ctrl</kbd>+<kbd>C</kbd> to copy.
 
 Anything that could run is neutralized. The next line has a `<script>` tag in the source. It shows as inert text and does not execute:

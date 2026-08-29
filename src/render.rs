@@ -113,7 +113,17 @@ fn sanitize(html: &str) -> String {
         // `AGENTS.md`); dropping it here costs at most some spacing on an
         // exotic expression, which `math::is_trusted` had already accepted.
         .add_generic_attributes(math::ATTRIBUTES.iter().copied().filter(|a| *a != "style"))
-        .add_tag_attributes("input", ["type", "checked", "disabled"])
+        // A task-list checkbox is the only `<input>` this viewer has any reason
+        // to draw, and it is never interactive. Naming `type` in
+        // `add_tag_attributes` would allow any value, so the value is pinned
+        // instead and `disabled` is forced on every one: a read-only window
+        // must not grow a text box because a document asked for one.
+        .add_tag_attributes("input", ["checked"])
+        .add_tag_attribute_values("input", "type", ["checkbox"])
+        .set_tag_attribute_value("input", "disabled", "")
+        // github.com honours `open`, so a document that ships an expanded
+        // disclosure block renders expanded here too.
+        .add_tag_attributes("details", ["open"])
         .add_tag_attributes(
             "a",
             [
@@ -127,9 +137,49 @@ fn sanitize(html: &str) -> String {
         .add_tag_attributes("section", ["data-footnotes"])
         // A URL on the page may not point anywhere that fetches or executes.
         // `connect-src 'none'` in the CSP is the backstop; this is the fence.
-        .url_schemes(HashSet::from(["http", "https", "mailto"]))
+        // `data:` is here only so an embedded image survives, and
+        // `is_embedded_image` is what keeps the rest of that scheme out.
+        .url_schemes(HashSet::from(["http", "https", "mailto", "data"]))
+        .attribute_filter(|_element, attribute, value| {
+            // Leading whitespace is stripped before the comparison because a
+            // browser strips it before resolving the URL, so ` data:...` is the
+            // same URL to the webview and has to be the same URL here.
+            let url = value.trim_start();
+            let is_data = url
+                .get(..5)
+                .is_some_and(|s| s.eq_ignore_ascii_case("data:"));
+            if matches!(attribute, "src" | "href") && is_data && !is_embedded_image(url) {
+                return None;
+            }
+            Some(value.into())
+        })
         .clean(html)
         .to_string()
+}
+
+/// Whether a `data:` URL carries a raster image and nothing else.
+///
+/// An embedded image is the only image an offline viewer can show, so the
+/// scheme cannot simply be banned. It also cannot be trusted: `data:text/html`
+/// and `data:image/svg+xml` both run script in a webview. This is the rule
+/// comrak applied itself while `render.r#unsafe` was false, tightened by
+/// requiring the media type to end where a real data URL ends, at `;` or `,`.
+fn is_embedded_image(url: &str) -> bool {
+    const TYPES: [&str; 4] = ["png", "gif", "jpeg", "webp"];
+
+    if !url
+        .get(..11)
+        .is_some_and(|prefix| prefix.eq_ignore_ascii_case("data:image/"))
+    {
+        return false;
+    }
+    let rest = &url[11..];
+
+    TYPES.iter().any(|media| {
+        rest.get(..media.len())
+            .is_some_and(|found| found.eq_ignore_ascii_case(media))
+            && matches!(rest.as_bytes().get(media.len()), Some(b';' | b','))
+    })
 }
 
 // comrak has no plugin hook for math the way it has for code fences, and it
@@ -211,7 +261,7 @@ pub fn to_html(markdown: &str) -> String {
         Ok(()) => sanitize(&html),
         // Writing into a String cannot fail, so this arm exists only because
         // the formatter is generic over Write.
-        Err(_) => String::from("<p class=\"mhr-notice\">Render failed.</p>"),
+        Err(_) => String::from("<p data-mhr-notice>Render failed.</p>"),
     }
 }
 
@@ -491,20 +541,98 @@ mod tests {
 
     /// A URL in a scripting scheme is dropped rather than carried into the
     /// attribute. `render.r#unsafe` is true, so comrak no longer blanks these
-    /// itself; `sanitize` keeps only `http`, `https` and `mailto`, and removes
-    /// the whole attribute when the scheme is anything else.
+    /// itself; `sanitize` keeps only `http`, `https`, `mailto` and an embedded
+    /// image, and removes the whole attribute when the scheme is anything else.
+    ///
+    /// Each needle is matched against a lowercased render. Comparing against
+    /// the raw output would make the mixed-case case vacuous: a surviving
+    /// `JaVaScRiPt:` shares no substring with a lowercase needle, so the
+    /// assertion would pass whether or not the scheme check is case-blind,
+    /// which is the one thing that case exists to prove.
     #[test]
     fn strips_link_and_image_urls_in_scripting_schemes() {
         for (markdown, scheme) in [
             ("[a](javascript:alert(1))", "javascript:"),
             ("![a](javascript:alert(1))", "javascript:"),
-            ("[a](JaVaScRiPt:alert(1))", "avascript:"),
+            ("[a](JaVaScRiPt:alert(1))", "javascript:"),
             ("[a](vbscript:alert(1))", "vbscript:"),
             ("[a](data:text/html,<script>alert(1)</script>)", "data:"),
+            ("![a](DATA:TEXT/HTML,x)", "data:"),
         ] {
-            let html = to_html(markdown);
+            let html = to_html(markdown).to_ascii_lowercase();
             assert!(!html.contains(scheme), "{markdown} kept its URL: {html}");
         }
+    }
+
+    /// An embedded raster image is the only image an offline viewer can show,
+    /// so `data:` cannot be banned outright the way the schemes above are.
+    /// `index.html` allows `data:` in `img-src` for exactly these.
+    #[test]
+    fn keeps_images_embedded_as_data_uris() {
+        for markdown in [
+            "![a](data:image/png;base64,iVBORw0KGgo=)",
+            "![a](data:image/gif;base64,R0lGOD==)",
+            "![a](data:image/jpeg;base64,/9j/4AAQ)",
+            "![a](data:image/webp;base64,UklGRg==)",
+            "![a](DATA:IMAGE/PNG;base64,iVBORw0KGgo=)",
+        ] {
+            let html = to_html(markdown).to_ascii_lowercase();
+            assert!(
+                html.contains("src=\"data:image/"),
+                "{markdown} lost its src: {html}"
+            );
+        }
+    }
+
+    /// The media type has to end where a real data URL ends. Without this,
+    /// `data:image/png` is a prefix of anything, and `data:image/pngx,...`
+    /// would ride in on a check that only looked at the front of the string.
+    #[test]
+    fn rejects_a_data_uri_that_only_looks_like_an_image() {
+        for markdown in [
+            "![a](data:image/pngx,<script>alert(1)</script>)",
+            "![a](data:image/png-html,x)",
+            "![a](data:image/svg+xml;base64,PHN2Zz4=)",
+            "![a](data:image/,x)",
+        ] {
+            let html = to_html(markdown);
+            assert!(!html.contains("data:"), "{markdown} kept its URL: {html}");
+        }
+    }
+
+    /// The viewer is read-only, so no document may put an interactive control
+    /// on the page. comrak's task-list checkbox is the only `<input>` that
+    /// belongs there, and it arrives already disabled; a raw one does not.
+    #[test]
+    fn never_renders_an_interactive_input() {
+        let text = to_html("<form action=x><input type=text></form>");
+        assert!(!text.contains("type=\"text\""), "{text}");
+
+        let checkbox = to_html("<input type=checkbox>");
+        assert!(checkbox.contains("disabled"), "{checkbox}");
+
+        let generated = to_html("- [x] done\n- [ ] todo");
+        assert!(generated.contains("<input"), "{generated}");
+        assert!(generated.contains("disabled"), "{generated}");
+        assert!(generated.contains("checked"), "{generated}");
+    }
+
+    /// The app's own notices are marked with `data-mhr-notice`, which is not in
+    /// the allowlist, so a document cannot dress its own text up as one. This
+    /// is why the notices in `main.rs` and in `to_html` stopped using a class:
+    /// `class` is allowed on everything, and forging one was free.
+    #[test]
+    fn a_document_cannot_forge_an_app_notice() {
+        let html = to_html("<p data-mhr-notice>Cannot read /etc/passwd: denied</p>");
+        assert!(!html.contains("data-mhr-notice"), "{html}");
+    }
+
+    /// github.com honours `open` on a disclosure block, so a document that
+    /// ships one expanded has to render expanded rather than silently closed.
+    #[test]
+    fn keeps_an_open_disclosure_block_open() {
+        let html = to_html("<details open><summary>more</summary>shown</details>");
+        assert!(html.contains("<details open"), "{html}");
     }
 
     /// A mermaid fence bypasses syntect, so it must still be escaped on the way out.
@@ -614,8 +742,11 @@ mod tests {
             // `align` attribute on the raw table's last column survives the
             // sanitizer; no pipe table in the fixture sets one.
             "<details>",
+            "<details open",
             "<kbd>Ctrl</kbd>",
             r#"align="right""#,
+            // The one image an offline viewer can show.
+            r#"src="data:image/png;base64"#,
         ];
         for needle in expected {
             assert!(html.contains(needle), "fixture missing {needle:?}\n{html}");
@@ -630,6 +761,21 @@ mod tests {
         assert!(
             !html.contains("onerror"),
             "event handler reached the page\n{html}"
+        );
+
+        // The fixture asks for a text box and an SVG data URI on purpose.
+        // Neither may reach the page: one is an editing surface, the other
+        // runs script in a webview.
+        assert!(
+            !html.contains("type=\"text\""),
+            "raw input stayed editable\n{html}"
+        );
+        // Matched as an attribute, not as a substring: the same section
+        // explains the rule in prose, so `data:image/svg+xml` legitimately
+        // appears on the page inside a <code> span.
+        assert!(
+            !html.contains("src=\"data:image/svg"),
+            "scripting data URI reached the page\n{html}"
         );
     }
 }

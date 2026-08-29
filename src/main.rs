@@ -113,8 +113,11 @@ fn main() -> Result<()> {
     });
 }
 
+/// `data-mhr-notice` rather than a class: `render::sanitize` strips an unknown
+/// data-* attribute from a document, so nothing a document contains can be
+/// styled as one of the app's own notices.
 const NOTICE_VANISHED: &str =
-    "<p class=\"mhr-notice\">File is gone. Still watching, will redraw if it comes back.</p>";
+    "<p data-mhr-notice>File is gone. Still watching, will redraw if it comes back.</p>";
 
 fn push(webview: &WebView, html: &str) {
     let json = serde_json::to_string(html).unwrap_or_else(|_| String::from("\"\""));
@@ -125,7 +128,7 @@ fn read_and_render(path: &Path) -> String {
     match std::fs::read_to_string(path) {
         Ok(markdown) => render::to_html(&markdown),
         Err(e) => format!(
-            "<p class=\"mhr-notice\">Cannot read {}: {}</p>",
+            "<p data-mhr-notice>Cannot read {}: {}</p>",
             render::escape_html(&path.display().to_string()),
             render::escape_html(&e.to_string())
         ),
@@ -206,7 +209,7 @@ mod tests {
     #[test]
     fn escapes_the_path_and_the_error_in_a_read_failure_notice() {
         let html = read_and_render(Path::new("<script>alert(1)</script>.md"));
-        assert!(html.contains("mhr-notice"), "{html}");
+        assert!(html.contains("data-mhr-notice"), "{html}");
         assert!(!html.contains("<script"), "{html}");
         assert!(html.contains("&lt;script&gt;"), "{html}");
     }
@@ -216,7 +219,7 @@ mod tests {
         let html = read_and_render(Path::new("fixtures/kitchen-sink.md"));
         assert!(html.contains("<table>"), "{html}");
         assert!(
-            !html.contains("mhr-notice"),
+            !html.contains("data-mhr-notice"),
             "read reported a failure: {html}"
         );
     }
@@ -225,7 +228,7 @@ mod tests {
     /// valid on their own rather than relying on the caller to wrap them.
     #[test]
     fn the_vanished_notice_is_self_contained_markup() {
-        assert!(NOTICE_VANISHED.starts_with("<p class=\"mhr-notice\">"));
+        assert!(NOTICE_VANISHED.starts_with("<p data-mhr-notice>"));
         assert!(NOTICE_VANISHED.ends_with("</p>"));
     }
 }

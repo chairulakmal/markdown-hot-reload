@@ -5,7 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/mhr.svg)](https://crates.io/crates/mhr)
 [![Snap Store](https://snapcraft.io/markdown-hot-reload/badge.svg)](https://snapcraft.io/markdown-hot-reload)
 
-This README describes Markdown Hot Reload (`mhr`), a Linux desktop viewer for GitHub-flavored markdown that re-renders a file every time it changes on disk. The most important point: `mhr` has no network access and never writes to the file it opens, so you can safely view markdown you did not write, such as a plan an agent wrote or a README from a repository you recently cloned. The sections below cover what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
+`mhr` is a markdown viewer with hot reload. Point it at a file on Linux and a native window renders it as GitHub-flavored markdown, then re-renders the moment the file changes on disk. It opens no port, reaches no network, and never writes to the file, so markdown you did not write is safe to open: a plan an agent produced, or a README from a repository you recently cloned. This README covers what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
 
 [![A window showing rendered markdown beside the editor writing it](https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/docs/demo-poster.png)](https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118)
 
@@ -13,7 +13,7 @@ Click the picture to play a 15-second demo.
 
 ## What it does
 
-Run `mhr notes.md`. A native window opens and shows the rendered markdown. Each time the file is saved, by you, your editor, or an agent, the window updates in place. Your scroll position and open `<details>` sections stay as they were. There is no editing surface, and `mhr` never writes to the file.
+Run `mhr notes.md` and a window opens with the file rendered. Every save updates it in place, whether you saved it, your editor did, or an agent did. Your scroll position and your open `<details>` sections survive the reload. There is no editing surface.
 
 While the window is open, the terminal that started `mhr` is blocked. Add `&` to the end of the command to get your prompt back:
 
@@ -27,7 +27,7 @@ One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file
 
 ## Safety
 
-`mhr` treats every document as untrusted input. This is a design constraint, not advice to the reader. Five guarantees follow from it, and the code enforces each one.
+`mhr` treats every document as untrusted input, and enforces that in code rather than asking the reader to be careful. Five guarantees follow.
 
 - **No server and no port.** The native window is the whole app. Most other markdown viewers render to a localhost port and open a browser tab, so any other process on the machine can read the document. `mhr` opens no socket.
 - **No network access.** `index.html` sets `connect-src 'none'` in its Content-Security-Policy. Anything that needs the network fails immediately, instead of working on your machine and leaking data on someone else's.
@@ -41,7 +41,7 @@ For the design invariants behind each guarantee, and the tests that protect them
 
 `mhr` has four install methods. `cargo install mhr` builds it from source. This is the most portable choice, and the only path that could run beyond Linux, though only Linux is tested. On a Linux desktop, the snap is usually better: one command, and it updates itself. Every release also attaches a `.deb` and a tarball for anyone who wants neither.
 
-Check out [the install guide](https://mhr.chairulakmal.com/) for the full version: every path step by step, how to verify a download against its published checksum, and how to update or remove each one.
+[The install guide](https://mhr.chairulakmal.com/) has the full version: every path step by step, how to verify a download against its published checksum, and how to update or remove each one.
 
 Every prebuilt package is built for x86_64, also called amd64. There is no arm64 build yet. Open an issue if you need one.
 
@@ -107,7 +107,7 @@ Every save re-renders the window. `fixtures/kitchen-sink.md` uses every markdown
 - Front matter, parsed and removed from the output instead of shown as a stray paragraph
 - A safe subset of raw HTML, the same tags GitHub allows, such as `<details>`, `<kbd>`, `<sub>`, and hand-written tables. Scripts, styles, event handlers, inline `style` attributes, and non-web URL schemes are removed
 
-Images are the one gap. `mhr` reads only the single file you name. A local image next to the document (`![](diagram.png)`) does not display. A remote image is blocked, because there is no network access. An image embedded as a `data:` URI does display.
+Images are the one gap. `mhr` reads only the single file you name. A local image next to the document (`![](diagram.png)`) does not display. A remote image is blocked, because there is no network access. An image embedded as a `data:` URI does display, as long as it is a PNG, GIF, JPEG, or WebP. An embedded SVG does not, because an SVG can carry a script.
 
 ## Platforms
 

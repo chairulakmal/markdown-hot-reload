@@ -14,6 +14,7 @@ Written as GitHub itself would resolve it, against the bare slug. `mhr` prefixes
 - [Table](#table)
 - [Code](#code)
 - [Raw HTML](#raw-html)
+- [Images](#images)
 - [Math](#math)
 - [Mermaid](#mermaid)
 - [Scroll test](#scroll-test)
@@ -99,16 +100,20 @@ The GitHub-safe subset of HTML renders. This disclosure widget is written as raw
 
 <details><summary>Click to expand</summary>Hidden body text.</details>
 
+A widget that asks to start expanded starts expanded, the same as on github.com:
+
+<details open><summary>Already open</summary>Visible without clicking.</details>
+
 This table is written as raw HTML, not as a pipe table, and it still renders as a real table with a right-aligned last column:
 
 <table>
   <thead>
-    <tr><th>Tag</th><th>Renders</th><th align="right">Since</th></tr>
+    <tr><th>Tag</th><th>Renders as</th><th align="right">Written</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>&lt;details&gt;</code></td><td>collapsible block</td><td align="right">0.1.3</td></tr>
-    <tr><td><code>&lt;kbd&gt;</code></td><td>keyboard key</td><td align="right">0.1.3</td></tr>
-    <tr><td><code>&lt;table&gt;</code></td><td>this table</td><td align="right">0.1.3</td></tr>
+    <tr><td><code>&lt;details&gt;</code></td><td>collapsible block</td><td align="right">block</td></tr>
+    <tr><td><code>&lt;kbd&gt;</code></td><td>keyboard key</td><td align="right">inline</td></tr>
+    <tr><td><code>&lt;table&gt;</code></td><td>this table</td><td align="right">block</td></tr>
   </tbody>
 </table>
 
@@ -121,6 +126,20 @@ Anything that could run is neutralized. The next line has a `<script>` tag in th
 An event handler on the next image is removed, so nothing fires:
 
 <img src="x" onerror="alert('this must not run either')" alt="broken image, on purpose">
+
+A raw `<input>` cannot become an editing surface. The next one asks to be a text box and arrives as a disabled checkbox:
+
+<input type="text" value="type here">
+
+## Images
+
+`mhr` reads one file, so an image has to travel inside the document. A `data:` URI does, and this bar chart is one:
+
+![Two-tone bar, embedded as a data URI](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAIAAADWASznAAAAQElEQVR42u3PMQ0AIAwAwTpCDIqqkokNIZXQqQnDJT9/crFyt5132377BBgYGBgYGBgYGBgYGBgYGBgYGNjUpwBPuyvVOQnVVAAAAABJRU5ErkJggg==)
+
+Only a raster image travels that way. `data:image/svg+xml` and `data:text/html` both run script in a webview, so the sanitizer drops them and the next image renders with no source at all:
+
+![Dropped on purpose](data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=)
 
 ## Math
 

@@ -534,10 +534,13 @@
         <strong>It is safe to point at a file you did not write.</strong>
         <code>mhr</code> opens no server and no local port. It never contacts
         the network, because its webview's Content-Security-Policy sets
-        <code>connect-src 'none'</code>. Raw HTML in a document is escaped, not
-        executed. A document can come from an editor, an agent, or a repository
-        you do not control, so every document is treated as untrusted input.
-        The tests that guard each claim are listed in the README's
+        <code>connect-src 'none'</code>. Raw HTML in a document is filtered to
+        the subset GitHub allows: tables, <code>&lt;details&gt;</code> and
+        <code>&lt;kbd&gt;</code> render, while scripts, styles, event handler
+        attributes and scripting URLs are removed. A document can come from an
+        editor, an agent, or a repository you do not control, so every document
+        is treated as untrusted input. The tests that guard each claim are
+        listed in the README's
         <a
           href="https://github.com/chairulakmal/markdown-hot-reload#safety"
           target="_blank"

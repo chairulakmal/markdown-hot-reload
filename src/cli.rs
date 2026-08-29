@@ -14,6 +14,7 @@ re-renders whenever the file changes on disk. It never writes to the file.
 
 Usage:
   mhr <file.md>
+  mhr -- <file.md>   Open a file whose name begins with a dash
 
 Options:
   -h, --help     Print this message
@@ -58,7 +59,9 @@ pub fn parse<I: IntoIterator<Item = OsString>>(args: I) -> Result<Request> {
         // an option to every person and every shell, so it is refused with a
         // way out rather than guessed at.
         Some(other) if other.starts_with('-') => {
-            bail!("unknown option {other}, use ./{other} to open a file by that name\n\n{USAGE}");
+            bail!(
+                "unknown option {other}, use mhr -- {other} or ./{other} to open a file by that name\n\n{USAGE}"
+            );
         }
         _ => {}
     }
@@ -162,6 +165,18 @@ mod tests {
         let error = format!("{:#}", parse_args(&["-x"]).unwrap_err());
         assert!(error.contains("unknown option -x"), "{error}");
         assert!(error.contains("./-x"), "no way out offered: {error}");
+        assert!(error.contains("mhr -- -x"), "no way out offered: {error}");
+    }
+
+    /// The `--` escape hatch is worth nothing if the person who needs it never
+    /// hears about it, and the error above is the only place they will look.
+    #[test]
+    fn documents_the_end_of_options_marker() {
+        assert!(
+            super::USAGE.contains("mhr -- <file.md>"),
+            "{}",
+            super::USAGE
+        );
     }
 
     #[test]

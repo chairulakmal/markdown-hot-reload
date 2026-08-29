@@ -43,6 +43,17 @@ pub fn parse<I: IntoIterator<Item = OsString>>(args: I) -> Result<Request> {
     match arg.to_str() {
         Some("-h" | "--help") => return Ok(Request::Help),
         Some("-V" | "--version") => return Ok(Request::Version),
+        // `--` ends option parsing, so the next argument is the file even when
+        // it begins with a dash.
+        Some("--") => {
+            let Some(file) = args.next() else {
+                bail!("no file given\n\n{USAGE}");
+            };
+            if args.next().is_some() {
+                bail!("mhr opens one file at a time\n\n{USAGE}");
+            }
+            return Ok(Request::Open(file));
+        }
         // A file may legally be named `-weird.md`, but a leading dash reads as
         // an option to every person and every shell, so it is refused with a
         // way out rather than guessed at.
@@ -157,6 +168,17 @@ mod tests {
     fn refuses_an_empty_or_crowded_command_line() {
         assert!(parse_args(&[]).is_err());
         assert!(parse_args(&["a.md", "b.md"]).is_err());
+    }
+
+    /// `--` ends option parsing, so a dash-leading filename can still be opened.
+    #[test]
+    fn treats_a_double_dash_as_end_of_options() {
+        assert_eq!(
+            parse_args(&["--", "-weird.md"]).unwrap(),
+            Request::Open(OsString::from("-weird.md"))
+        );
+        assert!(parse_args(&["--"]).is_err());
+        assert!(parse_args(&["--", "a.md", "b.md"]).is_err());
     }
 
     /// A path is bytes, not text, so an argument that is not UTF-8 is still a

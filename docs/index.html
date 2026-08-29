@@ -532,12 +532,12 @@
       <pre><code>mhr TODO.md &amp;</code></pre>
       <p>
         <strong>It is safe to point at a file you did not write.</strong>
-        <code>mhr</code> never contacts the network, because its webview's
-        Content-Security-Policy sets <code>connect-src 'none'</code>, and it
-        always escapes raw HTML in a document rather than executing it. A
-        document can come from an editor, an agent, or a repository you do not
-        control, so every document is treated as untrusted input. The tests
-        that guard each claim are listed in the README's
+        <code>mhr</code> opens no server and no local port. It never contacts
+        the network, because its webview's Content-Security-Policy sets
+        <code>connect-src 'none'</code>. Raw HTML in a document is escaped, not
+        executed. A document can come from an editor, an agent, or a repository
+        you do not control, so every document is treated as untrusted input.
+        The tests that guard each claim are listed in the README's
         <a
           href="https://github.com/chairulakmal/markdown-hot-reload#safety"
           target="_blank"

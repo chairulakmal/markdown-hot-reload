@@ -13,7 +13,7 @@ Written as GitHub itself would resolve it, against the bare slug. `mhr` prefixes
 - [Task list](#task-list)
 - [Table](#table)
 - [Code](#code)
-- [Raw HTML is escaped, not executed](#raw-html-is-escaped-not-executed)
+- [Raw HTML](#raw-html)
 - [Math](#math)
 - [Mermaid](#mermaid)
 - [Scroll test](#scroll-test)
@@ -93,11 +93,34 @@ fn is_target(candidate: &Path, target: &Path) -> bool {
 mhr fixtures/kitchen-sink.md
 ```
 
-## Raw HTML is escaped, not executed
+## Raw HTML
+
+The GitHub-safe subset of HTML renders. This disclosure widget is written as raw HTML, and it opens and closes:
+
+<details><summary>Click to expand</summary>Hidden body text.</details>
+
+This table is written as raw HTML, not as a pipe table, and it still renders as a real table with a right-aligned last column:
+
+<table>
+  <thead>
+    <tr><th>Tag</th><th>Renders</th><th align="right">Since</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>&lt;details&gt;</code></td><td>collapsible block</td><td align="right">0.1.3</td></tr>
+    <tr><td><code>&lt;kbd&gt;</code></td><td>keyboard key</td><td align="right">0.1.3</td></tr>
+    <tr><td><code>&lt;table&gt;</code></td><td>this table</td><td align="right">0.1.3</td></tr>
+  </tbody>
+</table>
+
+Inline tags work too: press <kbd>Ctrl</kbd>+<kbd>C</kbd> to copy.
+
+Anything that could run is neutralized. The next line has a `<script>` tag in the source. It shows as inert text and does not execute:
 
 <script>alert('this must not run')</script>
 
-<details><summary>This should show as text, not a disclosure widget</summary>body</details>
+An event handler on the next image is removed, so nothing fires:
+
+<img src="x" onerror="alert('this must not run either')" alt="broken image, on purpose">
 
 ## Math
 

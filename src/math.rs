@@ -31,7 +31,7 @@ use pulldown_latex::{Parser, Storage, push_mathml};
 /// converter echoes the failing source back verbatim, and it shows the reader
 /// their own LaTeX rather than an ASCII-art error box drawn by a crate they have
 /// never heard of.
-const ELEMENTS: &[&str] = &[
+pub(crate) const ELEMENTS: &[&str] = &[
     "math",
     "mfrac",
     "mi",
@@ -70,7 +70,7 @@ const ELEMENTS: &[&str] = &[
 /// cannot end the attribute or open a tag. CSS in a style attribute cannot run
 /// script in any browser this targets, and a URL inside one would still have to
 /// get past `default-src 'self'` and `connect-src 'none'`.
-const ATTRIBUTES: &[&str] = &[
+pub(crate) const ATTRIBUTES: &[&str] = &[
     "class",
     "depth",
     "display",

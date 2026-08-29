@@ -1,9 +1,9 @@
 # Supply-chain policy for `cargo deny check`. Run it in CI alongside fmt,
-# clippy and test. Eight direct dependencies pull 555 crates, so the tree is the
-# part of this project most likely to grow a problem without anyone touching a
-# line of code here.
+# clippy and test. Ten direct dependencies pull in a tree of several hundred
+# crates, so it is the part of this project most likely to grow a problem
+# without anyone touching a line of code here.
 #
-# Verified against cargo-deny 0.20.2 on 2026-08-20: advisories ok, bans ok,
+# Verified against cargo-deny 0.20.2 on 2026-08-29: advisories ok, bans ok,
 # licenses ok, sources ok.
 
 [graph]

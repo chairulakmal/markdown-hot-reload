@@ -217,6 +217,7 @@ mod tests {
     fn the_policy_forbids_network_access_and_inline_script() {
         let csp = shell();
         assert!(csp.contains("connect-src 'none'"), "{csp}");
+        assert!(csp.contains("object-src 'none'"), "{csp}");
         assert!(csp.contains("base-uri 'none'"), "{csp}");
         assert!(csp.contains("form-action 'none'"), "{csp}");
 

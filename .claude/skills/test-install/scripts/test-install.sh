@@ -180,7 +180,23 @@ XAUTH=$(docker exec "$CONTAINER" bash -lc "find /tmp -iname Xauthority | head -1
 docker exec "$CONTAINER" bash -lc "DISPLAY=:99 XAUTHORITY=$XAUTH import -display :99 -window root /root/before.png"
 
 echo "==> Editing the watched file on disk to check hot reload"
-docker exec "$CONTAINER" bash -lc "printf '\n## Reload check\n\nIf you can read this, the watcher reloaded after the file changed on disk.\n' >> /root/test.md"
+# Prepended, not appended. Nothing scrolls the window during this run, so a
+# screenshot only ever shows the top of the document, and a marker added to the
+# end of a long fixture lands below the fold: the two screenshots come back
+# looking the same whether the watcher fired or not. They can still differ byte
+# for byte, so comparing the files does not help either.
+# The rewrite truncates the same inode instead of renaming over it, which keeps
+# the in-place save this check has always exercised; the rename path has its own
+# test in src/watch.rs.
+# `set -e` because the last command below is `rm -f`, which always succeeds: a
+# rewrite that failed halfway would otherwise leave a truncated fixture behind
+# and report success to the outer shell.
+docker exec "$CONTAINER" bash -lc "
+  set -e
+  { printf '# Reload check\n\nIf you can read this, the watcher reloaded after the file changed on disk.\n\n'; cat /root/test.md; } > /root/reloaded.md
+  cat /root/reloaded.md > /root/test.md
+  rm -f /root/reloaded.md
+"
 sleep 2
 docker exec "$CONTAINER" bash -lc "DISPLAY=:99 XAUTHORITY=$XAUTH import -display :99 -window root /root/after.png"
 
@@ -191,4 +207,4 @@ docker exec "$CONTAINER" bash -lc "cat /root/mhr.log" > "$OUT_DIR/mhr.log" || tr
 echo "==> Done."
 echo "==> Screenshots: $OUT_DIR/before.png $OUT_DIR/after.png"
 echo "==> Log: $OUT_DIR/mhr.log"
-echo "==> Read both screenshots to confirm rendering and that the reload picked up the appended section."
+echo "==> Read both screenshots to confirm rendering, and that after.png opens with the Reload check heading."

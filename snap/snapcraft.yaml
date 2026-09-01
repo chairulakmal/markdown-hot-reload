@@ -1,18 +1,42 @@
 name: markdown-hot-reload
-# The Store slug stays the long name; mhr is the upstream command, set below
-# so search and the listing page both show what people actually type.
+# title, summary and description are mirrors, not the source. The Snapcraft
+# dashboard is authoritative for the live listing and no longer reads from this
+# file, so change the dashboard first and match it here. See TODO, "Snap Store
+# listing". `title` stays `mhr` only to satisfy the metadata linter, which
+# checks that a title is set, not what it says; the dashboard serves the full
+# name, "Markdown Hot Reload".
 title: mhr
 version: '0.1.3' # keep in sync with the [package] version in Cargo.toml
 license: MIT
 # Points at the vendored SVG rather than a copy under snap/gui/, so the Store
 # listing and the app both track the one source file.
 icon: assets/icon/mhr-icon.svg
-summary: Read-only GitHub-flavored markdown viewer that reloads on save
+summary: Offline, read-only GitHub-flavored markdown viewer that reloads on save
 description: |
-  mhr watches a markdown file and re-renders it in a native window every
-  time the file changes on disk. Rendering happens entirely offline: there
-  is no network access, so a document looks the same on a plane as it does
-  at a desk.
+  mhr shows a markdown file in a native window and re-renders it every time
+  the file changes on disk. Your scroll position stays where it was. There is
+  no editing surface, and mhr never writes to the file it opens.
+
+  It is built for reading files you did not write, such as a plan produced by
+  an AI agent or a README from a repository you just cloned:
+
+  * No network access. The window blocks every outgoing request, so a document
+    renders the same way with the network disconnected.
+  * No server and no port. Most markdown previewers render to a localhost page
+    that any other process on the machine can read. mhr opens a window instead.
+  * Raw HTML is filtered to the same safe subset GitHub allows. Hand-written
+    tables, `<details>` and `<kbd>` render; `<script>`, `<style>`, event
+    handlers, inline styles and non-web URLs are removed.
+
+  It renders GitHub Flavored Markdown, including tables, task lists, footnotes
+  and alerts, plus syntax-highlighted code blocks, math converted to MathML and
+  Mermaid diagrams. Front matter is removed cleanly instead of showing as a
+  stray paragraph. Images do not display, because mhr reads only the single
+  file you name.
+
+  * Open a file from a terminal with: `mhr notes.md`
+  * Or right-click a markdown file in your file manager and choose mhr from the
+    "Open With" menu.
 contact: mail@chairulakmal.com
 issues: https://github.com/chairulakmal/markdown-hot-reload/issues
 source-code: https://github.com/chairulakmal/markdown-hot-reload

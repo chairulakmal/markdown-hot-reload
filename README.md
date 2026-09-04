@@ -23,7 +23,7 @@ mhr TODO.md &
 
 ## How it works
 
-One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file's parent directory for changes. `wry` and `tao` host a system webview, which receives the new HTML through `evaluate_script`. The frontend is a static HTML file plus a small amount of plain JavaScript, both compiled into the binary by `rust-embed`. All parsing, syntax highlighting, math conversion, escaping, and HTML sanitization happen in Rust. The JavaScript only updates the DOM and draws Mermaid diagrams.
+One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file's parent directory for changes. `wry` and `tao` host a system webview, which receives the new HTML through `evaluate_script`. The frontend is a static HTML file plus a small amount of plain JavaScript, both compiled into the binary by `rust-embed`. All parsing, syntax highlighting, math conversion, escaping, and HTML sanitization happen in Rust. The JavaScript updates the DOM and draws Mermaid diagrams. It never parses markdown, never unescapes HTML, and never uses the network.
 
 ## Safety
 

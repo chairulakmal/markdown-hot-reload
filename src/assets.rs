@@ -21,6 +21,25 @@ pub fn index_url() -> String {
     }
 }
 
+/// Whether `url` stays on the app's own shell, on either origin spelling.
+///
+/// `main.rs` hands this to `WebViewBuilder::with_navigation_handler` so the
+/// webview can never be steered off the app. A rendered document is untrusted
+/// input and may contain links; without this, one click loads a remote page
+/// into the window, which then has no address bar or back button to recover
+/// from, and that page is not covered by the policy in `index.html`, so
+/// `connect-src 'none'` and the offline guarantee stop holding. A same-page
+/// fragment jump, which is how a table of contents works, stays on this origin
+/// and is allowed. A host that merely begins with the app host, such as
+/// `mhr://localhost.example.com`, is not on the origin and is refused.
+pub fn is_app_url(url: &str) -> bool {
+    let on_origin = |origin: &str| {
+        url.strip_prefix(origin)
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with('/'))
+    };
+    on_origin(&format!("{SCHEME}://localhost")) || on_origin(&format!("http://{SCHEME}.localhost"))
+}
+
 /// Side of the pre-rasterized window icon, in pixels.
 pub const ICON_SIZE: u32 = 128;
 
@@ -94,7 +113,7 @@ fn mime_for(path: &str) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::{Asset, SCHEME, handler, index_url, mime_for};
+    use super::{Asset, SCHEME, handler, index_url, is_app_url, mime_for};
     use std::sync::{Arc, Mutex};
     use wry::http::Request;
 
@@ -250,6 +269,28 @@ mod tests {
             .unwrap_or_else(|| panic!("policy has no {name} directive"));
         let rest = &csp[start..];
         &rest[..rest.find(';').unwrap_or(rest.len())]
+    }
+
+    /// The navigation handler in `main.rs` cancels anything this rejects, so a
+    /// link in an untrusted document cannot take the webview off the app. Both
+    /// origin spellings and same-page fragments pass; every external scheme,
+    /// and a look-alike host that only shares a prefix, do not.
+    #[test]
+    fn recognizes_the_app_origin_and_refuses_everything_else() {
+        assert!(is_app_url("mhr://localhost/index.html"));
+        assert!(is_app_url("mhr://localhost/index.html#user-content-h"));
+        assert!(is_app_url("mhr://localhost/app.js"));
+        assert!(is_app_url("mhr://localhost"));
+        assert!(is_app_url("http://mhr.localhost/index.html"));
+
+        assert!(!is_app_url("https://example.com/"));
+        assert!(!is_app_url("http://example.com/"));
+        assert!(!is_app_url("mailto:someone@example.com"));
+        assert!(!is_app_url("file:///etc/passwd"));
+        assert!(!is_app_url("data:text/html,<script>alert(1)</script>"));
+
+        assert!(!is_app_url("mhr://localhost.example.com/"));
+        assert!(!is_app_url("http://mhr.localhost.example.com/"));
     }
 
     /// `WebView2` rewrites a custom scheme to `http://<scheme>.localhost`, so

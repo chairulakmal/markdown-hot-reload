@@ -11,7 +11,7 @@ use tao::dpi::LogicalSize;
 use tao::event::{Event, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
 use tao::window::{Icon, WindowBuilder};
-use wry::{WebView, WebViewBuilder};
+use wry::{NewWindowResponse, WebView, WebViewBuilder};
 
 #[derive(Debug)]
 pub enum UserEvent {
@@ -55,6 +55,13 @@ fn main() -> Result<()> {
     let builder = WebViewBuilder::new()
         .with_initialization_script(INIT_SCRIPT)
         .with_custom_protocol(assets::SCHEME.to_string(), assets::handler(body.clone()))
+        // A document is untrusted input and may carry links. Without this, one
+        // click loads a remote page into a window with no address bar and no
+        // way back, on a page the CSP no longer covers. Only the app's own
+        // shell, fragment jumps included, is allowed to load; every external
+        // scheme is cancelled, and `window.open` is denied outright.
+        .with_navigation_handler(|url| assets::is_app_url(&url))
+        .with_new_window_req_handler(|_url, _features| NewWindowResponse::Deny)
         .with_url(assets::index_url());
 
     // WebKitGTK attaches to a GTK container, not to a raw window handle, so the

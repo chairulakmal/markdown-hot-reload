@@ -50,6 +50,10 @@ body {
   margin: 0 auto;
   padding: 2.5rem 2rem 6rem;
   word-wrap: break-word;
+  /* Written by chrome.js, and by INIT_SCRIPT before the first paint so a saved
+     level does not arrive as a jump. Scoped to the document rather than to
+     <body> so the help overlay and the link readout keep their own size. */
+  zoom: var(--mhr-zoom, 1);
 }
 
 .markdown-body > *:first-child {

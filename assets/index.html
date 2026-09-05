@@ -13,9 +13,57 @@
     <link rel="stylesheet" href="latex.css" />
     <link rel="stylesheet" href="highlight.css" />
     <link rel="stylesheet" href="github.css" />
+    <link rel="stylesheet" href="chrome.css" />
   </head>
   <body>
     <main id="content" class="markdown-body"><!--CONTENT--></main>
+
+    <!--
+      Everything below is application chrome and sits outside #content on
+      purpose. A reload morphs the inner HTML of #content only, so markup
+      placed inside it would be wiped on the next save.
+    -->
+    <div id="readout" hidden></div>
+
+    <!--
+      The dialog is the panel, not the full-screen backdrop that centres it, so
+      the role and the focus target both sit on the panel. tabindex="-1" makes
+      it focusable by script without putting it in the tab order.
+    -->
+    <div id="overlay" hidden>
+      <div
+        id="overlay-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="overlay-title"
+        tabindex="-1"
+      >
+        <h2 id="overlay-title">Keyboard shortcuts</h2>
+        <dl id="shortcuts">
+          <dt><kbd>?</kbd></dt>
+          <dd>Show and hide this panel</dd>
+          <dt><kbd>Esc</kbd></dt>
+          <dd>Close this panel</dd>
+          <dt><kbd>Ctrl</kbd> <kbd>+</kbd></dt>
+          <dd>Zoom in</dd>
+          <dt><kbd>Ctrl</kbd> <kbd>-</kbd></dt>
+          <dd>Zoom out</dd>
+          <dt><kbd>Ctrl</kbd> <kbd>0</kbd></dt>
+          <dd>Reset zoom</dd>
+        </dl>
+        <p id="about">
+          Markdown Hot Reload v<!--VERSION-->
+          <br />
+          <a
+            href="https://github.com/chairulakmal/markdown-hot-reload"
+            target="_blank"
+            rel="noopener noreferrer"
+            >github.com/chairulakmal/markdown-hot-reload</a
+          >
+        </p>
+      </div>
+    </div>
+
     <script src="idiomorph.min.js"></script>
     <script src="app.js"></script>
     <script src="chrome.js"></script>

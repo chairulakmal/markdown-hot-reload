@@ -22,7 +22,27 @@ pub enum UserEvent {
 
 /// Buffers renders that arrive before app.js has run, so a save during page
 /// load is not dropped. app.js replaces `__render` and drains the queue.
-const INIT_SCRIPT: &str = "window.__q=[];window.__render=h=>window.__q.push(h);";
+///
+/// It also applies the saved zoom level. That has to happen here rather than in
+/// chrome.js, because the first paint is the HTML the custom protocol serves
+/// with no page script having run yet, so a level applied after load arrives as
+/// a visible jump. wry injects this through `with_initialization_script`, so it
+/// is not an inline `<script>` and the policy in `index.html` is untouched.
+///
+/// The zoom read is wrapped in `try` because this runs before every page
+/// script: a webview with site data disabled throws on `localStorage` itself,
+/// and an uncaught throw here would take the handshake above down with it.
+/// chrome.js owns the real step range and re-applies the level from a validated
+/// value once it runs, so the bounds here only have to keep a garbage value out
+/// of the stylesheet.
+const INIT_SCRIPT: &str = concat!(
+    "window.__q=[];window.__render=h=>window.__q.push(h);",
+    "try{",
+    "const z=parseFloat(localStorage.getItem('mhr-zoom'));",
+    "if(z>=0.5&&z<=3)",
+    "document.documentElement.style.setProperty('--mhr-zoom',String(z));",
+    "}catch(e){}",
+);
 
 fn main() -> Result<()> {
     let path = match cli::parse(std::env::args_os().skip(1))? {
@@ -223,6 +243,43 @@ mod tests {
                     .collect()
             })
             .collect()
+    }
+
+    /// `INIT_SCRIPT` applies the saved zoom before the first paint, so it reads
+    /// `localStorage` before any page script has run. Two things about that are
+    /// easy to lose in an edit and neither fails visibly. The key has to be the
+    /// one chrome.js writes, or a saved level is silently ignored on every
+    /// launch and only reappears once chrome.js runs. And the read has to stay
+    /// inside the guard, because a webview with site data disabled throws on
+    /// `localStorage` itself: an uncaught throw here runs before `app.js`, so
+    /// it would take the reload handshake down with it and the window would
+    /// stop redrawing entirely.
+    #[test]
+    fn the_zoom_bootstrap_reads_the_key_chrome_js_writes_and_cannot_throw() {
+        let chrome_js = crate::assets::embedded_text("chrome.js").expect("chrome.js is embedded");
+        assert!(
+            chrome_js.contains("\"mhr-zoom\""),
+            "chrome.js no longer names the key INIT_SCRIPT bootstraps from"
+        );
+        assert!(
+            INIT_SCRIPT.contains("'mhr-zoom'"),
+            "INIT_SCRIPT no longer reads the saved zoom: {INIT_SCRIPT}"
+        );
+
+        let guard = INIT_SCRIPT
+            .find("try{")
+            .expect("the zoom bootstrap is wrapped in a try block");
+        let read = INIT_SCRIPT
+            .find("localStorage")
+            .expect("the zoom bootstrap reads localStorage");
+        assert!(
+            guard < read,
+            "the localStorage read moved outside the guard: {INIT_SCRIPT}"
+        );
+        assert!(
+            INIT_SCRIPT.contains("catch"),
+            "the guard has no catch: {INIT_SCRIPT}"
+        );
     }
 
     /// The title bar is the only place the filename is shown, so a path with

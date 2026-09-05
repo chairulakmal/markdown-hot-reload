@@ -16,6 +16,18 @@
       document.head.appendChild(script);
     }));
 
+  // Mermaid names its light palette "default", not "light". An override set by
+  // chrome.js wins over the OS preference; with no override the OS decides.
+  function mermaidTheme() {
+    const override = document.documentElement.dataset.theme;
+    if (override === "dark" || override === "light") {
+      return override === "dark" ? "dark" : "default";
+    }
+    return matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "default";
+  }
+
   // drawDiagrams awaits (mermaid load, each render), and a reload or a theme
   // switch can call it again mid-flight. Without this guard both passes see
   // the same :not([data-drawn]) blocks and render each twice.
@@ -26,6 +38,12 @@
   // still drawing with the old theme, and it cannot know which those are; the
   // next pass reads this flag and clears every one of them.
   let themeChanged = false;
+  // Bumped by render() before it morphs. A pass captures it and abandons after
+  // any await where it no longer matches, because the blocks that pass is
+  // holding have been morphed to new source: writing the resolved SVG into one
+  // would put a diagram from the previous document on the page, and marking it
+  // drawn would hide it from every later pass.
+  let generation = 0;
 
   async function drawDiagrams() {
     if (drawing) {
@@ -37,6 +55,7 @@
     try {
       do {
         drawAgain = false;
+        const pass = generation;
 
         if (themeChanged) {
           themeChanged = false;
@@ -51,32 +70,49 @@
         if (blocks.length === 0) continue;
 
         const mermaid = await loadMermaid();
+        if (pass !== generation) {
+          drawAgain = true;
+          continue;
+        }
+
         // Re-applied on every pass rather than once at load, so a diagram picks
         // up whichever theme is current instead of the one active the first time
         // any diagram was ever drawn.
         mermaid.initialize({
           startOnLoad: false,
           securityLevel: "strict",
-          theme: matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "default",
+          theme: mermaidTheme(),
         });
         for (const block of blocks) {
           // The first render overwrites the block's text with the rendered SVG,
           // so the source is cached here for any later redraw to reuse.
           const source = block.dataset.source ?? block.textContent;
           block.dataset.source = source;
-          block.dataset.drawn = "1";
+          let svg = null;
+          let failure = null;
           try {
-            const { svg } = await mermaid.render(
+            ({ svg } = await mermaid.render(
               `mermaid-${Math.random().toString(36).slice(2)}`,
               source,
-            );
-            block.innerHTML = svg;
+            ));
           } catch (error) {
-            block.dataset.error = "1";
-            block.textContent = String(error);
+            failure = String(error);
           }
+          // Checked after the await and before the write, so an abandoned block
+          // keeps no data-drawn and the next pass picks it up. A block that
+          // failed to render was still handled, so it is marked drawn either
+          // way and is not retried until the source changes.
+          if (pass !== generation) {
+            drawAgain = true;
+            break;
+          }
+          if (failure === null) {
+            block.innerHTML = svg;
+          } else {
+            block.dataset.error = "1";
+            block.textContent = failure;
+          }
+          block.dataset.drawn = "1";
         }
       } while (drawAgain || themeChanged);
     } finally {
@@ -84,16 +120,24 @@
     }
   }
 
-  // A drawn diagram is a static SVG with colors baked in, so an OS theme
-  // switch alone won't repaint it: mark every diagram stale and redraw.
-  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  // A drawn diagram is a static SVG with colors baked in, so a theme switch
+  // alone won't repaint it: mark every diagram stale and redraw. The OS query
+  // covers a change with no override in force; the event covers an override
+  // applied by chrome.js, which the query never sees.
+  const redrawForTheme = () => {
     themeChanged = true;
     void drawDiagrams();
-  });
+  };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener(
+    "change",
+    redrawForTheme,
+  );
+  document.addEventListener("mhr:themechange", redrawForTheme);
 
   // Morphing (not replacing innerHTML) preserves scroll position, open
   // <details> elements, and text selection across a reload.
   function render(html) {
+    generation += 1;
     Idiomorph.morph(content, html, { morphStyle: "innerHTML" });
     void drawDiagrams();
   }

@@ -222,7 +222,7 @@ fn write_math(output: &mut dyn fmt::Write, latex: &str, display: bool) -> fmt::R
 /// GitHub-rendered one works, still targets the bare, unprefixed slug and
 /// never matches. GitHub's own rendering resolves those links too, so this
 /// replicates that here rather than in `assets/app.js`: parsing stays in
-/// Rust, and JavaScript only morphs the DOM. Only links whose fragment
+/// Rust, and JavaScript never touches document text. Only links whose fragment
 /// matches a real heading are touched, so footnote references and other
 /// hash links, none of which comrak prefixes, are left alone.
 fn rewrite_local_anchor_links<'a>(root: &'a AstNode<'a>) {

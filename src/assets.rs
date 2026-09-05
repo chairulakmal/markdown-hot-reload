@@ -134,15 +134,18 @@ mod tests {
         )
     }
 
-    /// The generated and vendored stylesheets, and the fonts in a subdirectory.
-    /// A path mistake here breaks silently rather than loudly: math would still
-    /// render, just with the wrong font and no environment alignment, and code
-    /// would still render, just with no colors.
+    /// The generated and vendored stylesheets, the fonts in a subdirectory, and
+    /// the diagram bundle `app.js` loads lazily by name. A path mistake here
+    /// breaks silently rather than loudly: math would still render, just with
+    /// the wrong font and no environment alignment, code would still render,
+    /// just with no colors, and a diagram would fail only in a document that
+    /// has one.
     #[test]
     fn embeds_the_vendored_stylesheets_and_fonts() {
         for path in [
             "latex.css",
             "highlight.css",
+            "mermaid.min.js",
             "font/latinmodern-math.woff2",
             "font/lmroman12-regular.woff2",
             "font/lmroman12-bold.woff2",
@@ -253,6 +256,53 @@ mod tests {
                 "{directive_name} reaches off-origin: {value}"
             );
         }
+    }
+
+    /// Every relative asset `index.html` names has to be embedded under that
+    /// exact path. A rename or a typo fails silently at runtime: the request
+    /// 404s, the page still loads, and the app comes up with no syntax colors,
+    /// no diagram morphing or no key handling, depending on which line was
+    /// wrong. Scanning the shell rather than listing the paths keeps this
+    /// honest as files are added.
+    #[test]
+    fn embeds_every_asset_the_shell_names() {
+        let shell = shell();
+        let scripts = attribute_values(&shell, "src");
+        for name in ["app.js", "chrome.js"] {
+            assert!(
+                scripts.iter().any(|src| src == name),
+                "the shell stopped loading {name}: {scripts:?}"
+            );
+        }
+
+        let mut named = scripts;
+        named.extend(attribute_values(&shell, "href"));
+        for path in named {
+            // An overlay's About block links the repository, which is off-origin
+            // and served by nobody here; the navigation handler sends it to the
+            // system browser instead.
+            if path.contains("://") || path.starts_with('#') || path.starts_with("mailto:") {
+                continue;
+            }
+            assert!(
+                Asset::get(&path).is_some(),
+                "index.html names {path}, which is not embedded"
+            );
+        }
+    }
+
+    /// Every value of one double-quoted attribute in `html`, in document order.
+    /// The match starts at an attribute boundary, so asking for `src` does not
+    /// also collect the value of a `data-src`.
+    fn attribute_values(html: &str, attribute: &str) -> Vec<String> {
+        let needle = format!("{attribute}=\"");
+        html.match_indices(&needle)
+            .filter(|(i, _)| html[..*i].ends_with(char::is_whitespace))
+            .filter_map(|(i, m)| {
+                let rest = &html[i + m.len()..];
+                rest.find('"').map(|end| rest[..end].to_string())
+            })
+            .collect()
     }
 
     fn shell() -> String {

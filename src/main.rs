@@ -190,6 +190,14 @@ mod tests {
     fn the_reload_handshake_uses_the_same_names_on_both_sides() {
         let app_js = crate::assets::embedded_text("app.js").expect("app.js is embedded");
 
+        // chrome.js shares the page with app.js, so a global it declared on the
+        // same prefix would join the handshake without either side knowing.
+        let chrome_js = crate::assets::embedded_text("chrome.js").expect("chrome.js is embedded");
+        assert!(
+            shared_globals(&chrome_js).is_empty(),
+            "chrome.js names a handshake global; keep chrome state in its closure"
+        );
+
         assert_eq!(
             shared_globals(INIT_SCRIPT),
             shared_globals(&app_js),

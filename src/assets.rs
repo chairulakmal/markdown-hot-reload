@@ -56,7 +56,11 @@ pub fn icon_rgba() -> Option<Vec<u8>> {
 
 /// Serves the embedded assets. `index.html` carries a `<!--CONTENT-->` marker
 /// that is replaced with the current render, so the first paint needs no
-/// JavaScript at all; later updates arrive through `evaluate_script`.
+/// JavaScript at all; later updates arrive through `evaluate_script`. A
+/// `<!--VERSION-->` marker in the help overlay is replaced the same way, so the
+/// version the overlay reports comes from the crate and a release bump cannot
+/// leave it stale. Every other asset skips this branch, so both markers are
+/// inert everywhere else.
 pub fn handler(
     body: Arc<Mutex<String>>,
 ) -> impl Fn(WebViewId, Request<Vec<u8>>) -> Response<Cow<'static, [u8]>> + Send + Sync + 'static {
@@ -71,7 +75,17 @@ pub fn handler(
         let bytes: Cow<'static, [u8]> = if path == "index.html" {
             let shell = String::from_utf8_lossy(&file.data);
             let current = body.lock().map(|b| b.clone()).unwrap_or_default();
-            Cow::Owned(shell.replace("<!--CONTENT-->", &current).into_bytes())
+            // Version first, then the render. In the other order the document
+            // would be scanned for the version marker too, and a document is
+            // untrusted input. `sanitize` strips comments, so nothing can carry
+            // the marker this far today; the ordering keeps that a second line
+            // of defence rather than the only one.
+            Cow::Owned(
+                shell
+                    .replace("<!--VERSION-->", env!("CARGO_PKG_VERSION"))
+                    .replace("<!--CONTENT-->", &current)
+                    .into_bytes(),
+            )
         } else {
             Cow::Owned(file.data.into_owned())
         };
@@ -191,6 +205,34 @@ mod tests {
         assert_eq!(status, 200);
         assert!(body.contains("<p>hello</p>"), "{body}");
         assert!(!body.contains("<!--CONTENT-->"), "marker survived: {body}");
+    }
+
+    /// The help overlay reports the running version, and it comes from the
+    /// crate rather than a literal in the shell, so a release bump cannot leave
+    /// the About block claiming an older one.
+    #[test]
+    fn splices_the_crate_version_into_the_shell() {
+        let (status, body) = get("index.html", "<p>hello</p>");
+        assert_eq!(status, 200);
+        assert!(!body.contains("<!--VERSION-->"), "marker survived: {body}");
+        assert!(
+            body.contains(env!("CARGO_PKG_VERSION")),
+            "shell does not name the crate version: {body}"
+        );
+    }
+
+    /// The render is untrusted input, so the version marker is replaced before
+    /// the document is spliced in and not after. In the other order a document
+    /// carrying the marker would have it substituted too, which is the app
+    /// putting its own text where a document's text should be.
+    #[test]
+    fn replaces_the_version_marker_before_splicing_the_document() {
+        let (_, body) = get("index.html", "<p><!--VERSION--></p>");
+        assert_eq!(
+            body.matches(env!("CARGO_PKG_VERSION")).count(),
+            1,
+            "the version was substituted inside the document as well: {body}"
+        );
     }
 
     /// A custom protocol request for the origin root arrives with an empty

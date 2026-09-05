@@ -5,7 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/mhr.svg)](https://crates.io/crates/mhr)
 [![Snap Store](https://snapcraft.io/markdown-hot-reload/badge.svg)](https://snapcraft.io/markdown-hot-reload)
 
-`mhr` is a markdown viewer with hot reload. Point it at a file on Linux and a native window renders it as GitHub-flavored markdown, then re-renders the moment the file changes on disk. It opens no port, reaches no network, and never writes to the file, so markdown you did not write is safe to open: a plan an agent produced, or a README from a repository you recently cloned. This README covers what the app does, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
+`mhr` is a markdown viewer with hot reload. Point it at a file on Linux and a native window renders it as GitHub-flavored markdown, then re-renders the moment the file changes on disk. It opens no port, reaches no network, and never writes to the file, so markdown you did not write is safe to open: a plan an agent produced, or a README from a repository you recently cloned. This README covers what the app does, its keyboard shortcuts, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
 
 [![A window showing rendered markdown beside the editor writing it](https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/docs/demo-poster.png)](https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118)
 
@@ -21,9 +21,25 @@ While the window is open, the terminal that started `mhr` is blocked. Add `&` to
 mhr TODO.md &
 ```
 
+## Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| <kbd>?</kbd> | Show and hide the shortcut panel |
+| <kbd>Esc</kbd> | Close the shortcut panel |
+| <kbd>Ctrl</kbd> <kbd>+</kbd> | Zoom in |
+| <kbd>Ctrl</kbd> <kbd>-</kbd> | Zoom out |
+| <kbd>Ctrl</kbd> <kbd>0</kbd> | Reset zoom |
+
+On macOS, use <kbd>Cmd</kbd> in place of <kbd>Ctrl</kbd>.
+
+Zoom changes the size of the document only, so the shortcut panel stays readable at every level. The level is remembered for the next launch. The webview stores it, and `mhr` still writes nothing to disk.
+
+Move the pointer over a link and its destination appears in the bottom corner of the window. This shows where a link goes before you click it.
+
 ## How it works
 
-One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file's parent directory for changes. `wry` and `tao` host a system webview, which receives the new HTML through `evaluate_script`. The frontend is a static HTML file plus a small amount of plain JavaScript, both compiled into the binary by `rust-embed`. All parsing, syntax highlighting, math conversion, escaping, and HTML sanitization happen in Rust. The JavaScript updates the DOM and draws Mermaid diagrams. It never parses markdown, never unescapes HTML, and never uses the network.
+One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file's parent directory for changes. `wry` and `tao` host a system webview, which receives the new HTML through `evaluate_script`. The frontend is a static HTML file plus a small amount of plain JavaScript, both compiled into the binary by `rust-embed`. All parsing, syntax highlighting, math conversion, escaping, and HTML sanitization happen in Rust. The JavaScript updates the DOM, draws Mermaid diagrams, and drives the view controls listed above. It never parses markdown, never unescapes HTML, and never uses the network.
 
 ## Safety
 

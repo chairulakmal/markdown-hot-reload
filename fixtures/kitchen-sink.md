@@ -25,6 +25,8 @@ Regular, *italic*, **bold**, ~~struck through~~, `inline code`, and a [link](htt
 
 Mail link: [someone@example.com](mailto:someone@example.com)
 
+File link: [a neighbouring file](./other.md). The window has no back button, so this one is inert rather than a dead end.
+
 Footnote reference here.[^1]
 
 [^1]: And the footnote body.

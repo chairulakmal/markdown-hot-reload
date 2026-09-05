@@ -58,13 +58,19 @@ fn main() -> Result<()> {
         .with_custom_protocol(assets::SCHEME.to_string(), assets::handler(body.clone()))
         // A document is untrusted input and may carry links. Without this, one
         // click loads a remote page into a window with no address bar and no
-        // way back, on a page the CSP no longer covers. Only the app's own
-        // shell, fragment jumps included, is allowed to load. An outbound link
-        // is handed to the desktop browser instead of being swallowed, because
-        // a viewer that answers a deliberate click with nothing at all leaves
-        // the person no way to reach the page and no way to see where it went.
+        // way back, on a page the CSP no longer covers. Only the shell itself,
+        // fragment jumps included, is allowed to load; a relative link such as
+        // `[other](./other.md)` resolves onto the app's own origin but not onto
+        // the shell, and following it would leave the window showing the asset
+        // handler's `not found` with no way back to the document. An outbound
+        // link is handed to the desktop browser instead of being swallowed,
+        // because a viewer that answers a deliberate click with nothing at all
+        // leaves the person no way to reach the page and no way to see where it
+        // went. A link to a local file is dropped, since `link::open` takes only
+        // the schemes a browser can act on; opening one in a second window is
+        // the plan on file rather than something to improvise here.
         .with_navigation_handler(|url| {
-            if assets::is_app_url(&url) {
+            if assets::is_shell_url(&url) {
                 return true;
             }
             link::open(&url);

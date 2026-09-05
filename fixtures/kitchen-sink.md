@@ -23,6 +23,8 @@ Written as GitHub itself would resolve it, against the bare slug. `mhr` prefixes
 
 Regular, *italic*, **bold**, ~~struck through~~, `inline code`, and a [link](https://example.com). Autolink: https://example.com
 
+Mail link: [someone@example.com](mailto:someone@example.com)
+
 Footnote reference here.[^1]
 
 [^1]: And the footnote body.

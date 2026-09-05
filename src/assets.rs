@@ -21,23 +21,60 @@ pub fn index_url() -> String {
     }
 }
 
-/// Whether `url` stays on the app's own shell, on either origin spelling.
+/// Whether `url` stays on the app's own origin, on either origin spelling.
 ///
-/// `main.rs` hands this to `WebViewBuilder::with_navigation_handler` so the
-/// webview can never be steered off the app. A rendered document is untrusted
-/// input and may contain links; without this, one click loads a remote page
-/// into the window, which then has no address bar or back button to recover
-/// from, and that page is not covered by the policy in `index.html`, so
-/// `connect-src 'none'` and the offline guarantee stop holding. A same-page
-/// fragment jump, which is how a table of contents works, stays on this origin
-/// and is allowed. A host that merely begins with the app host, such as
+/// `link.rs` uses this to tell the app's own pages apart from a document link
+/// worth handing to the desktop. It is not the navigation test: everything the
+/// app serves shares this origin, so a URL can pass here and still address
+/// something that is not the document. `is_shell_url` is what navigation asks.
+/// A host that merely begins with the app host, such as
 /// `mhr://localhost.example.com`, is not on the origin and is refused.
 pub fn is_app_url(url: &str) -> bool {
+    path_on_origin(url).is_some()
+}
+
+/// Whether `url` addresses the shell document itself, with any fragment or
+/// query.
+///
+/// `main.rs` hands this to `WebViewBuilder::with_navigation_handler`, which
+/// cancels every navigation it rejects. A rendered document is untrusted input
+/// and may contain links, and two kinds of link have to be refused for the
+/// same reason: the window has no address bar and no back button, so any
+/// navigation that leaves the document is a dead end.
+///
+/// An off-origin link is the obvious one. It would load a remote page the
+/// policy in `index.html` no longer covers, so `connect-src 'none'` and the
+/// offline guarantee stop holding.
+///
+/// A relative link is the quiet one. `[other](./other.md)` resolves against
+/// the shell and lands on this origin, so an origin test alone accepts it; the
+/// webview then navigates, `handler` finds nothing embedded under that path,
+/// and the window is left showing `not found` with no way back to the
+/// document. The same holds for a link that happens to name an embedded asset,
+/// which would replace the document with a stylesheet.
+///
+/// So only the shell passes. The empty path is the origin root, which `handler`
+/// also answers with the shell. A same-page fragment jump, which is how a table
+/// of contents works, keeps the path and is allowed.
+pub fn is_shell_url(url: &str) -> bool {
+    let Some(path) = path_on_origin(url) else {
+        return false;
+    };
+    let path = path
+        .split_once(['#', '?'])
+        .map_or(path, |(before, _)| before);
+    matches!(path, "" | "/" | "/index.html")
+}
+
+/// The path of `url` on either spelling of the app origin, fragment and query
+/// still attached, or `None` if `url` is not on the origin at all.
+fn path_on_origin(url: &str) -> Option<&str> {
     let on_origin = |origin: &str| {
         url.strip_prefix(origin)
-            .is_some_and(|rest| rest.is_empty() || rest.starts_with('/'))
+            .filter(|rest| rest.is_empty() || rest.starts_with('/'))
     };
-    on_origin(&format!("{SCHEME}://localhost")) || on_origin(&format!("http://{SCHEME}.localhost"))
+    on_origin(&format!("{SCHEME}://localhost"))
+        .or_else(|| on_origin(&format!("http://{SCHEME}.localhost")))
 }
 
 /// Side of the pre-rasterized window icon, in pixels.
@@ -113,7 +150,7 @@ fn mime_for(path: &str) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::{Asset, SCHEME, handler, index_url, is_app_url, mime_for};
+    use super::{Asset, SCHEME, handler, index_url, is_app_url, is_shell_url, mime_for};
     use std::sync::{Arc, Mutex};
     use wry::http::Request;
 
@@ -321,10 +358,9 @@ mod tests {
         &rest[..rest.find(';').unwrap_or(rest.len())]
     }
 
-    /// The navigation handler in `main.rs` cancels anything this rejects, so a
-    /// link in an untrusted document cannot take the webview off the app. Both
-    /// origin spellings and same-page fragments pass; every external scheme,
-    /// and a look-alike host that only shares a prefix, do not.
+    /// `link.rs` asks this to keep the app's own pages out of the outbound
+    /// route, so both origin spellings pass and every external scheme, plus a
+    /// look-alike host that only shares a prefix, does not.
     #[test]
     fn recognizes_the_app_origin_and_refuses_everything_else() {
         assert!(is_app_url("mhr://localhost/index.html"));
@@ -341,6 +377,47 @@ mod tests {
 
         assert!(!is_app_url("mhr://localhost.example.com/"));
         assert!(!is_app_url("http://mhr.localhost.example.com/"));
+    }
+
+    /// The navigation handler in `main.rs` cancels anything this rejects. Being
+    /// on the app's origin is not enough, because a relative link in a document
+    /// resolves onto that origin: `[other](./other.md)` becomes
+    /// `mhr://localhost/other.md`, which the asset handler answers with 404,
+    /// leaving a window that has no address bar and no back button showing
+    /// `not found`. That is the bug this test pins. An embedded asset is
+    /// refused for the same reason, since navigating to one would replace the
+    /// document with a stylesheet. Only the shell, with any fragment, passes.
+    #[test]
+    fn allows_navigation_to_the_shell_and_nothing_else_on_the_origin() {
+        for url in [
+            "mhr://localhost/index.html",
+            "mhr://localhost/index.html#user-content-h",
+            "mhr://localhost/index.html?v=1",
+            "mhr://localhost/",
+            "mhr://localhost",
+            "http://mhr.localhost/index.html",
+            "http://mhr.localhost/",
+        ] {
+            assert!(is_shell_url(url), "{url}");
+        }
+
+        for url in [
+            // The relative document links that used to strand the window.
+            "mhr://localhost/other.md",
+            "mhr://localhost/docs/notes.md",
+            "http://mhr.localhost/other.md",
+            // Embedded assets, which navigation has no business reaching even
+            // though the handler serves them happily to the page.
+            "mhr://localhost/app.js",
+            "mhr://localhost/github.css",
+            // A path that merely starts like the shell's.
+            "mhr://localhost/index.html.md",
+            // Off-origin, already refused by the origin test.
+            "https://example.com/",
+            "mhr://localhost.example.com/index.html",
+        ] {
+            assert!(!is_shell_url(url), "{url}");
+        }
     }
 
     /// `WebView2` rewrites a custom scheme to `http://<scheme>.localhost`, so

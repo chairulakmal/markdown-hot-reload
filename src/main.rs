@@ -1,5 +1,6 @@
 mod assets;
 mod cli;
+mod link;
 mod math;
 mod render;
 mod watch;
@@ -58,10 +59,25 @@ fn main() -> Result<()> {
         // A document is untrusted input and may carry links. Without this, one
         // click loads a remote page into a window with no address bar and no
         // way back, on a page the CSP no longer covers. Only the app's own
-        // shell, fragment jumps included, is allowed to load; every external
-        // scheme is cancelled, and `window.open` is denied outright.
-        .with_navigation_handler(|url| assets::is_app_url(&url))
-        .with_new_window_req_handler(|_url, _features| NewWindowResponse::Deny)
+        // shell, fragment jumps included, is allowed to load. An outbound link
+        // is handed to the desktop browser instead of being swallowed, because
+        // a viewer that answers a deliberate click with nothing at all leaves
+        // the person no way to reach the page and no way to see where it went.
+        .with_navigation_handler(|url| {
+            if assets::is_app_url(&url) {
+                return true;
+            }
+            link::open(&url);
+            false
+        })
+        // Nothing in a document can ask for a window, since `target` is not in
+        // the sanitizer's allowlist for `a`. A modifier-click can still arrive
+        // here, so the URL takes the same route rather than vanishing, and the
+        // app still opens no second window of its own.
+        .with_new_window_req_handler(|url, _features| {
+            link::open(&url);
+            NewWindowResponse::Deny
+        })
         .with_url(assets::index_url());
 
     // WebKitGTK attaches to a GTK container, not to a raw window handle, so the

@@ -90,6 +90,8 @@ Two pairings there fail silently rather than loudly, which is why they are named
 
 CI builds the snap on every pull request and every push to `main` that touches more than prose, and uploads it as a workflow artifact, so a packaging break is caught before release rather than at it. It also catches breaks no commit here causes: the snapcraft 9.0.1 regression above arrived on its own, because the build action installs snapcraft from `latest/stable`. Nothing is published automatically; the artifact is there to install with `snap install --dangerous` and test.
 
+A sideloaded snap has no `mhr` command. The bare `mhr` is a Store automatic alias, so it arrives through the Store's snap declaration, and `--dangerous` bypasses the Store: the install gets no declaration, `snap aliases` reports none, and `/snap/bin/` holds only `markdown-hot-reload.mhr`. Run a locally built revision by that wrapper name, or run `snap alias markdown-hot-reload.mhr mhr` to create the short name by hand for as long as that revision is installed. `Command 'mhr' not found` after a local install means the missing alias, not a broken package.
+
 Cutting an actual release, version bump through tag through Snap Store promotion, is [`docs/releasing.md`](docs/releasing.md). Read it before tagging; it exists because a snap can pass every check above and still fail to open a window, and the order it lays out is how that gets caught before a tag makes any promise about it.
 
 The Snap Store, GitHub Releases and crates.io are the only planned channels. Flathub was considered and dropped, not deferred: one maintainer, and a second packaging manifest and Store listing costs more upkeep than the extra reach is worth. Do not propose adding it back without the author raising it first.

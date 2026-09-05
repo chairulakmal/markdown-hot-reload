@@ -747,6 +747,10 @@ mod tests {
             r#"align="right""#,
             // The one image an offline viewer can show.
             r#"src="data:image/png;base64"#,
+            // `mailto:` has to survive the sanitizer, because `link::open`
+            // hands one to the desktop and can only do that if it reaches the
+            // page in the first place.
+            r#"href="mailto:"#,
         ];
         for needle in expected {
             assert!(html.contains(needle), "fixture missing {needle:?}\n{html}");

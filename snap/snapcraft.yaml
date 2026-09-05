@@ -6,7 +6,7 @@ name: markdown-hot-reload
 # checks that a title is set, not what it says; the dashboard serves the full
 # name, "Markdown Hot Reload".
 title: mhr
-version: '0.1.4' # keep in sync with the [package] version in Cargo.toml
+version: '0.1.5' # keep in sync with the [package] version in Cargo.toml
 license: MIT
 # Points at the vendored SVG rather than a copy under snap/gui/, so the Store
 # listing and the app both track the one source file.

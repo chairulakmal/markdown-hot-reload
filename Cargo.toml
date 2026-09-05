@@ -1,6 +1,6 @@
 [package]
 name = "mhr"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 # The floor is set by dependencies (icu_* and time), not by edition 2024, which
 # only needs 1.85. Declaring it also lets cargo's MSRV-aware resolver pick

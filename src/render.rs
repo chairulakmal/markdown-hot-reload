@@ -45,9 +45,9 @@ pub fn escape_html(s: &str) -> String {
 /// Highlights to CSS classes rather than inline styles. Passing a theme name
 /// here would bake one theme's colors into the HTML, including a
 /// `background-color` on the `<pre>` that no stylesheet can override, so a dark
-/// page would show a white code block. The classes let `highlight.css` pick the
-/// palette from `prefers-color-scheme` instead, and leave the block's own
-/// background to `--code-bg` in `github.css`.
+/// page would show a white code block. The classes let the two `highlight-*.css`
+/// sheets pick the palette instead, and leave the block's own background to
+/// `--code-bg` in `github.css`.
 fn syntect() -> &'static SyntectAdapter {
     static ADAPTER: OnceLock<SyntectAdapter> = OnceLock::new();
     ADAPTER.get_or_init(|| {
@@ -540,7 +540,7 @@ mod tests {
 
     /// An inline `style` attribute never reaches the page. It is the one
     /// document-controlled channel that a class allowlist does not close, and
-    /// `highlight.css` relies on nothing carrying its own colors.
+    /// the `highlight-*.css` sheets rely on nothing carrying its own colors.
     #[test]
     fn drops_style_attributes_from_raw_html() {
         let html = to_html(r#"<p style="color:red">text</p>"#);

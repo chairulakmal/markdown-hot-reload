@@ -195,7 +195,8 @@ mod tests {
     fn embeds_the_vendored_stylesheets_and_fonts() {
         for path in [
             "latex.css",
-            "highlight.css",
+            "highlight-light.css",
+            "highlight-dark.css",
             "mermaid.min.js",
             "font/latinmodern-math.woff2",
             "font/lmroman12-regular.woff2",
@@ -368,6 +369,63 @@ mod tests {
                 "index.html names {path}, which is not embedded"
             );
         }
+    }
+
+    /// The theme override forces a syntax palette by rewriting the `media`
+    /// attribute on these two links. That only works if the palette lives on
+    /// the attribute and not in a query inside the file: a `@media` block in
+    /// either sheet would keep tracking the OS whatever the attribute says, and
+    /// a forced-dark page would show light code. So the split has to stay split
+    /// and each link has to keep its `media`.
+    #[test]
+    fn each_highlight_sheet_is_media_gated_and_carries_no_media_query() {
+        // The shell is pretty-printed with one attribute per line, so collapse
+        // runs of whitespace before matching the link.
+        let shell = shell();
+        let collapsed = shell.split_whitespace().collect::<Vec<_>>().join(" ");
+        for (sheet, scheme) in [
+            ("highlight-light.css", "(prefers-color-scheme: light)"),
+            ("highlight-dark.css", "(prefers-color-scheme: dark)"),
+        ] {
+            assert!(
+                collapsed.contains(&format!("href=\"{sheet}\" media=\"{scheme}\"")),
+                "the {sheet} link is not gated by {scheme}: {collapsed}"
+            );
+
+            let css = String::from_utf8_lossy(
+                &Asset::get(sheet)
+                    .unwrap_or_else(|| panic!("{sheet} is embedded"))
+                    .data,
+            )
+            .into_owned();
+            assert!(
+                !css.contains("@media"),
+                "{sheet} still wraps its rules in a media query, so the override cannot force it"
+            );
+        }
+    }
+
+    /// github.css carries the palette three ways: light at `:root`, dark for
+    /// "OS dark and not forced light", dark for "forced dark". Flattened back
+    /// to a plain light/dark pair, the in-app override silently stops working,
+    /// because nothing on the page could then force the palette the OS did not
+    /// pick. This pins the two selectors that make the third state exist.
+    #[test]
+    fn github_css_keeps_the_three_state_theme_ladder() {
+        let css = String::from_utf8_lossy(
+            &Asset::get("github.css")
+                .expect("github.css is embedded")
+                .data,
+        )
+        .into_owned();
+        assert!(
+            css.contains(":root[data-theme=\"dark\"]"),
+            "github.css lost the forced-dark selector"
+        );
+        assert!(
+            css.contains(":root:not([data-theme=\"light\"])"),
+            "github.css lost the guard that lets forced-light win under an OS dark preference"
+        );
     }
 
     /// Every value of one double-quoted attribute in `html`, in document order.

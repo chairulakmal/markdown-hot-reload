@@ -11,7 +11,14 @@
     <link rel="icon" type="image/svg+xml" sizes="16x16" href="icon/mhr-icon-16.svg" />
     <link rel="icon" type="image/svg+xml" sizes="any" href="icon/mhr-icon.svg" />
     <link rel="stylesheet" href="latex.css" />
-    <link rel="stylesheet" href="highlight.css" />
+    <!--
+      One highlight sheet per palette, each gated by a media attribute rather
+      than a media query inside the file. chrome.js forces a palette by
+      rewriting these two attributes; with no override they track the OS. See
+      assets/highlight-light.css.
+    -->
+    <link rel="stylesheet" href="highlight-light.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="highlight-dark.css" media="(prefers-color-scheme: dark)" />
     <link rel="stylesheet" href="github.css" />
     <link rel="stylesheet" href="chrome.css" />
   </head>
@@ -24,6 +31,9 @@
       placed inside it would be wiped on the next save.
     -->
     <div id="readout" hidden></div>
+
+    <!-- Transient "125%" or "Dark" after a zoom or theme change; chrome.js fills it and hides it again. -->
+    <div id="notice" hidden></div>
 
     <!--
       The dialog is the panel, not the full-screen backdrop that centres it, so
@@ -50,7 +60,20 @@
           <dd>Zoom out</dd>
           <dt><kbd>Ctrl</kbd> <kbd>0</kbd></dt>
           <dd>Reset zoom</dd>
+          <dt><kbd>t</kbd></dt>
+          <dd>Cycle theme: system, light, dark</dd>
         </dl>
+
+        <!--
+          The same cycle the `t` key drives, as a click target. chrome.js sets
+          the button label to the active mode and advances it on click. It
+          starts empty so a failed script leaves no misleading text.
+        -->
+        <div id="theme-control">
+          <span id="theme-label">Theme</span>
+          <button id="theme-toggle" type="button"></button>
+        </div>
+
         <p id="about">
           Markdown Hot Reload v<!--VERSION-->
           <br />

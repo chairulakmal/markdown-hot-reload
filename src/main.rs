@@ -23,24 +23,29 @@ pub enum UserEvent {
 /// Buffers renders that arrive before app.js has run, so a save during page
 /// load is not dropped. app.js replaces `__render` and drains the queue.
 ///
-/// It also applies the saved zoom level. That has to happen here rather than in
-/// chrome.js, because the first paint is the HTML the custom protocol serves
-/// with no page script having run yet, so a level applied after load arrives as
-/// a visible jump. wry injects this through `with_initialization_script`, so it
-/// is not an inline `<script>` and the policy in `index.html` is untouched.
+/// It also applies the saved zoom level and theme override before the first
+/// paint. That has to happen here rather than in chrome.js, because the first
+/// paint is the HTML the custom protocol serves with no page script having run
+/// yet, so a zoom level or a `data-theme` applied after load arrives as a
+/// visible jump or a flash of the wrong palette. wry injects this through
+/// `with_initialization_script`, so it is not an inline `<script>` and the
+/// policy in `index.html` is untouched.
 ///
-/// The zoom read is wrapped in `try` because this runs before every page
+/// Both reads are wrapped in one `try` because this runs before every page
 /// script: a webview with site data disabled throws on `localStorage` itself,
 /// and an uncaught throw here would take the handshake above down with it.
-/// chrome.js owns the real step range and re-applies the level from a validated
-/// value once it runs, so the bounds here only have to keep a garbage value out
-/// of the stylesheet.
+/// chrome.js owns the real validation and re-applies both from checked values
+/// once it runs, including the highlight sheets, which this runs too early to
+/// reach; the checks here only have to keep a garbage value out of the DOM.
 const INIT_SCRIPT: &str = concat!(
     "window.__q=[];window.__render=h=>window.__q.push(h);",
     "try{",
     "const z=parseFloat(localStorage.getItem('mhr-zoom'));",
     "if(z>=0.5&&z<=3)",
     "document.documentElement.style.setProperty('--mhr-zoom',String(z));",
+    "const t=localStorage.getItem('mhr-theme');",
+    "if(t==='light'||t==='dark')",
+    "document.documentElement.dataset.theme=t;",
     "}catch(e){}",
 );
 
@@ -285,6 +290,32 @@ mod tests {
         assert!(
             INIT_SCRIPT.contains("catch"),
             "the guard has no catch: {INIT_SCRIPT}"
+        );
+    }
+
+    /// The theme override rides the same bootstrap, for the same reason: a
+    /// `data-theme` written by chrome.js after load flashes the OS palette
+    /// first. The same two failure modes apply. The key has to match the one
+    /// chrome.js persists, and the read has to sit inside the `try` so a
+    /// webview with site data disabled does not throw before `app.js` runs.
+    #[test]
+    fn the_theme_bootstrap_reads_the_key_chrome_js_writes_and_cannot_throw() {
+        let chrome_js = crate::assets::embedded_text("chrome.js").expect("chrome.js is embedded");
+        assert!(
+            chrome_js.contains("\"mhr-theme\""),
+            "chrome.js no longer names the theme key INIT_SCRIPT bootstraps from"
+        );
+
+        let guard = INIT_SCRIPT
+            .find("try{")
+            .expect("the bootstrap is wrapped in a try block");
+        let read = INIT_SCRIPT
+            .find("'mhr-theme'")
+            .expect("INIT_SCRIPT no longer reads the saved theme");
+        let close = INIT_SCRIPT.find("}catch").expect("the guard has no catch");
+        assert!(
+            guard < read && read < close,
+            "the theme read is outside the guard: {INIT_SCRIPT}"
         );
     }
 

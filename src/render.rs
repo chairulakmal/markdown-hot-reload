@@ -72,6 +72,14 @@ fn options() -> Options<'static> {
     o.extension.multiline_block_quotes = true;
     o.extension.math_dollars = true;
     o.extension.math_code = true;
+    // `:tada:` and `:warning:` are ordinary in GitHub markdown and in what
+    // agents write. comrak substitutes the Unicode character during parsing, so
+    // the output carries no new tag and `sanitize` has nothing extra to allow.
+    o.extension.shortcodes = true;
+    // CommonMark's emphasis rules need whitespace around a word, so `**強調**`
+    // followed immediately by more text does not render as bold. The intended
+    // readers write Japanese, where that spacing does not exist.
+    o.extension.cjk_friendly_emphasis = true;
     o.extension.header_id_prefix = Some(String::from(HEADER_ID_PREFIX));
     // Without this, the id gets the prefix but the heading's own anchor link
     // does not, so clicking it jumps to a fragment nothing has.
@@ -663,6 +671,25 @@ mod tests {
         assert!(html.contains("<blockquote>"), "{html}");
     }
 
+    /// `:tada:` is a shortcode GitHub renders and agents write. comrak swaps in
+    /// the Unicode character during parsing, so the literal colons must be gone
+    /// from the output and the emoji present.
+    #[test]
+    fn renders_emoji_shortcodes() {
+        let html = to_html("ship it :tada:");
+        assert!(html.contains('\u{1F389}'), "{html}");
+        assert!(!html.contains(":tada:"), "{html}");
+    }
+
+    /// Without this extension, `**bold**` pressed against Japanese text does
+    /// not render as bold, because the emphasis rules assume a space between
+    /// words.
+    #[test]
+    fn renders_cjk_friendly_emphasis() {
+        let html = to_html("これは**強調**です");
+        assert!(html.contains("<strong>強調</strong>"), "{html}");
+    }
+
     /// Front matter is metadata, not content, so it must disappear from the
     /// render rather than showing up as a stray paragraph or literal `---`.
     #[test]
@@ -723,6 +750,10 @@ mod tests {
             "<dt>",
             "<dd>",
             "<sup>2</sup>",
+            // Emoji shortcode substituted to the character, CJK-friendly
+            // emphasis applied with no surrounding space.
+            "\u{1F389}",
+            "<strong>強調</strong>",
             "<blockquote>",
             "<table>",
             "markdown-alert",

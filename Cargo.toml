@@ -53,7 +53,7 @@ assets = [
 [dependencies]
 ammonia = "4"
 anyhow = "1.0.104"
-comrak = { version = "0.54.0", default-features = false, features = ["syntect-fancy"] }
+comrak = { version = "0.54.0", default-features = false, features = ["syntect-fancy", "shortcodes"] }
 notify = "8.2.0"
 notify-debouncer-full = "0.7.0"
 pulldown-latex = "0.8"

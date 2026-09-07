@@ -117,6 +117,8 @@ Every save re-renders the window. `fixtures/kitchen-sink.md` uses every markdown
 ## What it supports
 
 - GitHub Flavored Markdown: tables, task lists, strikethrough, autolinks, footnotes, alerts, description lists, superscript, multiline block quotes
+- Emoji shortcodes (`:tada:`), substituted offline from a built-in table
+- CJK-friendly emphasis, so `**強調**` renders as bold with no surrounding spaces
 - Syntax-highlighted fenced code blocks
 - Inline and display math (`$...$`, `$$...$$`, and GitHub's `` $`...`$ ``), converted to MathML offline. LaTeX that does not parse shows its own source instead of a broken render
 - Mermaid diagrams, loaded on demand, so a document without a diagram loads nothing extra

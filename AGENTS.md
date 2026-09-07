@@ -31,6 +31,8 @@ cargo build --locked --release
 
 These five are what the `ci` job runs, in that order. Run them before opening a pull request; a failure in any of them blocks the merge.
 
+CI sets `CARGO_BUILD_WARNINGS: deny` for the whole workflow, so a warning `cargo clippy` prints locally is an error there. `[lints]` in `Cargo.toml` sets `clippy::pedantic` to `warn`, and `pedantic` lints such as `doc_markdown` then fail CI while passing a bare local run. Run `CARGO_BUILD_WARNINGS=deny cargo clippy --locked --all-targets` to see what CI sees.
+
 ```
 ./target/release/mhr fixtures/kitchen-sink.md
 ```

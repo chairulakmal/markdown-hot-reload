@@ -33,6 +33,10 @@ Footnote reference here.[^1]
 
 Superscript: x^2^
 
+Emoji shortcode: ship it :tada:, and heed the :warning:.
+
+CJK-friendly emphasis: これは**強調**です, no space needed around the bold run.
+
 ## Definition list
 
 Term

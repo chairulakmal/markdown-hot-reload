@@ -17,6 +17,7 @@
   --border-subtle: #d1d9e0b3;
   --code-bg: #f6f8fa;
   --link: #0969da;
+  --accent-emphasis: #0969da;
   --accent-note: #0969da;
   --accent-tip: #1a7f37;
   --accent-important: #8250df;
@@ -36,6 +37,7 @@
     --border-subtle: #3d444db3;
     --code-bg: #151b23;
     --link: #4493f8;
+    --accent-emphasis: #1f6feb;
     --accent-note: #4493f8;
     --accent-tip: #3fb950;
     --accent-important: #ab7df8;
@@ -54,6 +56,7 @@
   --border-subtle: #3d444db3;
   --code-bg: #151b23;
   --link: #4493f8;
+  --accent-emphasis: #1f6feb;
   --accent-note: #4493f8;
   --accent-tip: #3fb950;
   --accent-important: #ab7df8;
@@ -159,9 +162,38 @@ li + li {
   margin-top: 0.25em;
 }
 
+/* Drawn here rather than left to the platform. A native checkbox is painted at
+   a fixed pixel size, in whatever grey the platform uses for a disabled
+   control, and every checkbox on this page is disabled, which
+   `render::sanitize` pins on to keep the page read-only. `appearance: none`
+   hands the drawing to this sheet, so the box takes its size from the text and
+   its colours from the palette, a forced theme moves it with everything else,
+   and it looks the same on every desktop. The design is GitHub's own: a 3px
+   radius, the emphasis blue when checked, and Octicons' 16px check glyph,
+   inlined so it loads offline. `--accent-emphasis` rather than `--link`
+   because the dark link blue is too light to carry a white glyph. */
+li.task-list-item {
+  list-style-type: none;
+}
+
 li input[type="checkbox"] {
+  appearance: none;
+  width: 1em;
+  height: 1em;
   margin: 0 0.35em 0.15em -1.4em;
   vertical-align: middle;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background-color: var(--code-bg);
+}
+
+li input[type="checkbox"]:checked {
+  border-color: var(--accent-emphasis);
+  background-color: var(--accent-emphasis);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3E%3Cpath d='M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100%;
 }
 
 blockquote {

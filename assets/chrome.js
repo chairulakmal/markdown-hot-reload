@@ -15,6 +15,27 @@
   const panel = document.getElementById("overlay-panel");
   const readout = document.getElementById("readout");
 
+  // -------------------------------------------------------------- notice
+
+  // A brief confirmation of a view change, shown in the corner opposite the
+  // readout and gone after a moment. The change is already visible; what is
+  // not is which of several levels it landed on, so this names it: "125%"
+  // after a zoom key, "Dark" after a theme change. Its own element rather than
+  // the readout, so a change made while a link is hovered does not overwrite
+  // the destination.
+  const notice = document.getElementById("notice");
+  let noticeTimer = 0;
+
+  function flashNotice(text) {
+    if (!notice) return;
+    notice.textContent = text;
+    notice.hidden = false;
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => {
+      notice.hidden = true;
+    }, 1400);
+  }
+
   // ---------------------------------------------------------------- zoom
 
   // Discrete steps rather than a multiplier, so the levels are round numbers, a
@@ -65,6 +86,7 @@
     zoom = normalizeZoom(next);
     setZoomProperty(zoom);
     storeZoom(zoom);
+    flashNotice(`${Math.round(zoom * 100)}%`);
   }
 
   // Steps to the neighbouring level. A stored value between two steps, whether
@@ -168,6 +190,103 @@
     showLink(linkAt(event.relatedTarget)),
   );
 
+  // ------------------------------------------------------------- theme
+
+  // Three states. "system" follows the desktop through the media queries
+  // already in the stylesheets and is the default. "light" and "dark" pin the
+  // palette by writing data-theme on <html>, which github.css keys off.
+  //
+  // The two syntax-highlight sheets are gated by a media attribute on their
+  // <link> rather than a query inside the file, because a media query always
+  // reflects the OS setting and never the override. Forcing a palette
+  // therefore means rewriting those attributes here as well.
+  const THEME_KEY = "mhr-theme";
+  const THEMES = ["system", "light", "dark"];
+  const THEME_LABELS = { system: "System", light: "Light", dark: "Dark" };
+
+  const themeToggle = document.getElementById("theme-toggle");
+  const highlightLight = document.querySelector(
+    'link[href="highlight-light.css"]',
+  );
+  const highlightDark = document.querySelector('link[href="highlight-dark.css"]');
+
+  // Same guard rationale as zoom: a webview with site data disabled throws on
+  // the localStorage property itself, and the store survives a downgrade, so a
+  // value read here can be missing or unrecognised.
+  function readStoredTheme() {
+    try {
+      const stored = localStorage.getItem(THEME_KEY);
+      return THEMES.includes(stored) ? stored : "system";
+    } catch {
+      return "system";
+    }
+  }
+
+  function storeTheme(value) {
+    try {
+      localStorage.setItem(THEME_KEY, value);
+    } catch {
+      // As with zoom: the choice still applies to this window, it just will
+      // not survive a restart.
+    }
+  }
+
+  // A forced theme pins one sheet on with `all` and the other off with
+  // `not all`; "system" restores the OS-tracking queries index.html ships.
+  // Assigning .media re-evaluates the sheet, and both files are embedded, so
+  // the swap needs no fetch.
+  function applyHighlightMedia(theme) {
+    if (!highlightLight || !highlightDark) return;
+    if (theme === "light") {
+      highlightLight.media = "all";
+      highlightDark.media = "not all";
+    } else if (theme === "dark") {
+      highlightLight.media = "not all";
+      highlightDark.media = "all";
+    } else {
+      highlightLight.media = "(prefers-color-scheme: light)";
+      highlightDark.media = "(prefers-color-scheme: dark)";
+    }
+  }
+
+  // Writes the DOM only. No store, no event: this is also what runs on load,
+  // and opening the app is not a theme change.
+  function renderTheme(theme) {
+    if (theme === "system") {
+      delete document.documentElement.dataset.theme;
+    } else {
+      document.documentElement.dataset.theme = theme;
+    }
+    applyHighlightMedia(theme);
+    if (themeToggle) themeToggle.textContent = THEME_LABELS[theme];
+  }
+
+  let theme = readStoredTheme();
+
+  function setTheme(next) {
+    theme = THEMES.includes(next) ? next : "system";
+    renderTheme(theme);
+    storeTheme(theme);
+    flashNotice(THEME_LABELS[theme]);
+    // A drawn Mermaid diagram is a static SVG with its colours baked in, so a
+    // palette change alone will not repaint it. app.js listens for this and
+    // redraws. The OS-change path it also listens on never fires for an
+    // override, which is why the event exists.
+    document.dispatchEvent(new CustomEvent("mhr:themechange"));
+  }
+
+  function cycleTheme() {
+    setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]);
+  }
+
+  // INIT_SCRIPT wrote data-theme before the first paint from the same stored
+  // value, so the page chrome does not flash. This re-applies it to reach the
+  // highlight sheets and the button label, which INIT_SCRIPT runs too early to
+  // touch.
+  renderTheme(theme);
+
+  if (themeToggle) themeToggle.addEventListener("click", cycleTheme);
+
   // ------------------------------------------------------------- keys
 
   // The one keydown listener for the whole app. A control adds a row here
@@ -206,12 +325,15 @@
     ],
   ]);
 
-  // Checked only when no physical binding matched. "?" sits on a different
-  // physical key on every layout, and it is the character the overlay itself
-  // promises, so it is the one control matched by what was typed rather than
-  // by where it was typed. Nothing here takes Ctrl, so it cannot collide with
-  // a zoom row above.
-  const byChar = new Map([["?", toggleOverlay]]);
+  // Checked only when no physical binding matched. "?" and "t" are matched by
+  // the character typed rather than the physical key: "?" is what the overlay
+  // itself promises, and "t" is for "theme", so both should follow the letter
+  // onto whatever key a layout puts it. Neither takes Ctrl, so they cannot
+  // collide with a zoom row above.
+  const byChar = new Map([
+    ["?", toggleOverlay],
+    ["t", cycleTheme],
+  ]);
 
   document.addEventListener("keydown", (event) => {
     if (event.altKey) return;

@@ -15,7 +15,8 @@
  * would otherwise beat the attribute's own rule, so each one restates it.
  */
 #readout[hidden],
-#overlay[hidden] {
+#overlay[hidden],
+#notice[hidden] {
   display: none;
 }
 
@@ -42,6 +43,27 @@
   line-height: 1.6;
   white-space: nowrap;
   text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/*
+ * The zoom and theme confirmation, in the corner opposite the readout so the
+ * two never sit on top of each other. Same strip shape; chrome.js shows it on
+ * a change and hides it a moment later.
+ */
+#notice {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 0.25rem 0.75rem;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-radius: 0.25rem 0 0 0;
+  background: var(--code-bg);
+  color: var(--fg-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
   pointer-events: none;
 }
 
@@ -110,6 +132,37 @@
   font-size: 0.75rem;
   line-height: 1.4;
   text-align: center;
+}
+
+/* The click target for the same three-state cycle the `t` key drives. Sits
+ * between the shortcut list and the About block. chrome.js fills the button
+ * label and advances it on click. */
+#theme-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+#theme-label {
+  color: var(--fg-muted);
+}
+
+#theme-toggle {
+  min-width: 5rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--code-bg);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+#theme-toggle:hover {
+  border-color: var(--fg-muted);
 }
 
 #about {

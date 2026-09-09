@@ -1,4 +1,15 @@
+/* Three states, not two. The palette follows the OS by default, and the theme
+   override in chrome.js can pin it to light or dark by writing `data-theme` on
+   <html>. `color-scheme` rides along on the same rules so the scrollbars and
+   the task-list checkboxes match the palette a forced theme selects.
+
+   The dark palette is written twice on purpose: once for "OS is dark and the
+   user has not forced light", once for "the user forced dark". A single
+   selector list cannot express both, because one half lives inside the media
+   query and the other does not. The highlight-light.css and highlight-dark.css
+   sheets carry the matching split for syntax colours. */
 :root {
+  color-scheme: light;
   --fg: #1f2328;
   --fg-muted: #59636e;
   --bg: #ffffff;
@@ -13,8 +24,11 @@
   --accent-caution: #cf222e;
 }
 
+/* The `:not([data-theme="light"])` is what lets a forced-light override win
+   here even while the OS asks for dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --fg: #f0f6fc;
     --fg-muted: #9198a1;
     --bg: #0d1117;
@@ -28,6 +42,23 @@
     --accent-warning: #d29922;
     --accent-caution: #f85149;
   }
+}
+
+/* Dark forced from the app, whatever the OS reports. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --fg: #f0f6fc;
+  --fg-muted: #9198a1;
+  --bg: #0d1117;
+  --border: #3d444d;
+  --border-subtle: #3d444db3;
+  --code-bg: #151b23;
+  --link: #4493f8;
+  --accent-note: #4493f8;
+  --accent-tip: #3fb950;
+  --accent-important: #ab7df8;
+  --accent-warning: #d29922;
+  --accent-caution: #f85149;
 }
 
 * {

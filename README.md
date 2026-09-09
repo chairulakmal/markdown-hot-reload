@@ -13,7 +13,7 @@ Click the picture to play a 15-second demo.
 
 ## What it does
 
-Run `mhr notes.md` and a window opens with the file rendered. Every save updates it in place, whether you saved it, your editor did, or an agent did. Your scroll position and your open `<details>` sections survive the reload. There is no editing surface.
+Run `mhr notes.md` and a window opens with the file rendered. Every save updates it in place, whether you saved it, your editor did, or an agent did. Your scroll position and your open `<details>` sections survive the reload. The window follows your desktop light or dark setting, and the <kbd>t</kbd> key pins either one. There is no editing surface.
 
 While the window is open, the terminal that started `mhr` is blocked. Add `&` to the end of the command to get your prompt back:
 
@@ -27,13 +27,14 @@ mhr TODO.md &
 | --- | --- |
 | <kbd>?</kbd> | Show and hide the shortcut panel |
 | <kbd>Esc</kbd> | Close the shortcut panel |
+| <kbd>t</kbd> | Cycle the theme: system, light, dark |
 | <kbd>Ctrl</kbd> <kbd>+</kbd> | Zoom in |
 | <kbd>Ctrl</kbd> <kbd>-</kbd> | Zoom out |
 | <kbd>Ctrl</kbd> <kbd>0</kbd> | Reset zoom |
 
 On macOS, use <kbd>Cmd</kbd> in place of <kbd>Ctrl</kbd>.
 
-Zoom changes the size of the document only, so the shortcut panel stays readable at every level. The level is remembered for the next launch. The webview stores it, and `mhr` still writes nothing to disk.
+The theme follows the desktop light or dark setting by default. Press <kbd>t</kbd>, or use the toggle in the shortcut panel, to pin light or dark instead. The choice is remembered for the next launch, stored by the webview, and `mhr` still writes nothing to disk. Zoom works the same way: it changes the size of the document only, so the shortcut panel stays readable at every level. After each change, the new zoom level or theme name shows briefly in the bottom corner of the window.
 
 Move the pointer over a link and its destination appears in the bottom corner of the window. This shows where a link goes before you click it.
 

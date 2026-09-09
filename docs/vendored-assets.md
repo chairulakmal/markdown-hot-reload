@@ -1,9 +1,9 @@
 # Vendored assets
 
-This document is the maintenance procedure for the files in `assets/`, the frontend dependencies that `rust-embed` compiles into the `mhr` binary. The point that matters most: every one of these files is refreshed by hand, and two of them are version-locked to something else in the repository, so a mismatch produces a wrong render rather than a build error. Below: the inventory table, how `highlight.css` is generated, the icon set and its design rules, how to regenerate the window icon bitmap, and the pairing rule for the math stylesheet and fonts.
+This document is the maintenance procedure for the files in `assets/`, the frontend dependencies that `rust-embed` compiles into the `mhr` binary. The point that matters most: every one of these files is refreshed by hand, and two of them are version-locked to something else in the repository, so a mismatch produces a wrong render rather than a build error. Below: the inventory table, how the two `highlight-*.css` sheets are generated, the icon set and its design rules, how to regenerate the window icon bitmap, and the pairing rule for the math stylesheet and fonts.
 
 - [Inventory](#inventory)
-- [highlight.css](#highlightcss)
+- [highlight-light.css and highlight-dark.css](#highlight-lightcss-and-highlight-darkcss)
 - [The icon set](#the-icon-set)
 - [window-icon.rgba](#window-iconrgba)
 - [latex.css and the fonts](#latexcss-and-the-fonts)
@@ -16,7 +16,8 @@ To refresh any file, download it, replace it in place, and rebuild.
 | --- | --- | --- |
 | `idiomorph.min.js` | 0.7.3 | `cdn.jsdelivr.net/npm/idiomorph@0.7.3/dist/idiomorph.min.js` |
 | `mermaid.min.js` | 11.x | `cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js` |
-| `highlight.css` | generated | syntect 5.3.0, see below |
+| `highlight-light.css` | generated | syntect 5.3.0, `InspiredGitHub`, see below |
+| `highlight-dark.css` | generated | syntect 5.3.0, `base16-ocean.dark`, see below |
 | `latex.css` | 0.8.0 | `github.com/carloskiki/pulldown-latex` release `0.8.0`, `styles.css` |
 | `font/*.woff2` | 0.8.0 | `github.com/carloskiki/pulldown-latex` release `0.8.0`, `font/` |
 | `icon/*.svg` | original | the project's own mark, four variants, see below |
@@ -24,9 +25,13 @@ To refresh any file, download it, replace it in place, and rebuild.
 
 Mermaid is 3.5 MB raw and dominates the binary, so it is loaded only when a document actually contains a diagram.
 
-## highlight.css
+## highlight-light.css and highlight-dark.css
 
-`highlight.css` is generated rather than downloaded. It is the two syntax-highlighting palettes, `InspiredGitHub` for a light page and `base16-ocean.dark` for a dark one, produced by syntect's `css_for_theme_with_class_style` with `ClassStyle::SpacedPrefixed { prefix: "hl-" }`. Each palette sits inside its own `prefers-color-scheme` media query, because the two themes do not emit the same selector set: the light theme has rules the dark one does not cover, and some of them are specific enough to take precedence. Regenerate it with a throwaway crate depending on `syntect` at the version in `Cargo.lock`; the file's own header comment records the exact call. The dead `.hl-code` rule is removed during generation, since the `<pre>` never carries that class and the rule's `background-color` would conflict with `--code-bg`.
+These two sheets are generated rather than downloaded. They are the two syntax-highlighting palettes, `InspiredGitHub` for a light page in `highlight-light.css` and `base16-ocean.dark` for a dark one in `highlight-dark.css`, each produced by syntect's `css_for_theme_with_class_style` with `ClassStyle::SpacedPrefixed { prefix: "hl-" }`.
+
+They are two files, not one file with the palettes behind mutually exclusive `prefers-color-scheme` media queries, because the theme override has to be able to force either palette on regardless of the operating system setting. A CSS media query always reflects the OS setting and never a `color-scheme` override, so the palette is selected by a `media` attribute on each `<link>` in `index.html` instead, and `chrome.js` rewrites those attributes to force one sheet. Keeping the two selector sets in separate files also means they never collide: the light theme emits rules the dark one does not, and only one sheet is ever live.
+
+Regenerate them with a throwaway crate depending on `syntect` at the version in `Cargo.lock`; each file's own header comment records the exact call. The output of `css_for_theme_with_class_style` is written directly, with no media-query wrapper of any kind. The dead `.hl-code` rule is removed from each file during generation, since the `<pre>` never carries that class and the rule's `background-color` would conflict with `--code-bg`.
 
 ## The icon set
 

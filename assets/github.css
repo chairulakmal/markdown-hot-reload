@@ -159,9 +159,19 @@ li + li {
   margin-top: 0.25em;
 }
 
+/* Sized in `em` so the box tracks the text it sits beside, at any zoom level;
+   the native default is a fixed pixel size that looks undersized next to this
+   page's body text. `accent-color` ties the checked fill to the palette, so a
+   forced theme moves it along with everything else. Every one of these is
+   disabled, which `render::sanitize` pins on to keep the page read-only, and a
+   platform may paint a disabled control in its own grey whatever this asks
+   for. */
 li input[type="checkbox"] {
   margin: 0 0.35em 0.15em -1.4em;
   vertical-align: middle;
+  width: 1em;
+  height: 1em;
+  accent-color: var(--link);
 }
 
 blockquote {

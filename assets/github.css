@@ -15,6 +15,7 @@
   --bg: #ffffff;
   --border: #d1d9e0;
   --border-subtle: #d1d9e0b3;
+  --border-emphasis: #818b98;
   --code-bg: #f6f8fa;
   --link: #0969da;
   --accent-emphasis: #0969da;
@@ -35,6 +36,7 @@
     --bg: #0d1117;
     --border: #3d444d;
     --border-subtle: #3d444db3;
+  --border-emphasis: #656c76;
     --code-bg: #151b23;
     --link: #4493f8;
     --accent-emphasis: #1f6feb;
@@ -54,6 +56,7 @@
   --bg: #0d1117;
   --border: #3d444d;
   --border-subtle: #3d444db3;
+  --border-emphasis: #656c76;
   --code-bg: #151b23;
   --link: #4493f8;
   --accent-emphasis: #1f6feb;
@@ -196,10 +199,13 @@ li input[type="checkbox"]:checked {
   background-size: 100%;
 }
 
+/* Not GitHub's rule, which greys the text with --fg-muted and draws the bar in
+   the table-rule --border, so a long quote fades into the page (issue #43).
+   The bar stays neutral because a blue one reads as a NOTE alert, and there is
+   no tint because a code block inside the quote would vanish into it. */
 blockquote {
   padding: 0 1em;
-  color: var(--fg-muted);
-  border-left: 0.25em solid var(--border);
+  border-left: 0.25em solid var(--border-emphasis);
 }
 
 blockquote > *:last-child {

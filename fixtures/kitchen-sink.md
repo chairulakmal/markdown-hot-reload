@@ -43,6 +43,19 @@ Term
 
 : The definition.
 
+## Block quote
+
+> A quote reads at the same contrast as the text around it. The bar on the left marks it as quoted.
+>
+> - It can hold a list
+> - and a code block:
+>
+> ```rust
+> let quoted = true;
+> ```
+>
+> > A nested quote draws a second bar.
+
 ## Multiline block quote
 
 >>>

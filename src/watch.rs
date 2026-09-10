@@ -1,3 +1,8 @@
+//! The file watcher. It reports that the document changed, vanished, or that
+//! watching itself failed, and leaves rendering to the caller. The one rule it
+//! exists to enforce is documented on `spawn`: watch the directory, never the
+//! file.
+
 use crate::UserEvent;
 use anyhow::Result;
 use notify::RecursiveMode;
@@ -32,12 +37,28 @@ where
     let watched = target;
 
     let mut debouncer = new_debouncer(DEBOUNCE, None, move |result: DebounceEventResult| {
-        let Ok(events) = result else { return };
+        let events = match result {
+            Ok(events) => events,
+            // Left silent, an error here looks exactly like a document that
+            // stopped changing: the window keeps a stale render and nothing
+            // says why.
+            Err(errors) => {
+                let text = errors
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join("; ");
+                notify(UserEvent::Failed(text));
+                return;
+            }
+        };
 
+        // A rescan flag means the kernel dropped events, so the file may have
+        // changed without saying so. Treat it as touched rather than trust
+        // the paths that did get reported.
         let touched = events
             .iter()
-            .flat_map(|e| e.paths.iter())
-            .any(|p| is_target(p, &watched));
+            .any(|e| e.need_rescan() || e.paths.iter().any(|p| is_target(p, &watched)));
 
         if touched {
             let event = if watched.exists() {

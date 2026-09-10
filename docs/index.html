@@ -529,7 +529,9 @@
         <code>?</code> to see them. <code>Ctrl</code> with <code>+</code>,
         <code>-</code> or <code>0</code> changes the zoom, and
         <code>t</code> pins the theme to light or dark instead of following
-        the desktop. Both settings are remembered for the next launch. The full
+        the desktop. Both settings are remembered for the next launch.
+        Clicking a link opens it in your default browser, never inside
+        <code>mhr</code>, and a link to a local file does nothing. The full
         list is in the README's
         <a
           href="https://github.com/chairulakmal/markdown-hot-reload#keyboard-shortcuts"
@@ -587,7 +589,8 @@
 
       <h2 id="which-package">Which package to use</h2>
       <p>
-        <strong>Use the snap unless you have a reason not to.</strong> It is
+        <strong>Use the snap.</strong> Choose another package only if the snap
+        does not work on your system. It is
         the only package that updates itself. The other three are installed
         once and stay at that version until you repeat the steps by hand.
         Whichever one you pick, the command you run afterwards is
@@ -688,6 +691,12 @@
       </p>
       <pre><code>mhr notes.md</code></pre>
       <p>
+        If the shell reports <code>Command 'mhr' not found</code>, the snap's
+        full command name is <code>markdown-hot-reload.mhr</code>. Run
+        <code>sudo snap alias markdown-hot-reload.mhr mhr</code> to add the
+        short name.
+      </p>
+      <p>
         Running the snap from a terminal can print lines like
         <code>Could not open /sys/class/dmi/id/chassis_type</code> or
         <code>This call is not available inside the sandbox</code>. These come
@@ -731,8 +740,10 @@
       <p>
         The <code>.deb</code> needs Ubuntu 24.04 (Noble Numbat), Debian 13
         (trixie), or newer, on x86_64. It links against the <code>t64</code>
-        builds of GTK and GLib, which earlier releases do not have. On an
-        older release, use the snap or the tarball instead.
+        builds of GTK and GLib. <code>t64</code> means the 64-bit time rebuild
+        that Ubuntu 24.04 and Debian 13 introduced, so earlier releases do not
+        have those builds. On an older release, use the snap or the tarball
+        instead.
       </p>
 
       <h3 id="in-one-block">All four steps in one block</h3>
@@ -925,9 +936,8 @@ mhr notes.md</code></pre>
         the only one that could work beyond Linux: <code>wry</code>, the
         webview library, drives WKWebView on macOS and WebView2 on Windows, and
         the source already carries the branches for both. Linux is still the
-        only platform <code>mhr</code> is released and tested on, so treat a
-        macOS or Windows build as something that may work rather than something
-        that should.
+        only platform <code>mhr</code> is released and tested on, so a
+        macOS or Windows build may work, but nothing guarantees it.
       </p>
 
       <h3 id="cargo-update">Updating</h3>

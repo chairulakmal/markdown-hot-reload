@@ -1,18 +1,28 @@
+//! Markdown to HTML, and the filter that makes the result safe to show.
+//!
+//! `to_html` is the whole pipeline: comrak parses with raw HTML allowed, code
+//! fences go through syntect, math goes through `math`, and `sanitize` runs
+//! over the finished string against an allowlist. A document is untrusted
+//! input, so that allowlist, not comrak, is the safety boundary, and every
+//! test in this file that carries a payload is checking that the payload does
+//! not survive `sanitize`.
+
 use crate::math;
 use comrak::adapters::CodefenceRendererAdapter;
 use comrak::html::ChildRendering;
-use comrak::nodes::{AstNode, NodeValue, Sourcepos};
+use comrak::nodes::{NodeValue, Sourcepos};
 use comrak::options::Plugins;
 use comrak::plugins::syntect::{SyntectAdapter, SyntectAdapterBuilder};
-use comrak::{Anchorizer, Arena, Options, create_formatter, parse_document};
+use comrak::{Arena, Options, create_formatter, parse_document};
 use std::collections::HashSet;
 use std::fmt;
 use std::sync::OnceLock;
 
-/// Shared between `options()`, which prefixes every heading id, and
-/// `rewrite_local_anchor_links()`, which has to prefix the same way when it
-/// rewrites a link pointing at one, so the two can never drift apart.
-const HEADER_ID_PREFIX: &str = "user-content-";
+/// GitHub's prefix for every id a document can produce. comrak applies it to
+/// the heading ids it generates, and `sanitize` applies it to every other id
+/// and to every same-page link, so the two can never drift apart and no id a
+/// document writes can collide with an element of the app's own chrome.
+const ID_PREFIX: &str = "user-content-";
 
 /// Emits mermaid fences as `<pre class="mermaid">`, the shape mermaid.js scans
 /// for, instead of letting syntect fail to find a `mermaid` syntax and fall
@@ -36,10 +46,17 @@ impl CodefenceRendererAdapter for Mermaid {
 
 /// The one place plain text gets turned into safe HTML, shared with `main.rs`
 /// for its own error notices so escaping logic exists in a single place.
+///
+/// Both quote characters are escaped too, so the result is safe inside a
+/// quoted attribute and not only between tags. Every caller today writes text
+/// content, where the two extra entities cost nothing; the point is that a
+/// future caller cannot pick the wrong context.
 pub fn escape_html(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
 }
 
 /// Highlights to CSS classes rather than inline styles. Passing a theme name
@@ -80,7 +97,7 @@ fn options() -> Options<'static> {
     // followed immediately by more text does not render as bold. The intended
     // readers write Japanese, where that spacing does not exist.
     o.extension.cjk_friendly_emphasis = true;
-    o.extension.header_id_prefix = Some(String::from(HEADER_ID_PREFIX));
+    o.extension.header_id_prefix = Some(String::from(ID_PREFIX));
     // Without this, the id gets the prefix but the heading's own anchor link
     // does not, so clicking it jumps to a fragment nothing has.
     o.extension.header_id_prefix_in_href = true;
@@ -159,10 +176,35 @@ fn sanitize(html: &str) -> String {
             if matches!(attribute, "src" | "href") && is_data && !is_embedded_image(url) {
                 return None;
             }
+            // `id` is allowed on every element, and `chrome.css` styles the
+            // app's readout, notice and overlay by id, so a document that
+            // wrote `<div id="overlay">` would cover the window with a layer
+            // styled as the help overlay and would win `getElementById` in
+            // `chrome.js` at launch. Every document id gets GitHub's prefix
+            // instead, and every same-page link gets the same prefix so it
+            // keeps resolving. comrak's heading ids arrive already prefixed.
+            if attribute == "id" {
+                return Some(prefixed_id(value).into());
+            }
+            if attribute == "href"
+                && let Some(fragment) = value.strip_prefix('#')
+                && !fragment.is_empty()
+            {
+                return Some(format!("#{}", prefixed_id(fragment)).into());
+            }
             Some(value.into())
         })
         .clean(html)
         .to_string()
+}
+
+/// `id` with [`ID_PREFIX`] in front of it, applied at most once.
+fn prefixed_id(id: &str) -> String {
+    if id.starts_with(ID_PREFIX) {
+        id.to_string()
+    } else {
+        format!("{ID_PREFIX}{id}")
+    }
 }
 
 /// Whether a `data:` URL carries a raster image and nothing else.
@@ -224,33 +266,6 @@ fn write_math(output: &mut dyn fmt::Write, latex: &str, display: bool) -> fmt::R
     }
 }
 
-/// comrak's `header_id_prefix_in_href` only rewrites the small anchor icon it
-/// inserts next to each heading; a link written anywhere else in the
-/// document, which is how every hand-authored table of contents and every
-/// GitHub-rendered one works, still targets the bare, unprefixed slug and
-/// never matches. GitHub's own rendering resolves those links too, so this
-/// replicates that here rather than in `assets/app.js`: parsing stays in
-/// Rust, and JavaScript never touches document text. Only links whose fragment
-/// matches a real heading are touched, so footnote references and other
-/// hash links, none of which comrak prefixes, are left alone.
-fn rewrite_local_anchor_links<'a>(root: &'a AstNode<'a>) {
-    let mut anchorizer = Anchorizer::new();
-    let heading_ids: HashSet<String> = root
-        .descendants()
-        .filter(|node| matches!(node.data.borrow().value, NodeValue::Heading(_)))
-        .map(|node| anchorizer.anchorize(&node.collect_text()))
-        .collect();
-
-    for node in root.descendants() {
-        if let NodeValue::Link(ref mut link) = node.data.borrow_mut().value
-            && let Some(fragment) = link.url.strip_prefix('#')
-            && heading_ids.contains(fragment)
-        {
-            link.url = format!("#{HEADER_ID_PREFIX}{fragment}");
-        }
-    }
-}
-
 pub fn to_html(markdown: &str) -> String {
     let mut plugins = Plugins::default();
     plugins.render.codefence_syntax_highlighter = Some(syntect());
@@ -262,7 +277,6 @@ pub fn to_html(markdown: &str) -> String {
     let options = options();
     let arena = Arena::new();
     let root = parse_document(&arena, markdown, &options);
-    rewrite_local_anchor_links(root);
 
     let mut html = String::new();
     match MathFormatter::format_document_with_plugins(root, &options, &mut html, &plugins) {
@@ -343,6 +357,8 @@ mod tests {
             let escaped = escape_html(&s);
             prop_assert!(!escaped.contains('<'), "{escaped}");
             prop_assert!(!escaped.contains('>'), "{escaped}");
+            prop_assert!(!escaped.contains('"'), "{escaped}");
+            prop_assert!(!escaped.contains('\''), "{escaped}");
             prop_assert_eq!(unescape_once(&escaped), s);
         }
 
@@ -373,8 +389,8 @@ mod tests {
         }
     }
 
-    /// Decodes the three entities [`escape_html`] writes, scanning left to
-    /// right so each one is decoded exactly once. Decoding by three successive
+    /// Decodes the five entities [`escape_html`] writes, scanning left to
+    /// right so each one is decoded exactly once. Decoding by successive
     /// `replace` calls would undo double-escaping instead of revealing it.
     fn unescape_once(s: &str) -> String {
         let mut out = String::with_capacity(s.len());
@@ -388,6 +404,10 @@ mod tests {
                 ("&lt;", '<')
             } else if rest.starts_with("&gt;") {
                 ("&gt;", '>')
+            } else if rest.starts_with("&quot;") {
+                ("&quot;", '"')
+            } else if rest.starts_with("&#39;") {
+                ("&#39;", '\'')
             } else {
                 out.push('&');
                 rest = &rest[1..];
@@ -722,19 +742,57 @@ mod tests {
 
     /// A hand-written table of contents, the common case, must resolve to the
     /// same prefixed id the heading actually got, not just the heading's own
-    /// generated anchor icon.
+    /// generated anchor icon. comrak prefixes only the icon; `sanitize`
+    /// prefixes the rest.
     #[test]
     fn rewrites_local_links_to_match_prefixed_heading_ids() {
         let html = to_html("- [Hello](#hello)\n\n# Hello");
         assert!(html.contains(r##"href="#user-content-hello""##), "{html}");
     }
 
-    /// Footnote references are never prefixed by comrak, so a link that
-    /// happens to share their shape must not be rewritten into a dead one.
+    /// comrak prefixes neither side of a footnote link, so the prefix has to
+    /// land on the id and the link together or every footnote goes dead.
     #[test]
-    fn leaves_hash_links_alone_when_no_heading_matches() {
-        let html = to_html("[note](#fn1)\n\n# Something Else");
-        assert!(html.contains(r##"href="#fn1""##), "{html}");
+    fn footnote_links_and_their_ids_get_the_same_prefix() {
+        let html = to_html("text[^1]\n\n[^1]: note");
+        assert!(html.contains(r#"id="user-content-fn-1""#), "{html}");
+        assert!(html.contains(r##"href="#user-content-fn-1""##), "{html}");
+        assert!(html.contains(r#"id="user-content-fnref-1""#), "{html}");
+        assert!(html.contains(r##"href="#user-content-fnref-1""##), "{html}");
+    }
+
+    /// A raw-HTML anchor and the link to it are prefixed together, and a bare
+    /// `#`, which scrolls to the top, is left alone.
+    #[test]
+    fn raw_html_anchors_keep_resolving_once_prefixed() {
+        let html = to_html("<a id=\"top\"></a>\n\n[up](#top) [start](#)");
+        assert!(html.contains(r#"id="user-content-top""#), "{html}");
+        assert!(html.contains(r##"href="#user-content-top""##), "{html}");
+        assert!(html.contains(r##"href="#""##), "{html}");
+        assert!(!html.contains(r#"id="top""#), "{html}");
+    }
+
+    /// `chrome.css` styles the readout, the notice and the help overlay by id,
+    /// and `chrome.js` finds them with `getElementById`. An unprefixed id
+    /// from a document would render as one of them, or be found instead of
+    /// one of them, so none may survive.
+    #[test]
+    fn a_document_cannot_forge_an_app_element_by_id() {
+        for id in [
+            "overlay",
+            "overlay-panel",
+            "notice",
+            "readout",
+            "theme-toggle",
+            "content",
+        ] {
+            let html = to_html(&format!("<div id=\"{id}\">x</div>"));
+            assert!(!html.contains(&format!("id=\"{id}\"")), "{html}");
+            assert!(
+                html.contains(&format!("id=\"user-content-{id}\"")),
+                "{html}"
+            );
+        }
     }
 
     /// The fixture's own header claims it exercises every supported GFM

@@ -13,9 +13,9 @@ This document is the procedure for cutting an `mhr` release. The point that matt
 | --- | --- | --- | --- |
 | alpha | Feature-incomplete or freshly landed, bugs expected | `edge` | `vX.Y.Z-alpha` |
 | beta | Feature-complete, hunting bugs rather than missing features | `beta` (or `candidate`, for something this small) | `vX.Y.Z-beta` |
-| stable | Safe to hand to someone with zero context and no warning | `stable` | `vX.Y.Z`, no suffix |
+| stable | Safe to give to a user who knows nothing about the project | `stable` | `vX.Y.Z`, no suffix |
 
-Keep the tag suffix and the snap channel in lockstep. The value of this ladder on a one-maintainer project is that a reader can predict one from the other without asking: a `-beta` tag sitting on `stable`, or a bare tag sitting on `edge`, breaks that.
+Always change the tag suffix and the snap channel together. The value of this ladder on a one-maintainer project is that a reader can predict one from the other without asking: a `-beta` tag sitting on `stable`, or a bare tag sitting on `edge`, breaks that.
 
 `grade: stable` in `snap/snapcraft.yaml` is a hard requirement for the `candidate` and `stable` channels, not just a label; the Snap Store backend refuses a `devel`-graded snap on either one. With the grade already set to `stable`, promoting a channel is a plain `snapcraft release` call.
 
@@ -38,10 +38,10 @@ Keep the tag suffix and the snap channel in lockstep. The value of this ladder o
 
 The snap and the deb install the same two desktop entries, and they are indistinguishable to the shell, so testing both packages installed at once proves nothing about either one.
 
-8. Remove the deb if it is installed, with `sudo apt remove mhr`. Install or refresh the snap from `edge`. Coming off a sideloaded (`--dangerous`) install needs `sudo snap refresh --edge --amend <snap>`, because that kind of install carries no assertion the Store can match against a normal refresh.
+8. Remove the deb if it is installed, with `sudo apt remove mhr`. Install or refresh the snap from `edge`. If the installed snap was sideloaded with `--dangerous`, run `sudo snap refresh --edge --amend <snap>` instead, because a sideloaded install carries no assertion the Store can match against a normal refresh.
 9. Run `hash -r`, then open a file. A shell caches the path of a command it has already run, and installing or replacing a package does not clear that cache, so confirm which binary is actually running with `pgrep -af bin/mhr` before trusting anything on screen.
 10. Look at three things: the window opens at all, the taskbar shows `mhr`'s own icon, and right-clicking a markdown file then choosing "Open With" launches it. This has to be a human looking at a screen; on Wayland, GNOME refuses to let any tool read back which window the shell matched to which icon.
-11. Repeat for the deb, with the snap held out of the way: `sudo snap disable <snap>`, install the deb from `target/debian/`, `hash -r`, and check the same three things. Then `sudo snap enable <snap>`.
+11. Repeat for the deb, with the snap disabled: `sudo snap disable <snap>`, install the deb from `target/debian/`, `hash -r`, and check the same three things. Then `sudo snap enable <snap>`.
 
 **Publish**
 
@@ -61,6 +61,6 @@ A tag is a promise, and it should not be made until the thing it names has been 
 
 ## Patch releases
 
-For a patch whose only user-visible change is a bug fix, going straight from alpha to stable is proportionate; reserve beta and `candidate` for a release that changes visible behavior enough to be worth field-testing first.
+For a patch whose only user-visible change is a bug fix, it is reasonable to go straight from alpha to stable; reserve beta and `candidate` for a release that changes visible behavior enough to be worth field-testing first.
 
-A patch may also sit on `edge` untagged while it is being verified. The lockstep rule above is about published state, and a strict reading of it would mean tagging `vX.Y.Z-alpha`, bumping the version in three files for that tag, then bumping them again for the real one, which is churn with no reader benefit. So for a patch: upload the CI-built snap to `edge`, run the checks that need running, then tag and promote that same revision. `edge` is the channel that carries unfinished work by definition. Do not stretch this shortcut to a release that changes visible behavior.
+A patch may also sit on `edge` untagged while it is being verified. The rule above, that the tag suffix and the channel change together, is about published state, and a strict reading of it would mean tagging `vX.Y.Z-alpha`, bumping the version in three files for that tag, then bumping them again for the real one, which is extra work that helps no reader. So for a patch: upload the CI-built snap to `edge`, run the checks that need running, then tag and promote that same revision. `edge` is the channel that carries unfinished work by definition. Do not stretch this shortcut to a release that changes visible behavior.

@@ -1,3 +1,11 @@
+//! The embedded frontend, and the custom protocol that serves it.
+//!
+//! Every file under `assets/` is compiled into the binary, so the webview
+//! never reads the disk or the network for a stylesheet, a font or a script.
+//! `handler` splices the current render into the shell so the first paint
+//! needs no JavaScript, and the two URL predicates decide which navigations
+//! stay inside the window.
+
 use rust_embed::Embed;
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex};

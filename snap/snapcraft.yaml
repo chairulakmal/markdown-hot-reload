@@ -56,7 +56,7 @@ apps:
 
 parts:
   # Bootstraps rustup, which snapcraft 9.0.1 stopped doing. The name, the
-  # symlinks and rust-channel below are all load-bearing: see AGENTS.md.
+  # symlinks and rust-channel below are all required exactly as written: see AGENTS.md.
   rust-deps:
     plugin: nil
     build-packages:

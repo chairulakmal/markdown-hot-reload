@@ -15,7 +15,7 @@ To refresh any file, download it, replace it in place, and rebuild.
 | File | Version | Source |
 | --- | --- | --- |
 | `idiomorph.min.js` | 0.7.3 | `cdn.jsdelivr.net/npm/idiomorph@0.7.3/dist/idiomorph.min.js` |
-| `mermaid.min.js` | 11.x | `cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js` |
+| `mermaid.min.js` | 11.16.1 | `cdn.jsdelivr.net/npm/mermaid@11.16.1/dist/mermaid.min.js` |
 | `highlight-light.css` | generated | syntect 5.3.0, `InspiredGitHub`, see below |
 | `highlight-dark.css` | generated | syntect 5.3.0, `base16-ocean.dark`, see below |
 | `latex.css` | 0.8.0 | `github.com/carloskiki/pulldown-latex` release `0.8.0`, `styles.css` |
@@ -31,11 +31,11 @@ These two sheets are generated rather than downloaded. They are the two syntax-h
 
 They are two files, not one file with the palettes behind mutually exclusive `prefers-color-scheme` media queries, because the theme override has to be able to force either palette on regardless of the operating system setting. A CSS media query always reflects the OS setting and never a `color-scheme` override, so the palette is selected by a `media` attribute on each `<link>` in `index.html` instead, and `chrome.js` rewrites those attributes to force one sheet. Keeping the two selector sets in separate files also means they never collide: the light theme emits rules the dark one does not, and only one sheet is ever live.
 
-Regenerate them with a throwaway crate depending on `syntect` at the version in `Cargo.lock`; each file's own header comment records the exact call. The output of `css_for_theme_with_class_style` is written directly, with no media-query wrapper of any kind. The dead `.hl-code` rule is removed from each file during generation, since the `<pre>` never carries that class and the rule's `background-color` would conflict with `--code-bg`.
+Regenerate them with a temporary crate depending on `syntect` at the version in `Cargo.lock`; each file's own header comment records the exact call. The output of `css_for_theme_with_class_style` is written directly, with no media-query wrapper of any kind. The dead `.hl-code` rule is removed from each file during generation, since the `<pre>` never carries that class and the rule's `background-color` would conflict with `--code-bg`.
 
 ## The icon set
 
-The icon set is the project's own mark: a 100x100 grid split into an ink pane holding an `m` and a red pane holding a `d`, all strokes 7 units, both letters on one baseline. `mhr-icon.svg` is the primary, `mhr-icon-mono.svg` is one-color, `mhr-icon-on-dark.svg` inverts the left pane, and `mhr-icon-16.svg` thickens the strokes to 8 units and sets `shape-rendering="crispEdges"` for 16px. The palette is ink `#201e1d`, red `#ec3013`, ground `#f3f2f2`, and nothing is rounded: corner radius is 0 everywhere, including any app-icon mask. The 4-unit channel between the panes is part of the mark, so never close it, never recolor the panes into two tints of red, and never letterbox the mark inside a rounded container.
+The icon set is the project's own mark: a 100x100 grid split into an ink pane holding an `m` and a red pane holding a `d`. Every stroke is 7 units wide, and both letters sit on one baseline. `mhr-icon.svg` is the primary, `mhr-icon-mono.svg` is one-color, `mhr-icon-on-dark.svg` inverts the left pane, and `mhr-icon-16.svg` thickens the strokes to 8 units and sets `shape-rendering="crispEdges"` for 16px. The palette is ink `#201e1d`, red `#ec3013`, ground `#f3f2f2`, and nothing is rounded: corner radius is 0 everywhere, including any app-icon mask. The 4-unit channel between the panes is part of the mark, so never close it, never recolor the panes into two tints of red, and never letterbox the mark inside a rounded container.
 
 ## window-icon.rgba
 
@@ -52,7 +52,7 @@ open('assets/icon/window-icon.rgba', 'wb').write(
 "
 ```
 
-That uses the librsvg loader behind GdkPixbuf, which is already present on any machine that can build this app. `rsvg-convert` or Inkscape would do as well; what matters is that the bitmap is rasterized from the SVG rather than drawn again by hand.
+That uses the librsvg loader behind GdkPixbuf, which is already present on any machine that can build this app. `rsvg-convert` or Inkscape would also work; what matters is that the bitmap is rasterized from the SVG rather than drawn again by hand.
 
 ## latex.css and the fonts
 

@@ -64,7 +64,7 @@ For the design invariants behind each guarantee, and the tests that protect them
 
 Every prebuilt package is built for x86_64, also called amd64. There is no arm64 build yet. Open an issue if you need one.
 
-The snap and the `.deb` add `mhr` to your file manager's "Open With" menu for markdown (.md) files. The tarball and `cargo install` install only the binary, with no menu entry.
+The snap and the `.deb` add `mhr` to your file manager's "Open With" menu for markdown (.md) files. The tarball and `cargo install` install only the binary, with no desktop entry. Without the entry, `mhr` is missing from "Open With", and on Wayland the window shows a generic icon instead of the `mhr` icon. [The install guide](https://mhr.chairulakmal.com/#desktop-entry) shows how to add the entry by hand.
 
 ### cargo install
 

@@ -651,8 +651,8 @@
               <th scope="row">Right-click to open</th>
               <td>Yes, in "Open With"</td>
               <td>Yes, in "Open With"</td>
-              <td>No, binary only</td>
-              <td>No, binary only</td>
+              <td>After <a href="#desktop-entry">one extra step</a></td>
+              <td>After <a href="#desktop-entry">one extra step</a></td>
             </tr>
           </tbody>
         </table>
@@ -859,8 +859,9 @@ mhr notes.md</code></pre>
       <p>
         Every release ships a plain <code>x86_64-unknown-linux-gnu</code>
         tarball. Use it on any distribution that is not Debian-based and does
-        not run snapd. It contains the <code>mhr</code> binary, the README,
-        and the license, inside a directory named after the version:
+        not run snapd. It contains the <code>mhr</code> binary, a desktop
+        entry, an icon, the README and the license, inside a directory named
+        after the version:
       </p>
       <pre><code>TAG=v0.2.0
 BASE=https://github.com/chairulakmal/markdown-hot-reload/releases/download
@@ -878,6 +879,11 @@ sudo install -m 755 "$DIR/mhr" /usr/local/bin/mhr</code></pre>
         confirm the install:
       </p>
       <pre><code>mhr --version</code></pre>
+      <p>
+        The binary alone has no "Open With" entry, and on Wayland its window
+        shows a generic icon. <a href="#desktop-entry">Install the desktop
+        entry</a> to fix both.
+      </p>
 
       <h3 id="tarball-update">Updating</h3>
       <p>
@@ -929,7 +935,10 @@ mhr --version
 mhr notes.md</code></pre>
       <p>
         cargo puts the binary in <code>~/.cargo/bin</code>, which rustup
-        already adds to your <code>PATH</code>.
+        already adds to your <code>PATH</code>. cargo installs only the
+        binary, so there is no "Open With" entry, and on Wayland the window
+        shows a generic icon. <a href="#desktop-entry">Install the desktop
+        entry</a> to fix both.
       </p>
       <p>
         This is the only install path that is not built here, so it is also
@@ -949,6 +958,54 @@ mhr notes.md</code></pre>
 
       <h3 id="cargo-remove">Removing</h3>
       <pre><code>cargo uninstall mhr</code></pre>
+
+      <h2 id="desktop-entry">Desktop entry, for the tarball and cargo</h2>
+      <p>
+        The snap and the <code>.deb</code> install a desktop entry: a small
+        file that tells the desktop how to start <code>mhr</code> and which
+        icon to show. The tarball and cargo install only the binary. Without
+        the entry, <code>mhr</code> is missing from the "Open With" menu, and
+        on Wayland the window shows the icon theme's generic icon, because
+        Wayland takes the icon from the entry and not from the window. X11
+        shows the correct icon either way.
+      </p>
+      <p>
+        First, set three variables. For the tarball, run this in the shell
+        where you extracted it, so <code>$DIR</code> is still set:
+      </p>
+      <pre><code>ENTRY="$DIR/mhr.desktop" ICON="$DIR/mhr.svg" BIN=/usr/local/bin/mhr</code></pre>
+      <p>
+        For cargo, the files are in the crate source that cargo downloaded:
+      </p>
+      <pre><code>SRC=$(ls -d ~/.cargo/registry/src/*/mhr-"$(mhr --version | cut -d' ' -f2)" | head -n 1)
+ENTRY="$SRC/packaging/mhr.desktop" ICON="$SRC/assets/icon/mhr-icon.svg" BIN="$HOME/.cargo/bin/mhr"</code></pre>
+      <p>Then install the icon and the entry, and make <code>mhr</code> the default for markdown:</p>
+      <pre><code>install -Dm644 "$ICON" ~/.local/share/icons/hicolor/scalable/apps/mhr.svg
+mkdir -p ~/.local/share/applications
+sed "s|^Exec=mhr|Exec=$BIN|" "$ENTRY" > ~/.local/share/applications/mhr.desktop
+update-desktop-database ~/.local/share/applications
+xdg-mime default mhr.desktop text/markdown</code></pre>
+      <p>Close any open <code>mhr</code> window and open it again. Three details matter:</p>
+      <ul>
+        <li>
+          The <code>sed</code> line writes the full path of the binary into
+          the entry. The desktop session does not read your shell's startup
+          files, so it often does not have <code>~/.cargo/bin</code> in its
+          <code>PATH</code>. With only <code>Exec=mhr</code>, the icon appears
+          but "Open With" does nothing.
+        </li>
+        <li>
+          The desktop matches a window to its entry when the window opens, so
+          a window that was already open keeps the generic icon.
+        </li>
+        <li>
+          The <code>xdg-mime</code> line makes <code>mhr</code> the default
+          for markdown files. Without it, the next application that registers
+          for markdown can become the default without asking.
+        </li>
+      </ul>
+      <p>To remove the entry and the icon:</p>
+      <pre><code>rm ~/.local/share/applications/mhr.desktop ~/.local/share/icons/hicolor/scalable/apps/mhr.svg</code></pre>
 
       <footer>
         <a

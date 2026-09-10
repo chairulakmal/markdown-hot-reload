@@ -103,7 +103,10 @@ jobs:
           rm -rf target/debian
           cargo deb --no-build
           cp target/debian/*.deb dist/
-          cp target/release/mhr README.md LICENSE "$dir/"
+          cp target/release/mhr README.md LICENSE packaging/mhr.desktop "$dir/"
+          # Named for the desktop entry's Icon=mhr, so the install guide can
+          # copy it into the icon theme without renaming it.
+          cp assets/icon/mhr-icon.svg "$dir/mhr.svg"
           tar czf "dist/${dir}.tar.gz" "$dir"
           sha256sum dist/*.deb dist/*.tar.gz | sed 's|dist/||' > dist/SHA256SUMS
 

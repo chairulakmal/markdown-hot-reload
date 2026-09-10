@@ -313,6 +313,9 @@
     ["C-NumpadSubtract", () => stepZoom(-1)],
     ["C-Digit0", () => applyZoom(ZOOM_DEFAULT)],
     ["C-Numpad0", () => applyZoom(ZOOM_DEFAULT)],
+    // The help key on every desktop, and unlike "?" it needs no Shift on any
+    // layout.
+    ["-F1", toggleOverlay],
     // Escape declines the key whenever nothing is open, so in the ordinary
     // case it still belongs to the webview rather than to this app.
     [

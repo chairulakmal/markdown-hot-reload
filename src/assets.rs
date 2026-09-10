@@ -441,36 +441,165 @@ mod tests {
     /// the combination a sweep is most likely to skip.
     #[test]
     fn every_palette_block_defines_the_same_variables() {
+        let light = palette(PALETTES[0]).into_keys().collect::<Vec<_>>();
+        assert!(!light.is_empty(), "found no variables under `:root`");
+        for selector in &PALETTES[1..] {
+            assert_eq!(
+                palette(selector).into_keys().collect::<Vec<_>>(),
+                light,
+                "`{selector}` differs from `:root`"
+            );
+        }
+    }
+
+    /// Every palette block has to pass two contrast models. WCAG 2's ratio is
+    /// the one audits check, so it is the floor. APCA is the perceptual model
+    /// behind the WCAG 3 drafts, and it catches what WCAG 2 misses: GitHub's
+    /// own dark muted text passes WCAG 2 at 6.5:1 and scores Lc 46.
+    ///
+    /// The Lc targets are APCA's published levels. 90 is what it prefers for
+    /// 16px body text and 75 its minimum, which secondary text and links are
+    /// held to because they are read at body size. 60 is for bold text such as
+    /// alert titles. 30 is for a solid mark that carries meaning, the quote bar
+    /// and the checkbox outline, and 15 is where a thin line stops being
+    /// visible at all.
+    #[test]
+    fn palette_meets_the_contrast_targets() {
+        // Foreground, background, minimum APCA Lc, minimum WCAG 2 ratio.
+        let pairs = [
+            ("--fg", "--bg", 90.0, 7.0),
+            ("--fg", "--code-bg", 90.0, 7.0),
+            ("--fg-muted", "--bg", 75.0, 4.5),
+            ("--fg-muted", "--code-bg", 75.0, 4.5),
+            ("--link", "--bg", 75.0, 4.5),
+            ("--accent-note", "--bg", 60.0, 4.5),
+            ("--accent-tip", "--bg", 60.0, 4.5),
+            ("--accent-important", "--bg", 60.0, 4.5),
+            ("--accent-warning", "--bg", 60.0, 4.5),
+            ("--accent-caution", "--bg", 60.0, 4.5),
+            ("--focus", "--bg", 0.0, 3.0),
+            ("--border-emphasis", "--bg", 30.0, 3.0),
+            ("--border", "--bg", 15.0, 1.0),
+            ("--border-subtle", "--bg", 15.0, 1.0),
+        ];
+        for selector in PALETTES {
+            let colours = palette(selector);
+            let colour = |name: &str| {
+                colours
+                    .get(name)
+                    .unwrap_or_else(|| panic!("`{selector}` has no {name}"))
+                    .clone()
+            };
+            for (fg, bg, lc, ratio) in pairs {
+                let (fg_value, bg_value) = (colour(fg), colour(bg));
+                let got_lc = apca_lc(&fg_value, &bg_value);
+                let got_ratio = wcag_ratio(&fg_value, &bg_value);
+                assert!(
+                    got_lc >= lc && got_ratio >= ratio,
+                    "{fg} {fg_value} on {bg} {bg_value} under `{selector}`: \
+                     Lc {got_lc:.1} (needs {lc}), {got_ratio:.2}:1 (needs {ratio}:1)"
+                );
+            }
+        }
+    }
+
+    /// Pins both formulas to published results, so a slip in either one
+    /// cannot quietly loosen the palette test above. The Lc values are the
+    /// reference pairs from the APCA-W3 documentation.
+    #[test]
+    fn contrast_math_matches_the_reference_values() {
+        let close = |got: f64, want: f64| (got - want).abs() < 0.01;
+        assert!(close(apca_lc("#888888", "#ffffff"), 63.06));
+        assert!(close(apca_lc("#ffffff", "#888888"), 68.54));
+        assert!(close(apca_lc("#000000", "#aaaaaa"), 58.15));
+        assert!(close(apca_lc("#aaaaaa", "#000000"), 56.24));
+        assert!(close(wcag_ratio("#000000", "#ffffff"), 21.0));
+        assert!(close(wcag_ratio("#777777", "#ffffff"), 4.48));
+    }
+
+    /// The three palette blocks in github.css: light, dark by OS preference,
+    /// and dark forced from the app.
+    const PALETTES: [&str; 3] = [
+        ":root",
+        ":root:not([data-theme=\"light\"])",
+        ":root[data-theme=\"dark\"]",
+    ];
+
+    /// The custom properties one palette block defines, name to value.
+    fn palette(selector: &str) -> std::collections::BTreeMap<String, String> {
         let css = String::from_utf8_lossy(
             &Asset::get("github.css")
                 .expect("github.css is embedded")
                 .data,
         )
         .into_owned();
-        let variables = |selector: &str| {
-            let start = css
-                .find(&format!("{selector} {{"))
-                .unwrap_or_else(|| panic!("github.css has no `{selector}` block"));
-            let block = &css[start..];
-            let block = &block[..block.find('}').expect("the block is closed")];
-            block
-                .lines()
-                .filter_map(|line| line.trim().split_once(':'))
-                .filter(|(name, _)| name.starts_with("--"))
-                .map(|(name, _)| name.to_string())
-                .collect::<std::collections::BTreeSet<_>>()
+        let start = css
+            .find(&format!("{selector} {{"))
+            .unwrap_or_else(|| panic!("github.css has no `{selector}` block"));
+        let block = &css[start..];
+        let block = &block[..block.find('}').expect("the block is closed")];
+        block
+            .lines()
+            .filter_map(|line| line.trim().strip_suffix(';')?.split_once(':'))
+            .filter(|(name, _)| name.starts_with("--"))
+            .map(|(name, value)| (name.to_string(), value.trim().to_string()))
+            .collect()
+    }
+
+    fn rgb(colour: &str) -> [f64; 3] {
+        let hex = colour
+            .strip_prefix('#')
+            .filter(|hex| hex.len() == 6)
+            .unwrap_or_else(|| panic!("{colour} is not #rrggbb, the only form this test reads"));
+        let channel = |i: usize| {
+            f64::from(u8::from_str_radix(&hex[i..i + 2], 16).expect("hex digits")) / 255.0
         };
-        let light = variables(":root");
-        assert!(!light.is_empty(), "found no variables under `:root`");
-        for selector in [
-            ":root:not([data-theme=\"light\"])",
-            ":root[data-theme=\"dark\"]",
-        ] {
-            assert_eq!(
-                variables(selector),
-                light,
-                "`{selector}` differs from `:root`"
-            );
+        [channel(0), channel(2), channel(4)]
+    }
+
+    /// The WCAG 2 contrast ratio, which ignores which colour is the text.
+    fn wcag_ratio(a: &str, b: &str) -> f64 {
+        let luminance = |c: [f64; 3]| {
+            let linear = |v: f64| {
+                if v <= 0.040_45 {
+                    v / 12.92
+                } else {
+                    ((v + 0.055) / 1.055).powf(2.4)
+                }
+            };
+            0.2126 * linear(c[0]) + 0.7152 * linear(c[1]) + 0.0722 * linear(c[2])
+        };
+        let (x, y) = (luminance(rgb(a)), luminance(rgb(b)));
+        (x.max(y) + 0.05) / (x.min(y) + 0.05)
+    }
+
+    /// APCA lightness contrast as a magnitude, whichever colour is lighter.
+    /// Constants are APCA-W3 0.0.98G-4g, from `src/apca-w3.js` in
+    /// github.com/Myndex/apca-w3.
+    fn apca_lc(text: &str, background: &str) -> f64 {
+        let luminance = |c: [f64; 3]| {
+            let y = 0.212_672_9 * c[0].powf(2.4)
+                + 0.715_152_2 * c[1].powf(2.4)
+                + 0.072_175 * c[2].powf(2.4);
+            if y > 0.022 {
+                y
+            } else {
+                y + (0.022 - y).powf(1.414)
+            }
+        };
+        let (fg, bg) = (luminance(rgb(text)), luminance(rgb(background)));
+        if (bg - fg).abs() < 0.0005 {
+            return 0.0;
+        }
+        let sapc = if bg > fg {
+            (bg.powf(0.56) - fg.powf(0.57)) * 1.14
+        } else {
+            (bg.powf(0.65) - fg.powf(0.62)) * 1.14
+        };
+        if sapc.abs() < 0.1 {
+            0.0
+        } else {
+            (sapc.abs() - 0.027) * 100.0
         }
     }
 

@@ -186,8 +186,12 @@ fn sanitize(html: &str) -> String {
             if attribute == "id" {
                 return Some(prefixed_id(value).into());
             }
+            // Matched against the same leading-whitespace-stripped value as
+            // the `data:` check above, and for the same reason: a browser
+            // strips it before resolving, so `href=" #overlay"` is a
+            // same-page link to the webview and has to be one here.
             if attribute == "href"
-                && let Some(fragment) = value.strip_prefix('#')
+                && let Some(fragment) = url.strip_prefix('#')
                 && !fragment.is_empty()
             {
                 return Some(format!("#{}", prefixed_id(fragment)).into());
@@ -770,6 +774,16 @@ mod tests {
         assert!(html.contains(r##"href="#user-content-top""##), "{html}");
         assert!(html.contains(r##"href="#""##), "{html}");
         assert!(!html.contains(r#"id="top""#), "{html}");
+    }
+
+    /// A browser strips leading whitespace out of an href before resolving
+    /// it, so ` #overlay` reaches the app's own overlay unless the prefix is
+    /// applied to the same stripped value the `data:` guard already uses.
+    #[test]
+    fn a_leading_space_does_not_smuggle_a_link_past_the_prefix() {
+        let html = to_html("<a href=\" #overlay\">x</a>");
+        assert!(!html.contains("\" #overlay\""), "{html}");
+        assert!(html.contains(r##"href="#user-content-overlay""##), "{html}");
     }
 
     /// `chrome.css` styles the readout, the notice and the help overlay by id,

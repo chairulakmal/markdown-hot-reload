@@ -5,7 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/mhr.svg)](https://crates.io/crates/mhr)
 [![Snap Store](https://snapcraft.io/markdown-hot-reload/badge.svg)](https://snapcraft.io/markdown-hot-reload)
 
-`mhr` is a markdown viewer with hot reload. Point it at a file on Linux and a native window renders it as GitHub-flavored markdown, then re-renders the moment the file changes on disk. It opens no port, reaches no network, and never writes to the file, so markdown you did not write is safe to open: a plan an agent produced, or a README from a repository you recently cloned. This README covers what the app does, its keyboard shortcuts, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
+`mhr` is a markdown viewer with hot reload. Give it a file path on Linux. A native window renders the file as GitHub-flavored markdown, and re-renders it every time the file changes on disk. It opens no port, reaches no network, and never writes to the file, so markdown you did not write is safe to open: a plan an agent produced, or a README from a repository you recently cloned. This README covers what the app does, its keyboard shortcuts, how it works, its safety guarantees, how to install it, how to build and run it, which markdown features it supports, target platforms, and how to contribute.
 
 [![A window showing rendered markdown beside the editor writing it](https://raw.githubusercontent.com/chairulakmal/markdown-hot-reload/main/docs/demo-poster.png)](https://github.com/user-attachments/assets/416b2828-7832-4f42-ad6a-3d9670a43118)
 
@@ -13,7 +13,7 @@ Click the picture to play a 15-second demo.
 
 ## What it does
 
-Run `mhr notes.md` and a window opens with the file rendered. Every save updates it in place, whether you saved it, your editor did, or an agent did. Your scroll position and your open `<details>` sections survive the reload. The window follows your desktop light or dark setting, and the <kbd>t</kbd> key pins either one. There is no editing surface.
+Run `mhr notes.md` and a window opens with the file rendered. Every save updates it in place, whether you saved it, your editor did, or an agent did. Your scroll position and your open `<details>` sections survive the reload. The window follows your desktop light or dark setting, and the <kbd>t</kbd> key pins the theme to light or to dark. There is no editing surface.
 
 While the window is open, the terminal that started `mhr` is blocked. Add `&` to the end of the command to get your prompt back:
 
@@ -38,6 +38,8 @@ The theme follows the desktop light or dark setting by default. Press <kbd>t</kb
 
 Move the pointer over a link and its destination appears in the bottom corner of the window. This shows where a link goes before you click it.
 
+Clicking a link opens it in your default browser or mail client, never inside `mhr`. Only `http`, `https` and `mailto` links open. A link to a local file does nothing, because `mhr` reads only the one file you name.
+
 ## How it works
 
 One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file's parent directory for changes. `wry` and `tao` host a system webview, which receives the new HTML through `evaluate_script`. The frontend is a static HTML file plus a small amount of plain JavaScript, both compiled into the binary by `rust-embed`. All parsing, syntax highlighting, math conversion, escaping, and HTML sanitization happen in Rust. The JavaScript updates the DOM, draws Mermaid diagrams, and drives the view controls listed above. It never parses markdown, never unescapes HTML, and never uses the network.
@@ -48,7 +50,7 @@ One Rust binary. `comrak` parses the markdown to HTML. `notify` watches the file
 
 - **No server and no port.** The native window is the whole app. Most other markdown viewers render to a localhost port and open a browser tab, so any other process on the machine can read the document. `mhr` opens no socket.
 - **No network access.** `index.html` sets `connect-src 'none'` in its Content-Security-Policy. Anything that needs the network fails immediately, instead of working on your machine and leaking data on someone else's.
-- **Raw HTML is filtered to a safe subset.** A document can use the same HTML that GitHub allows, such as tables, `<details>`, and `<kbd>`, and it renders. Anything that could run, such as `<script>`, `<style>`, an event handler attribute, or a `javascript:` URL, is removed or shown as inert text. The rendered HTML passes through an allowlist sanitizer before it reaches the window. `src/render.rs` has tests that check this.
+- **Raw HTML is filtered to a safe subset.** A document can use the same HTML that GitHub allows, such as tables, `<details>`, and `<kbd>`, and it renders. Anything that could run, such as `<script>`, `<style>`, an event handler attribute, or a `javascript:` URL, is removed, or shown as plain text that cannot run. The rendered HTML passes through an allowlist sanitizer before it reaches the window. `src/render.rs` has tests that check this.
 - **Read-only.** `mhr` never writes to the file it watches. There is no editing surface.
 - **No `unsafe` code in this crate.** `Cargo.toml` forbids the `unsafe` keyword at the compiler level (`[lints.rust] unsafe_code = "forbid"`). Dependencies are ordinary Rust crates and may use `unsafe` internally.
 
@@ -58,11 +60,11 @@ For the design invariants behind each guarantee, and the tests that protect them
 
 `mhr` has four install methods. `cargo install mhr` builds it from source. This is the most portable choice, and the only path that could run beyond Linux, though only Linux is tested. On a Linux desktop, the snap is usually better: one command, and it updates itself. Every release also attaches a `.deb` and a tarball for anyone who wants neither.
 
-[The install guide](https://mhr.chairulakmal.com/) has the full version: every path step by step, how to verify a download against its published checksum, and how to update or remove each one.
+[The install guide](https://mhr.chairulakmal.com/) explains every install path step by step, how to verify a download against its published checksum, and how to update or remove each one.
 
 Every prebuilt package is built for x86_64, also called amd64. There is no arm64 build yet. Open an issue if you need one.
 
-The snap and the `.deb` add `mhr` to your file manager's "Open With" menu for markdown (.md) files. The tarball and `cargo install` install only the binary, with no menu entry.
+The snap and the `.deb` add `mhr` to your file manager's "Open With" menu for markdown (.md) files. The tarball and `cargo install` install only the binary, with no desktop entry. Without the entry, `mhr` is missing from "Open With", and on Wayland the window shows a generic icon instead of the `mhr` icon. [The install guide](https://mhr.chairulakmal.com/#desktop-entry) shows how to add the entry by hand.
 
 ### cargo install
 
@@ -113,7 +115,7 @@ cargo run -- fixtures/kitchen-sink.md
 
 Every save re-renders the window. `fixtures/kitchen-sink.md` uses every markdown feature the app supports, so it is the fastest way to check that a rendering change did not break something else.
 
-`cargo test --locked` runs the render, math, CLI, asset, and watcher tests. `cargo clippy --locked --all-targets` should report no warnings. The Contributing section lists the full command set that CI runs, and [`AGENTS.md`](AGENTS.md) explains why `--locked` is required.
+`cargo test --locked` runs the render, math, CLI, link, notice, asset, and watcher tests. `cargo clippy --locked --all-targets` should report no warnings. The Contributing section lists the full command set that CI runs, and [`AGENTS.md`](AGENTS.md) explains why `--locked` is required.
 
 ## What it supports
 
@@ -126,11 +128,11 @@ Every save re-renders the window. `fixtures/kitchen-sink.md` uses every markdown
 - Front matter, parsed and removed from the output instead of shown as a stray paragraph
 - A safe subset of raw HTML, the same tags GitHub allows, such as `<details>`, `<kbd>`, `<sub>`, and hand-written tables. Scripts, styles, event handlers, inline `style` attributes, and non-web URL schemes are removed
 
-Images are the one gap. `mhr` reads only the single file you name. A local image next to the document (`![](diagram.png)`) does not display. A remote image is blocked, because there is no network access. An image embedded as a `data:` URI does display, as long as it is a PNG, GIF, JPEG, or WebP. An embedded SVG does not, because an SVG can carry a script.
+Images have one limitation. `mhr` reads only the single file you name. A local image next to the document (`![](diagram.png)`) does not display. A remote image is blocked, because there is no network access. An image embedded as a `data:` URI does display, as long as it is a PNG, GIF, JPEG, or WebP. An embedded SVG does not, because an SVG can carry a script.
 
 ## Platforms
 
-Linux is the only platform `mhr` is built and tested on. Every release ships Linux packages only. `cargo install mhr` may compile on macOS or Windows, since the webview library supports both, but nothing there is tested. macOS is the next target. Windows is nice-to-have.
+Linux is the only platform `mhr` is built and tested on. Every release ships Linux packages only. `cargo install mhr` may compile on macOS or Windows, since the webview library supports both, but nothing there is tested. macOS is the next target. Windows support is not planned, but it would be welcome.
 
 ## Contributing
 

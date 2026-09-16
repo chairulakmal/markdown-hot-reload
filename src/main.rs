@@ -1,3 +1,7 @@
+//! The window. Argument handling, the first render, the webview and the
+//! event loop that swaps each new render in live here. Everything a document
+//! can contain is handled in `render`, and everything a link can do in `link`.
+
 mod assets;
 mod cli;
 mod link;
@@ -17,6 +21,19 @@ use wry::{NewWindowResponse, WebView, WebViewBuilder};
 #[derive(Debug)]
 pub enum UserEvent {
     Changed,
+    Vanished,
+    /// The watcher itself reported an error, with its text. Reloads may have
+    /// stopped, and only the window can tell the reader so.
+    Failed(String),
+}
+
+/// What the event loop receives once the watcher thread has rendered. The
+/// render stays off the loop because it blocks repaints, scrolling and the
+/// close button for as long as comrak, syntect and ammonia take, which is
+/// about a second per save on a document of a couple of megabytes.
+#[derive(Debug)]
+enum Redraw {
+    Body(String),
     Vanished,
 }
 
@@ -69,7 +86,7 @@ fn main() -> Result<()> {
     // panic before the window opens. Without an id, GTK falls back to the
     // program name, which is `mhr` in every package, and that is what
     // `StartupWMClass` in the two desktop files matches. See AGENTS.md.
-    let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();
+    let event_loop = EventLoopBuilder::<Redraw>::with_user_event().build();
     let proxy = event_loop.create_proxy();
 
     let window = WindowBuilder::new()
@@ -138,24 +155,32 @@ fn main() -> Result<()> {
         builder.build_gtk(vbox)?
     };
 
-    // The watcher thread only knows how to say "something happened"; turning
-    // that into a redraw is the event loop's job, below.
-    let _debouncer = watch::spawn(path.clone(), move |event| {
-        let _ = proxy.send_event(event);
+    // The watcher thread only knows how to say "something happened". The
+    // render happens on that thread too, so the event loop below never waits
+    // on it and the window stays responsive during a slow re-render.
+    let render_path = path.clone();
+    let _debouncer = watch::spawn(path, move |event| {
+        let redraw = match event {
+            UserEvent::Changed => Redraw::Body(read_and_render(&render_path)),
+            UserEvent::Vanished => Redraw::Vanished,
+            UserEvent::Failed(error) => {
+                Redraw::Body(watch_failed(&error, &read_and_render(&render_path)))
+            }
+        };
+        let _ = proxy.send_event(redraw);
     })?;
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::UserEvent(UserEvent::Changed) => {
-                let html = read_and_render(&path);
+            Event::UserEvent(Redraw::Body(html)) => {
                 if let Ok(mut slot) = body.lock() {
                     slot.clone_from(&html);
                 }
                 push(&webview, &html);
             }
-            Event::UserEvent(UserEvent::Vanished) => {
+            Event::UserEvent(Redraw::Vanished) => {
                 push(&webview, NOTICE_VANISHED);
             }
             Event::WindowEvent {
@@ -172,6 +197,16 @@ fn main() -> Result<()> {
 /// styled as one of the app's own notices.
 const NOTICE_VANISHED: &str =
     "<p data-mhr-notice>File is gone. Still watching, will redraw if it comes back.</p>";
+
+/// The document with a warning above it, rather than the warning alone: the
+/// reader loses nothing they were looking at, and the reason reloads may have
+/// stopped is on the page rather than in a terminal nobody is watching.
+fn watch_failed(error: &str, body: &str) -> String {
+    format!(
+        "<p data-mhr-notice>The file watcher reported an error: {}. Reloads may have stopped; restart mhr to be sure.</p>{body}",
+        render::escape_html(error)
+    )
+}
 
 fn push(webview: &WebView, html: &str) {
     let json = serde_json::to_string(html).unwrap_or_else(|_| String::from("\"\""));
@@ -207,7 +242,7 @@ fn title(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{INIT_SCRIPT, NOTICE_VANISHED, read_and_render, title};
+    use super::{INIT_SCRIPT, NOTICE_VANISHED, read_and_render, title, watch_failed};
     use std::path::Path;
 
     /// `INIT_SCRIPT` and `app.js` are two files in two languages that have to
@@ -347,6 +382,18 @@ mod tests {
             !html.contains("data-mhr-notice"),
             "read reported a failure: {html}"
         );
+    }
+
+    /// The watcher's error text comes from the operating system and is
+    /// spliced into the page, so it is escaped, and the document it sits
+    /// above is kept rather than replaced.
+    #[test]
+    fn escapes_the_watcher_error_and_keeps_the_document() {
+        let html = watch_failed("<script>alert(1)</script>", "<p>doc</p>");
+        assert!(html.starts_with("<p data-mhr-notice>"), "{html}");
+        assert!(!html.contains("<script"), "{html}");
+        assert!(html.contains("&lt;script&gt;"), "{html}");
+        assert!(html.ends_with("<p>doc</p>"), "{html}");
     }
 
     /// Both notices are spliced into the page as HTML, so they have to be

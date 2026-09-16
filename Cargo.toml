@@ -1,6 +1,6 @@
 [package]
 name = "mhr"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 # The floor is set by dependencies (icu_* and time), not by edition 2024, which
 # only needs 1.85. Declaring it also lets cargo's MSRV-aware resolver pick
@@ -80,7 +80,10 @@ unsafe_code = "forbid"
 pedantic = { level = "warn", priority = -1 }
 
 [profile.release]
-opt-level = "z"
+# 3 rather than "z": the render runs on every save, and "z" made it about
+# 45 percent slower to save one megabyte of binary. Measured 2026-09-09 on
+# fixtures/kitchen-sink.md repeated 50 times: 154 ms at "z", 87 ms at 3.
+opt-level = 3
 lto = true
 codegen-units = 1
 strip = true

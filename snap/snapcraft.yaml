@@ -6,7 +6,7 @@ name: markdown-hot-reload
 # checks that a title is set, not what it says; the dashboard serves the full
 # name, "Markdown Hot Reload".
 title: mhr
-version: '0.2.0' # keep in sync with the [package] version in Cargo.toml
+version: '0.2.1' # keep in sync with the [package] version in Cargo.toml
 license: MIT
 # Points at the vendored SVG rather than a copy under snap/gui/, so the Store
 # listing and the app both track the one source file.
@@ -56,7 +56,7 @@ apps:
 
 parts:
   # Bootstraps rustup, which snapcraft 9.0.1 stopped doing. The name, the
-  # symlinks and rust-channel below are all load-bearing: see AGENTS.md.
+  # symlinks and rust-channel below are all required exactly as written: see AGENTS.md.
   rust-deps:
     plugin: nil
     build-packages:

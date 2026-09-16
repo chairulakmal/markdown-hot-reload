@@ -1,3 +1,11 @@
+//! The embedded frontend, and the custom protocol that serves it.
+//!
+//! Every file under `assets/` is compiled into the binary, so the webview
+//! never reads the disk or the network for a stylesheet, a font or a script.
+//! `handler` splices the current render into the shell so the first paint
+//! needs no JavaScript, and the two URL predicates decide which navigations
+//! stay inside the window.
+
 use rust_embed::Embed;
 use std::borrow::Cow;
 use std::sync::{Arc, Mutex};
@@ -426,6 +434,44 @@ mod tests {
             css.contains(":root:not([data-theme=\"light\"])"),
             "github.css lost the guard that lets forced-light win under an OS dark preference"
         );
+    }
+
+    /// A variable added to one palette block and missed in another falls back
+    /// to the light value, so it shows only under one theme and one override,
+    /// the combination a sweep is most likely to skip.
+    #[test]
+    fn every_palette_block_defines_the_same_variables() {
+        let css = String::from_utf8_lossy(
+            &Asset::get("github.css")
+                .expect("github.css is embedded")
+                .data,
+        )
+        .into_owned();
+        let variables = |selector: &str| {
+            let start = css
+                .find(&format!("{selector} {{"))
+                .unwrap_or_else(|| panic!("github.css has no `{selector}` block"));
+            let block = &css[start..];
+            let block = &block[..block.find('}').expect("the block is closed")];
+            block
+                .lines()
+                .filter_map(|line| line.trim().split_once(':'))
+                .filter(|(name, _)| name.starts_with("--"))
+                .map(|(name, _)| name.to_string())
+                .collect::<std::collections::BTreeSet<_>>()
+        };
+        let light = variables(":root");
+        assert!(!light.is_empty(), "found no variables under `:root`");
+        for selector in [
+            ":root:not([data-theme=\"light\"])",
+            ":root[data-theme=\"dark\"]",
+        ] {
+            assert_eq!(
+                variables(selector),
+                light,
+                "`{selector}` differs from `:root`"
+            );
+        }
     }
 
     /// Every value of one double-quoted attribute in `html`, in document order.

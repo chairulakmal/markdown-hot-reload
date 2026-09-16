@@ -43,6 +43,19 @@ Term
 
 : The definition.
 
+## Block quote
+
+> A quote reads at the same contrast as the text around it. The bar on the left marks it as quoted.
+>
+> - It can hold a list
+> - and a code block:
+>
+> ```rust
+> let quoted = true;
+> ```
+>
+> > A nested quote draws a second bar.
+
 ## Multiline block quote
 
 >>>
@@ -145,7 +158,7 @@ A raw `<input>` cannot become an editing surface. The next one asks to be a text
 
 ![Two-tone bar, embedded as a data URI](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAAAYCAIAAADWASznAAAAQElEQVR42u3PMQ0AIAwAwTpCDIqqkokNIZXQqQnDJT9/crFyt5132377BBgYGBgYGBgYGBgYGBgYGBgYGNjUpwBPuyvVOQnVVAAAAABJRU5ErkJggg==)
 
-Only a raster image travels that way. `data:image/svg+xml` and `data:text/html` both run script in a webview, so the sanitizer drops them and the next image renders with no source at all:
+Only a raster image moves that way. `data:image/svg+xml` and `data:text/html` both run script in a webview, so the sanitizer drops them and the next image renders with no source at all:
 
 ![Dropped on purpose](data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciLz4=)
 

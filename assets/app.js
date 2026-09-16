@@ -134,11 +134,32 @@
   );
   document.addEventListener("mhr:themechange", redrawForTheme);
 
+  // A drawn diagram whose source did not change keeps its SVG. Left to the
+  // morph, the new markup strips data-drawn and swaps the SVG back to the
+  // source text, so every save redraws every diagram and each one flashes
+  // its source first. Comparing two strings is neither parsing nor
+  // unescaping, so the frontend invariant holds.
+  function keepsDrawnDiagram(oldNode, newNode) {
+    return (
+      oldNode instanceof Element &&
+      newNode instanceof Element &&
+      oldNode.matches("pre.mermaid[data-drawn]") &&
+      newNode.matches("pre.mermaid") &&
+      oldNode.dataset.source === newNode.textContent
+    );
+  }
+
   // Morphing (not replacing innerHTML) preserves scroll position, open
   // <details> elements, and text selection across a reload.
   function render(html) {
     generation += 1;
-    Idiomorph.morph(content, html, { morphStyle: "innerHTML" });
+    Idiomorph.morph(content, html, {
+      morphStyle: "innerHTML",
+      callbacks: {
+        beforeNodeMorphed: (oldNode, newNode) =>
+          !keepsDrawnDiagram(oldNode, newNode),
+      },
+    });
     void drawDiagrams();
   }
 

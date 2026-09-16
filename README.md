@@ -25,7 +25,7 @@ mhr TODO.md &
 
 | Key | Action |
 | --- | --- |
-| <kbd>?</kbd> | Show and hide the shortcut panel |
+| <kbd>?</kbd> or <kbd>F1</kbd> | Show and hide the shortcut panel |
 | <kbd>Esc</kbd> | Close the shortcut panel |
 | <kbd>t</kbd> | Cycle the theme: system, light, dark |
 | <kbd>Ctrl</kbd> <kbd>+</kbd> | Zoom in |

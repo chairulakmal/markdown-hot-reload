@@ -7,17 +7,25 @@
    user has not forced light", once for "the user forced dark". A single
    selector list cannot express both, because one half lives inside the media
    query and the other does not. The highlight-light.css and highlight-dark.css
-   sheets carry the matching split for syntax colours. */
+   sheets carry the matching split for syntax colours.
+
+   The values are GitHub's, except where they read poorly. GitHub's dark muted
+   text, link and alert colours pass WCAG 2 but score Lc 41 to 52 in APCA, the
+   perceptual contrast model, and WCAG 2 is known to overrate light text on a
+   dark ground. The replacements are mostly from GitHub's own colour scales.
+   The targets are enforced by `palette_meets_the_contrast_targets` in
+   src/assets.rs, which lists them. */
 :root {
   color-scheme: light;
   --fg: #1f2328;
   --fg-muted: #59636e;
   --bg: #ffffff;
   --border: #d1d9e0;
-  --border-subtle: #d1d9e0b3;
+  --border-subtle: #d8dee4;
   --border-emphasis: #818b98;
   --code-bg: #f6f8fa;
-  --link: #0969da;
+  --link: #0550ae;
+  --focus: #0969da;
   --accent-emphasis: #0969da;
   --accent-note: #0969da;
   --accent-tip: #1a7f37;
@@ -32,19 +40,20 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
     --fg: #f0f6fc;
-    --fg-muted: #9198a1;
+    --fg-muted: #c9d1d9;
     --bg: #0d1117;
-    --border: #3d444d;
-    --border-subtle: #3d444db3;
-    --border-emphasis: #656c76;
+    --border: #59616c;
+    --border-subtle: #4f5761;
+    --border-emphasis: #8b949e;
     --code-bg: #151b23;
-    --link: #4493f8;
+    --link: #a5d6ff;
+    --focus: #58a6ff;
     --accent-emphasis: #1f6feb;
-    --accent-note: #4493f8;
-    --accent-tip: #3fb950;
-    --accent-important: #ab7df8;
-    --accent-warning: #d29922;
-    --accent-caution: #f85149;
+    --accent-note: #79c0ff;
+    --accent-tip: #56d364;
+    --accent-important: #d2a8ff;
+    --accent-warning: #e3b341;
+    --accent-caution: #ffa198;
   }
 }
 
@@ -52,19 +61,20 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --fg: #f0f6fc;
-  --fg-muted: #9198a1;
+  --fg-muted: #c9d1d9;
   --bg: #0d1117;
-  --border: #3d444d;
-  --border-subtle: #3d444db3;
-  --border-emphasis: #656c76;
+  --border: #59616c;
+  --border-subtle: #4f5761;
+  --border-emphasis: #8b949e;
   --code-bg: #151b23;
-  --link: #4493f8;
+  --link: #a5d6ff;
+  --focus: #58a6ff;
   --accent-emphasis: #1f6feb;
-  --accent-note: #4493f8;
-  --accent-tip: #3fb950;
-  --accent-important: #ab7df8;
-  --accent-warning: #d29922;
-  --accent-caution: #f85149;
+  --accent-note: #79c0ff;
+  --accent-tip: #56d364;
+  --accent-important: #d2a8ff;
+  --accent-warning: #e3b341;
+  --accent-caution: #ffa198;
 }
 
 * {
@@ -147,13 +157,24 @@ pre {
   margin: 0 0 1rem;
 }
 
+/* Underlined, unlike GitHub's default. Colour alone separates a link from body
+   text by under 3:1 in both themes, below what WCAG 1.4.1 asks of a link with
+   no other cue, and not at all for a reader who cannot see the hue. */
 a {
   color: var(--link);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: max(1px, 0.0625em);
+  text-underline-offset: 0.2em;
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration-thickness: max(2px, 0.125em);
+}
+
+/* The webview's default ring is thin and takes no colour from the palette. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 ul,
@@ -185,7 +206,7 @@ li input[type="checkbox"] {
   height: 1em;
   margin: 0 0.35em 0.15em -1.4em;
   vertical-align: middle;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-emphasis);
   border-radius: 3px;
   background-color: var(--code-bg);
 }
@@ -228,10 +249,13 @@ code {
   border-radius: 6px;
 }
 
+/* The border is not GitHub's. --code-bg is too close to --bg for APCA to
+   register any contrast in either theme, so without it a block has no edge. */
 pre {
   padding: 1rem;
   overflow-x: auto;
   background: var(--code-bg);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   line-height: 1.45;
 }
@@ -332,6 +356,7 @@ hr {
   padding: 0.75rem 1rem;
   color: var(--fg-muted);
   background: var(--code-bg);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
 }
 

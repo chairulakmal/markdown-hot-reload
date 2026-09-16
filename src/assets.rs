@@ -472,6 +472,9 @@ mod tests {
             ("--fg-muted", "--bg", 75.0, 4.5),
             ("--fg-muted", "--code-bg", 75.0, 4.5),
             ("--link", "--bg", 75.0, 4.5),
+            // Inline `code` sets a background and no colour, so a link
+            // wrapping one renders link text on --code-bg at 0.875em.
+            ("--link", "--code-bg", 75.0, 4.5),
             ("--accent-note", "--bg", 60.0, 4.5),
             ("--accent-tip", "--bg", 60.0, 4.5),
             ("--accent-important", "--bg", 60.0, 4.5),

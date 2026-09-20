@@ -9,7 +9,7 @@ mod math;
 mod render;
 mod watch;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use tao::dpi::LogicalSize;
@@ -146,6 +146,7 @@ fn main() -> Result<()> {
         target_os = "openbsd"
     ))]
     let webview = {
+        use anyhow::Context;
         use tao::platform::unix::WindowExtUnix;
         use wry::WebViewBuilderExtUnix;
 

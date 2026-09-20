@@ -78,7 +78,7 @@ This builds the crate on your machine, so it needs Rust 1.88 or newer, which [ru
 sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev pkg-config
 ```
 
-Install these first. Without them, the build fails at the linker, with an error that does not name the missing package. Only Linux has a tested build, so a `cargo install` on macOS or Windows may work but is unverified. See Platforms below.
+Install these first. Without them, the build fails at the linker, with an error that does not name the missing package. Only Linux has a tested app. On macOS, CI compiles the crate and runs the tests, but nobody has opened the window there. On Windows nothing is tested. See Platforms below.
 
 ### snap
 
@@ -132,7 +132,7 @@ Images have one limitation. `mhr` reads only the single file you name. A local i
 
 ## Platforms
 
-Linux is the only platform `mhr` is built and tested on. Every release ships Linux packages only. `cargo install mhr` may compile on macOS or Windows, since the webview library supports both, but nothing there is tested. macOS is the next target. Windows support is not planned, but it would be welcome.
+Linux is the only platform `mhr` is released on and used on. Every release ships Linux packages only. On macOS, CI compiles the crate and runs the test suite on every pull request, so `cargo install mhr` should build there, but nobody has opened the window on a Mac, so the app itself is unverified. On Windows nothing is tested, although the webview library supports it. macOS is the next target. Windows support is not planned, but it would be welcome.
 
 ## Contributing
 

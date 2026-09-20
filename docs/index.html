@@ -946,8 +946,9 @@ mhr notes.md</code></pre>
         the only one that could work beyond Linux: <code>wry</code>, the
         webview library, drives WKWebView on macOS and WebView2 on Windows, and
         the source already carries the branches for both. Linux is still the
-        only platform <code>mhr</code> is released and tested on, so a
-        macOS or Windows build may work, but nothing guarantees it.
+        only platform <code>mhr</code> is released on. On macOS the crate
+        is compiled and its tests run on every change, but nobody has opened
+        the window there. On Windows nothing is tested.
       </p>
 
       <h3 id="cargo-update">Updating</h3>

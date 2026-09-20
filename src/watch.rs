@@ -97,6 +97,10 @@ mod tests {
     /// hanging it. The debounce itself is 150ms.
     const SETTLE: Duration = Duration::from_secs(5);
 
+    /// How long the watcher must stay silent to count as silent. Four times the
+    /// debounce, so a change that was going to arrive has arrived.
+    const QUIET: Duration = Duration::from_millis(600);
+
     /// A directory that removes itself, so the suite needs no `tempfile`
     /// dependency to test a file watcher.
     struct TempDir(PathBuf);
@@ -137,6 +141,16 @@ mod tests {
         })
         .expect("watcher starts");
         (debouncer, receiver)
+    }
+
+    /// Waits until the watcher has been quiet for one full window. `FSEvents`, the
+    /// macOS file change interface, can replay a change made just before the
+    /// stream opened, so a fixture written before `watching` arrives as a change
+    /// to the target. A test that asserts silence must let that replay pass
+    /// first, or it blames the replay on whatever the test did next. inotify
+    /// never replays, so on Linux this receives nothing.
+    fn settled(events: &Receiver<UserEvent>) {
+        while events.recv_timeout(QUIET).is_ok() {}
     }
 
     /// The trap the module exists to avoid. Editors do not write a file in
@@ -210,13 +224,11 @@ mod tests {
         std::fs::write(&target, "here").expect("fixture is writable");
 
         let (_debouncer, events) = watching(&target);
+        settled(&events);
         std::fs::write(dir.join("other.md"), "unrelated").expect("neighbor is writable");
 
         assert!(
-            matches!(
-                events.recv_timeout(Duration::from_millis(600)),
-                Err(RecvTimeoutError::Timeout)
-            ),
+            matches!(events.recv_timeout(QUIET), Err(RecvTimeoutError::Timeout)),
             "a change to another file caused a redraw"
         );
     }

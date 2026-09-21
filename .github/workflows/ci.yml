@@ -61,6 +61,43 @@ jobs:
       - name: cargo build
         run: cargo build --locked --release
 
+  # Compiles what Linux never does: the `builder.build(&window)` arm in
+  # src/main.rs and the macOS dependency graph behind wry and tao. Kept a
+  # separate job rather than a matrix on `ci`, because a matrix renames the
+  # check to `ci (ubuntu-24.04)` and the ruleset requires one named `ci`.
+  macos:
+    # Pinned like ubuntu-24.04 above, for a different fault: an image bump moves
+    # the Xcode SDK. arm64 only, so x86_64-apple-darwin is audited through
+    # deny.toml's graph and never compiled.
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # No system packages to install first: WKWebView is a system framework.
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch, 2026-09-09
+        with:
+          # Named for the same reason as in `ci`: the action reads the channel
+          # from its own ref, which is a commit rather than `stable`.
+          toolchain: stable
+          components: clippy
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      # No fmt and no cargo-deny: formatting is platform-independent, and
+      # deny.toml already lists both darwin targets, so `ci` audits this graph.
+      - name: cargo clippy
+        run: cargo clippy --locked --all-targets
+
+      # Worth the second run: watch.rs exercises FSEvents here, not inotify.
+      - name: cargo test
+        run: cargo test --locked
+
+      # lto, codegen-units = 1 and panic = "abort" apply only to this profile,
+      # so it is the one link step the debug build never performs.
+      - name: cargo build
+        run: cargo build --locked --release
+
   # Gates `snap` and nothing else: `ci` is the required check, and one that
   # does not report blocks the merge.
   changes:

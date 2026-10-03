@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Rebuilds the snap against the current Ubuntu archive after a Snap Store
+  # notice about outdated packages. No base commit, so `changes` builds it.
+  workflow_dispatch:
 
 # Nothing here writes to the repository, so the token stays read-only.
 permissions:

@@ -1,11 +1,12 @@
 # Releasing
 
-This document is the procedure for cutting an `mhr` release. The point that matters most: the snap is tested on a real desktop before the git tag is created, not after, because a snap can pass every automated check and still fail to open a window. Below: the channel and tag ladder, the order of operations from version bump through the crates.io and Snap Store publishes, why that order is a real fix for a real failure, and the shortcut allowed for a patch release.
+This document is the procedure for cutting an `mhr` release. The point that matters most: the snap is tested on a real desktop before the git tag is created, not after, because a snap can pass every automated check and still fail to open a window. Below: the channel and tag ladder, the order of operations from version bump through the crates.io and Snap Store publishes, why that order is a real fix for a real failure, the shortcut allowed for a patch release, and how to rebuild the snap when the Snap Store reports outdated Ubuntu packages.
 
 - [Channel and tag ladder](#channel-and-tag-ladder)
 - [Order of operations](#order-of-operations)
 - [Why the snap is tested before the tag exists](#why-the-snap-is-tested-before-the-tag-exists)
 - [Patch releases](#patch-releases)
+- [Security rebuilds](#security-rebuilds)
 
 ## Channel and tag ladder
 
@@ -64,3 +65,13 @@ A tag is a promise, and it should not be made until the thing it names has been 
 For a patch whose only user-visible change is a bug fix, it is reasonable to go straight from alpha to stable; reserve beta and `candidate` for a release that changes visible behavior enough to be worth field-testing first.
 
 A patch may also sit on `edge` untagged while it is being verified. The rule above, that the tag suffix and the channel change together, is about published state, and a strict reading of it would mean tagging `vX.Y.Z-alpha`, bumping the version in three files for that tag, then bumping them again for the real one, which is extra work that helps no reader. So for a patch: upload the CI-built snap to `edge`, run the checks that need running, then tag and promote that same revision. `edge` is the channel that carries unfinished work by definition. Do not stretch this shortcut to a release that changes visible behavior.
+
+## Security rebuilds
+
+The Snap Store emails a notice when a published revision contains Ubuntu packages that have a newer security update. The snap bundles these packages at build time, and `snap/snapcraft.yaml` pins no versions, so the fix is a new build of the same code, not a code change.
+
+1. Run CI by hand on `main`: `gh workflow run ci.yml --ref main`. A manual run has no base commit, so the `changes` job always lets `snap` build.
+2. Download the artifact as in step 5, and check `primed-stage-packages` in `snap/manifest.yaml` inside it: each package the notice names must be at the fixed version or newer.
+3. Follow steps 6 to 10 and step 16: verify, upload to `edge`, test on a desktop, promote to `stable`.
+
+Keep the version and do not tag. The new revision carries the same version as the one it replaces, and the existing tag still describes the code. This holds only while `main` has no user-visible change since the last tag. If it has one, cut a normal release instead.
